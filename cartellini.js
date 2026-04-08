@@ -77,7 +77,7 @@ var renderTable = (function(_origRenderTable){
     // Comportamento normale
     _origRenderTable();
   };
-})(renderTable); // cattura renderTable di database.js QUI, prima dell'assegnazione
+})(renderTable); // cattura renderTable dei moduli database.* QUI, prima dell'assegnazione
 
 
 // ═══════════════════════════════════════════════════════════════════════════════

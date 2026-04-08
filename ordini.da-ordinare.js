@@ -80,34 +80,34 @@ function renderDaOrdinareView(){
     var colLabel=colorNames[col]||col;
     var fornNome=forniMap[col]||'';
 
-    h+='<div class="cof-group" style="border-color:'+col+'55">';
-    h+='<div class="cof-header" style="border-color:'+col+'">';
-    h+='<span class="cof-dot" style="background:'+col+'"></span>';
-    h+='<span class="cof-color-label">'+colLabel+'</span>';
-    h+='<input class="cof-forn-inp" value="'+esc(fornNome)+'" placeholder="Nome fornitore..." '+
+    h+='<div class="ord-dao-group" style="border-color:'+col+'55">';
+    h+='<div class="ord-dao-header" style="border-color:'+col+'">';
+    h+='<span class="ord-dao-dot" style="background:'+col+'"></span>';
+    h+='<span class="ord-dao-color-label">'+colLabel+'</span>';
+    h+='<input class="ord-dao-forn-inp" value="'+esc(fornNome)+'" placeholder="Nome fornitore..." '+
        'oninput="ctSaveFornNome(\''+col+'\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()">';
-    h+='<span class="cof-count">'+items.length+' art.</span>';
+    h+='<span class="ord-dao-count">'+items.length+' art.</span>';
     h+='</div>';
 
     items.forEach(function(entry){
       var it=entry.it;
       var codM=it.codM?(String(it.codM).match(/^\d+$/)?String(it.codM).padStart(7,'0'):it.codM):'';
       var sub=(parsePriceIT(it.prezzoUnit)*(parseFloat(it.qty)||0)).toFixed(2);
-      h+='<div class="cof-row">';
-      if(it.foto) h+='<img class="cof-thumb" src="'+it.foto+'" alt="" onclick="apriModalFoto(this.src)">';
-      else h+='<div class="cof-thumb cof-thumb--empty">📦</div>';
-      h+='<div class="cof-info">';
-      h+='<div class="cof-nome">'+esc(it.desc||'—')+'</div>';
-      h+='<div class="cof-meta">';
+      h+='<div class="ord-dao-row">';
+      if(it.foto) h+='<img class="ord-dao-thumb" src="'+it.foto+'" alt="" onclick="apriModalFoto(this.src)">';
+      else h+='<div class="ord-dao-thumb ord-dao-thumb--empty">📦</div>';
+      h+='<div class="ord-dao-info">';
+      h+='<div class="ord-dao-nome">'+esc(it.desc||'—')+'</div>';
+      h+='<div class="ord-dao-meta">';
       if(codM) h+='<span>Cod.Mag: <b>'+esc(codM)+'</b></span> ';
       if(it.codF) h+='<span>Cod.Forn: <b>'+esc(it.codF)+'</b></span> ';
       h+='<span>Cart: <b>'+esc(entry.cartNome)+'</b></span>';
       h+='</div>';
-      if(it.nota) h+='<div class="cof-nota">📝 '+esc(it.nota)+'</div>';
+      if(it.nota) h+='<div class="ord-dao-nota">📝 '+esc(it.nota)+'</div>';
       h+='</div>';
-      h+='<div class="cof-right">';
-      h+='<div class="cof-qty">'+(parseFloat(it.qty)||0)+' '+(it.unit||'pz')+'</div>';
-      h+='<div class="cof-sub">€'+sub+'</div>';
+      h+='<div class="ord-dao-right">';
+      h+='<div class="ord-dao-qty">'+(parseFloat(it.qty)||0)+' '+(it.unit||'pz')+'</div>';
+      h+='<div class="ord-dao-sub">€'+sub+'</div>';
       h+='</div>';
       h+='</div>';
     });

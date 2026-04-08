@@ -42,8 +42,8 @@ function _fbSaveArticolo(idx){
 // Traccia ultimo articolo modificato per sync automatico
 var _lastModifiedIdx = null;
 
-// Wrappa save() di database.js per sincronizzare su Firebase
-// Viene eseguito dopo che database.js è caricato
+// Wrappa save() (database.cartellini.js) per sincronizzare su Firebase
+// Viene eseguito dopo il caricamento dei moduli database.*.js
 document.addEventListener('DOMContentLoaded', function(){
   setTimeout(function(){
     if(typeof save === 'function'){

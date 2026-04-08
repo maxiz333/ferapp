@@ -214,23 +214,6 @@ body.light-mode .ord-spacer-line { background:repeating-linear-gradient(90deg,#c
 body.light-mode .ord-code-mag    { background:#f5f0d0; }
 body.light-mode .ord-code-forn   { background:#fde8e8; }
 
-/* ── Vista "Da ordinare" ── */
-.dao-group {
-  background:#161616; border-radius:12px;
-  margin-bottom:16px; overflow:hidden;
-  border:2px solid #2a2a2a;
-}
-.dao-group-header {
-  padding:12px 16px;
-  font-size:16px; font-weight:900;
-  letter-spacing:1px;
-  border-bottom:2px solid #2a2a2a;
-}
-.dao-table { margin:0; }
-body.light-mode .dao-group { background:#fff; border-color:#ddd; }
-body.light-mode .dao-group-header { border-color:#ddd; }
-
-
 /* ── Lock collaborativo overlay ── */
 .ord-lock-overlay {
   position: absolute;
@@ -368,3 +351,274 @@ body.light-mode .ord-card--exbozza { border-color: #805ad555 !important; }
 @keyframes delPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
 body.light-mode .ord-item-del { color: #999; background: #e8e8e8; }
 body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { color: #e53e3e; background: #fde8e8; }
+
+/* ═══════════════════════════════════════════════════════════════
+   TAB ORDINI (#to) — layout mobile, ricerca, contatore
+   ═══════════════════════════════════════════════════════════════ */
+
+#to .panel {
+  padding: 10px 10px 140px;
+}
+
+#to .panel > div[style*="flex"][style*="wrap"] {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+#to .panel > div[style*="flex"][style*="wrap"]::-webkit-scrollbar {
+  display: none;
+}
+
+#ord-search {
+  font-size: 16px; /* previene zoom iOS */
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+
+#to button[onclick*="filterOrdini"] {
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+#ord-counter-banner .ord-counter-pulse > div:first-child {
+  font-size: 32px;
+}
+
+/* Vista "Da ordinare" — gruppi per colore fornitore (tab ordini) */
+.ord-dao-group {
+  background: var(--ct-card, #1a1b1d);
+  border: 1px solid #333;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.ord-dao-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #222;
+}
+.ord-dao-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ord-dao-color-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ct-muted, #7a7d82);
+}
+.ord-dao-forn-inp {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed #444;
+  color: var(--ct-text, #f0f0f0);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 2px 4px;
+  outline: none;
+  font-family: inherit;
+}
+.ord-dao-forn-inp:focus {
+  border-bottom-color: var(--ct-yellow, var(--accent));
+}
+.ord-dao-count {
+  font-size: 11px;
+  color: var(--ct-muted, #7a7d82);
+  white-space: nowrap;
+}
+.ord-dao-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #1a1b1d;
+}
+.ord-dao-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #252628;
+}
+.ord-dao-thumb--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.ord-dao-info {
+  flex: 1;
+  min-width: 0;
+}
+.ord-dao-nome {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ct-text, #f0f0f0);
+  white-space: normal;
+  word-break: break-word;
+}
+.ord-dao-meta {
+  font-size: 10px;
+  color: var(--ct-muted, #7a7d82);
+  margin-top: 2px;
+}
+.ord-dao-meta b {
+  color: #ddd;
+}
+.ord-dao-nota {
+  font-size: 10px;
+  color: #f6ad55;
+  font-style: italic;
+  margin-top: 2px;
+}
+.ord-dao-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+.ord-dao-qty {
+  font-size: 11px;
+  color: var(--ct-muted, #7a7d82);
+}
+.ord-dao-sub {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ct-yellow, var(--accent));
+}
+
+body.light-mode .ord-dao-group {
+  background: #fff;
+  border-color: #e0e0e0;
+}
+body.light-mode .ord-dao-header {
+  border-color: #e8e8e8;
+}
+body.light-mode .ord-dao-nome {
+  color: var(--text);
+}
+
+/* Pannello "ordina a fornitori" (slide-up dal basso, aperto da carrello) */
+#ord-forn-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 72vh;
+  background: #1a1a1a;
+  border-top: 2px solid var(--accent);
+  border-radius: 18px 18px 0 0;
+  z-index: 3500;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform .32s cubic-bezier(.32, 1, .23, 1);
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, .6);
+}
+
+#ord-forn-panel.ord-forn-panel--open {
+  transform: translateY(0);
+}
+
+#ord-forn-handle {
+  padding: 8px 0 4px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.ord-forn-handle-bar {
+  display: inline-block;
+  width: 40px;
+  height: 4px;
+  background: #444;
+  border-radius: 2px;
+}
+
+.ord-forn-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 16px 10px;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+
+.ord-forn-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 12px;
+}
+
+.ord-forn-vendor-group {
+  margin-bottom: 14px;
+  background: #1e1e1e;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #2a2a2a;
+}
+
+.ord-forn-vendor-title {
+  padding: 8px 12px;
+  background: #222;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ord-forn-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #242424;
+}
+.ord-forn-line:last-child {
+  border-bottom: none;
+}
+
+.ord-forn-footer {
+  padding: 12px 16px 20px;
+  border-top: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+
+.ord-forn-confirm {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #dd6b20, var(--accent));
+  border: none;
+  border-radius: 14px;
+  color: #111;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: .5px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.ord-forn-confirm:active {
+  opacity: .85;
+}
+
+body.light-mode #ord-forn-panel {
+  background: #fff;
+  border-top-color: var(--accent);
+}
+body.light-mode .ord-forn-vendor-group {
+  background: #f5f5f5;
+  border-color: #ddd;
+}
+body.light-mode .ord-forn-vendor-title {
+  background: #eee;
+  border-color: #ddd;
+}
+body.light-mode .ord-forn-line {
+  border-color: #e8e8e8;
+}

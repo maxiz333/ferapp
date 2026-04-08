@@ -1,10 +1,5 @@
 /* ══ CARRELLO — card, iconbar, pannelli, footer ═════════════════ */
-/* ── Tab Carrello: layout ──────────────────────────────────── */
-#tc {
-  background: var(--pos-bg);
-  padding: 0;
-  min-height: 100vh;
-}
+/* Tab #tc: regole definitive in sezione CART REDESIGN v3 sotto */
 
 /* ── Header clienti (pillole) ──────────────────────────────── */
 #cart-tabs-bar {
@@ -59,380 +54,6 @@
 .cart-tab-pill[data-tipo="sospeso"]    { background: var(--pos-red) !important;    color: #fff !important; }
 .cart-tab-pill[data-tipo=""]           { background: #3a3d40 !important;            color: #ddd !important; }
 
-/* ── Zona tasti dominanti ──────────────────────────────────── */
-#cart-action-btns {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 10px 6px;
-  background: var(--pos-bg);
-}
-
-/* Tasto CERCA PER CODICE */
-.pos-btn-cerca {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 10px !important;
-  width: 100% !important;
-  padding: 16px 20px !important;
-  background: linear-gradient(135deg, var(--pos-orange), var(--pos-orange2)) !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: 14px !important;
-  font-family: 'Barlow Condensed', 'Inter', sans-serif !important;
-  font-size: 22px !important;
-  font-weight: 900 !important;
-  letter-spacing: 1.5px !important;
-  text-transform: uppercase !important;
-  cursor: pointer !important;
-  touch-action: manipulation !important;
-  min-height: 58px !important;
-  box-shadow: 0 4px 20px rgba(232,84,10,.35) !important;
-  transition: transform .1s, filter .1s !important;
-}
-.pos-btn-cerca:active { transform: scale(.97) !important; filter: brightness(.88) !important; }
-.pos-btn-cerca .pos-btn-icon { font-size: 26px !important; line-height: 1 !important; }
-
-/* Tasto + NUOVO ARTICOLO */
-.pos-btn-nuovo {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 10px !important;
-  width: 100% !important;
-  padding: 14px 20px !important;
-  background: var(--pos-card2) !important;
-  color: #ccc !important;
-  border: 2px solid var(--pos-border) !important;
-  border-radius: 14px !important;
-  font-family: 'Inter', sans-serif !important;
-  font-size: 16px !important;
-  font-weight: 700 !important;
-  cursor: pointer !important;
-  touch-action: manipulation !important;
-  min-height: 50px !important;
-  transition: background .12s, border-color .12s !important;
-}
-.pos-btn-nuovo:active { background: #2e3033 !important; border-color: #555 !important; }
-
-/* ── Body articoli ─────────────────────────────────────────── */
-#cart-body {
-  padding: 8px 10px 180px !important;
-  background: var(--pos-bg) !important;
-}
-
-/* ── Card articolo POS ─────────────────────────────────────── */
-.pos-cart-card {
-  background: var(--pos-card) !important;
-  border: 1px solid var(--pos-border) !important;
-  border-radius: 14px !important;
-  margin-bottom: 8px !important;
-  overflow: hidden !important;
-  transition: border-color .15s !important;
-}
-.pos-cart-card:active { border-color: var(--accent) !important; }
-
-/* Riga top: foto + info + prezzo + cestino */
-.pos-card-top {
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  padding: 10px 12px 6px !important;
-}
-.pos-card-thumb {
-  width: 44px !important;
-  height: 44px !important;
-  border-radius: 8px !important;
-  object-fit: cover !important;
-  background: #2a2a2a !important;
-  flex-shrink: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 22px !important;
-  color: #555 !important;
-}
-.pos-card-info { flex: 1; min-width: 0; }
-.pos-card-name {
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  color: var(--pos-text) !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  line-height: 1.3 !important;
-}
-.pos-card-code {
-  font-size: 10px !important;
-  color: var(--pos-muted) !important;
-  margin-top: 1px !important;
-  font-family: monospace !important;
-  letter-spacing: .5px !important;
-}
-.pos-card-price {
-  font-family: 'Barlow Condensed', sans-serif !important;
-  font-size: 22px !important;
-  font-weight: 800 !important;
-  color: var(--accent) !important;
-  white-space: nowrap !important;
-  flex-shrink: 0 !important;
-}
-.pos-card-price.has-discount {
-  color: var(--pos-orange2) !important;
-}
-.pos-card-old-price {
-  font-size: 11px !important;
-  color: var(--pos-muted) !important;
-  text-decoration: line-through !important;
-  display: block !important;
-  text-align: right !important;
-  font-family: 'Inter', sans-serif !important;
-  font-weight: 400 !important;
-}
-.pos-card-del {
-  background: rgba(229,62,62,.15) !important;
-  border: 1px solid rgba(229,62,62,.3) !important;
-  color: #fc8181 !important;
-  border-radius: 8px !important;
-  width: 36px !important;
-  height: 36px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 16px !important;
-  cursor: pointer !important;
-  touch-action: manipulation !important;
-  flex-shrink: 0 !important;
-  transition: background .12s !important;
-}
-.pos-card-del:active { background: rgba(229,62,62,.35) !important; }
-
-/* Riga comandi: qty + azioni */
-.pos-card-actions {
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  padding: 6px 10px 10px !important;
-  border-top: 1px solid var(--pos-border) !important;
-}
-
-/* Qty stepper */
-.pos-qty-wrap {
-  display: flex !important;
-  align-items: center !important;
-  background: #111 !important;
-  border-radius: 10px !important;
-  border: 1px solid var(--pos-border) !important;
-  overflow: hidden !important;
-  flex-shrink: 0 !important;
-}
-.pos-qty-btn {
-  width: 38px !important;
-  height: 38px !important;
-  background: transparent !important;
-  border: none !important;
-  color: var(--accent) !important;
-  font-size: 20px !important;
-  font-weight: 700 !important;
-  cursor: pointer !important;
-  touch-action: manipulation !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  transition: background .1s !important;
-  line-height: 1 !important;
-}
-.pos-qty-btn:active { background: #222 !important; }
-.pos-qty-val {
-  min-width: 38px !important;
-  text-align: center !important;
-  font-size: 15px !important;
-  font-weight: 800 !important;
-  color: var(--pos-text) !important;
-  background: transparent !important;
-  border: none !important;
-  outline: none !important;
-  padding: 0 2px !important;
-  font-family: 'Inter', sans-serif !important;
-}
-
-/* Tasti azione rapida (forbici, %, scatola, busta) */
-.pos-act-btn {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  gap: 2px !important;
-  background: var(--pos-card2) !important;
-  border: 1px solid var(--pos-border) !important;
-  border-radius: 9px !important;
-  min-width: 46px !important;
-  height: 46px !important;
-  padding: 5px 4px 4px !important;
-  font-size: 10px !important;
-  font-weight: 600 !important;
-  color: var(--pos-muted) !important;
-  cursor: pointer !important;
-  touch-action: manipulation !important;
-  transition: background .1s, color .1s, border-color .1s !important;
-  flex: 1 !important;
-  max-width: 56px !important;
-}
-.pos-act-btn .pos-act-icon { font-size: 18px !important; line-height: 1 !important; }
-.pos-act-btn:active { background: #2e3033 !important; color: var(--accent) !important; border-color: var(--accent) !important; }
-.pos-act-btn.has-value { color: var(--accent) !important; border-color: rgba(245,196,0,.4) !important; }
-
-/* Sconto badge */
-.pos-discount-badge {
-  font-size: 9px !important;
-  background: var(--pos-orange) !important;
-  color: #fff !important;
-  border-radius: 4px !important;
-  padding: 1px 4px !important;
-  font-weight: 700 !important;
-  position: absolute !important;
-  top: -4px !important;
-  right: -4px !important;
-}
-
-/* Nota preview inline */
-.pos-card-nota-preview {
-  margin: 0 10px 8px !important;
-  background: rgba(245,196,0,.07) !important;
-  border-left: 3px solid var(--accent) !important;
-  border-radius: 0 7px 7px 0 !important;
-  padding: 5px 9px !important;
-  font-size: 11px !important;
-  color: var(--pos-muted) !important;
-  font-style: italic !important;
-}
-
-/* ── Footer POS fisso ──────────────────────────────────────── */
-#cart-pos-footer {
-  position: fixed !important;
-  bottom: 58px !important; /* sopra tab bar */
-  left: 0 !important;
-  right: 0 !important;
-  z-index: 200 !important;
-  background: #0d0e0f !important;
-  border-top: 2px solid var(--pos-border) !important;
-  padding: 10px 12px 10px !important;
-  box-shadow: 0 -8px 30px rgba(0,0,0,.6) !important;
-}
-.pos-footer-top {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  margin-bottom: 8px !important;
-}
-.pos-footer-label {
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  color: var(--pos-muted) !important;
-  text-transform: uppercase !important;
-  letter-spacing: 1px !important;
-}
-.pos-footer-total {
-  font-family: 'Barlow Condensed', sans-serif !important;
-  font-size: 34px !important;
-  font-weight: 900 !important;
-  color: #fff !important;
-  letter-spacing: .5px !important;
-  line-height: 1 !important;
-}
-.pos-footer-total .pos-total-sym {
-  font-size: 20px !important;
-  font-weight: 700 !important;
-  color: var(--pos-muted) !important;
-  margin-right: 3px !important;
-}
-.pos-footer-btns {
-  display: flex !important;
-  gap: 8px !important;
-}
-/* Tasto secondario (DDT, Note, Cestino) */
-.pos-footer-sec {
-  background: var(--pos-card2) !important;
-  border: 1px solid var(--pos-border) !important;
-  border-radius: 12px !important;
-  min-width: 52px !important;
-  height: 50px !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 2px !important;
-  font-size: 9px !important;
-  font-weight: 700 !important;
-  color: var(--pos-muted) !important;
-  cursor: pointer !important;
-  touch-action: manipulation !important;
-  border: none !important;
-  text-transform: uppercase !important;
-  letter-spacing: .3px !important;
-  transition: background .12s !important;
-}
-.pos-footer-sec:active { background: #2e3033 !important; }
-.pos-footer-sec .pos-sec-icon { font-size: 18px !important; line-height: 1 !important; }
-.pos-footer-sec.danger { color: #fc8181 !important; }
-
-/* Tasto INVIA A CASSA */
-.pos-btn-cassa {
-  flex: 1 !important;
-  background: linear-gradient(135deg, #c44a00, var(--pos-orange)) !important;
-  color: #fff !important;
-  border: none !important;
-  border-radius: 14px !important;
-  height: 50px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  font-family: 'Barlow Condensed', 'Inter', sans-serif !important;
-  font-size: 20px !important;
-  font-weight: 900 !important;
-  letter-spacing: 1px !important;
-  text-transform: uppercase !important;
-  cursor: pointer !important;
-  touch-action: manipulation !important;
-  box-shadow: 0 3px 16px rgba(232,84,10,.4) !important;
-  transition: transform .1s, filter .1s !important;
-}
-.pos-btn-cassa:active { transform: scale(.97) !important; filter: brightness(.88) !important; }
-.pos-btn-cassa:disabled { background: #333 !important; color: #666 !important; box-shadow: none !important; }
-
-/* Nota ordine input */
-.pos-nota-ordine-wrap {
-  padding: 0 10px 8px !important;
-}
-.pos-nota-ordine {
-  width: 100% !important;
-  background: var(--pos-card) !important;
-  border: 1px solid var(--pos-border) !important;
-  border-radius: 10px !important;
-  color: var(--pos-muted) !important;
-  font-size: 12px !important;
-  padding: 9px 12px !important;
-  font-family: 'Inter', sans-serif !important;
-  resize: none !important;
-  outline: none !important;
-  transition: border-color .15s !important;
-}
-.pos-nota-ordine:focus { border-color: var(--accent) !important; color: var(--pos-text) !important; }
-
-/* Stato vuoto carrello */
-.pos-empty-cart {
-  text-align: center !important;
-  padding: 60px 20px !important;
-  color: var(--pos-muted) !important;
-}
-.pos-empty-cart .pos-empty-icon { font-size: 56px !important; margin-bottom: 12px !important; opacity: .3 !important; }
-.pos-empty-cart p { font-size: 14px !important; }
-
-/* ── Sezione nota ordine (prima del footer) ────────────────── */
-#cart-order-nota-row {
-  padding: 0 10px 6px !important;
-}
 /* ════════════════════════════════════════════════════════════════
    RIEPILOGO ORDINE — overlay checklist operativa
    ════════════════════════════════════════════════════════════════ */
@@ -619,60 +240,16 @@
   align-items: flex-end !important;
 }
 
-/* Tasto RIEPILOGO nel footer — più visibile */
-.pos-footer-riepilogo {
-  color: var(--accent) !important;
-  border-color: rgba(245,196,0,.4) !important;
-  background: rgba(245,196,0,.08) !important;
-  font-size: 10px !important;
-  font-weight: 800 !important;
-  min-width: 64px !important;
-}
-.pos-footer-riepilogo:active {
-  background: rgba(245,196,0,.2) !important;
-}
-.pos-footer-riepilogo .pos-sec-icon {
-  font-size: 20px !important;
-}
-
-/* ── Garanzia min 44px su tutti i bottoni touch-action ─────── */
+/* ── Garanzia min 44px su bottoni touch principali ─────── */
 button[touch-action="manipulation"],
-.pos-footer-sec,
-.pos-qty-btn,
-.pos-act-btn,
 .cart-tab-pill,
 .numpad-btn,
-.pos-btn-cerca,
-.pos-btn-cassa,
+.ct-qty-btn,
+.ct-icon-btn,
+.ct-fbtn,
+.ct-btn-cerca,
 .tab-bottom-btn {
   min-height: 44px;
-}
-
-/* Input prezzo nel carrello — area tap più grande */
-.pos-price-input {
-  min-height: 32px !important;
-  padding: 4px 4px !important;
-  width: 64px !important;
-}
-
-/* Riepilogo: checkbox più grandi per pollice */
-.riepilogo-check {
-  width: 28px !important;
-  height: 28px !important;
-  border-radius: 8px !important;
-  font-size: 16px !important;
-}
-.riepilogo-row {
-  padding: 10px 14px !important;
-  min-height: 52px !important;
-}
-
-/* Input prezzo modificabile: feedback visivo al tap */
-.pos-price-input:focus {
-  background: rgba(245,196,0,.1) !important;
-  border-bottom: 2px solid var(--accent) !important;
-  border-radius: 4px 4px 0 0 !important;
-  outline: none !important;
 }
 
 /* Animazione caricamento DB */
@@ -682,37 +259,8 @@ button[touch-action="manipulation"],
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   MOBILE-FIRST: Tab Ordini & Carrello
-   Ottimizzazioni pollice, leggibilità, touch targets
+   MOBILE-FIRST: Carrello (tab ordini → ordini.css)
    ═══════════════════════════════════════════════════════════════ */
-
-/* ── Tab Ordini: padding corretto per non stare sotto la nav bar ── */
-#to .panel {
-  padding: 10px 10px 140px;
-}
-
-/* ── Tab Ordini: filtri scroll orizzontale su mobile ── */
-#to .panel > div[style*="flex"][style*="wrap"] {
-  flex-wrap: nowrap !important;
-  overflow-x: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-  scrollbar-width: none !important;
-  padding-bottom: 4px !important;
-}
-#to .panel > div[style*="flex"][style*="wrap"]::-webkit-scrollbar { display: none; }
-
-/* ── Barra ricerca ordini: full width mobile ── */
-#ord-search {
-  font-size: 16px !important; /* previene zoom iOS */
-  padding: 12px 14px !important;
-  border-radius: 12px !important;
-}
-
-/* ── Filtri ordini: bottoni più alti (pollice) ── */
-#to button[onclick*="filterOrdini"] {
-  min-height: 40px !important;
-  white-space: nowrap !important;
-}
 
 /* ── Carrello: tab bar scrollabile orizzontalmente ── */
 #cart-tabs-bar {
@@ -744,63 +292,6 @@ button[touch-action="manipulation"],
   border-radius: 12px !important;
 }
 
-/* ── Cart body: padding bottom maggiore per il footer fisso ── */
-#cart-body {
-  padding: 8px 10px 200px !important;
-}
-
-/* ── Bottoni qty carrello: più grandi al pollice ── */
-.pos-qty-btn {
-  width: 44px !important;
-  height: 44px !important;
-  font-size: 22px !important;
-}
-.pos-qty-val {
-  min-width: 44px !important;
-  font-size: 16px !important;
-}
-
-/* ── Azioni rapide card carrello: più alte ── */
-.pos-act-btn {
-  min-height: 48px !important;
-  height: 48px !important;
-  font-size: 11px !important;
-}
-.pos-act-btn .pos-act-icon {
-  font-size: 20px !important;
-}
-
-/* ── Bottone cestino card carrello ── */
-.pos-card-del {
-  width: 44px !important;
-  height: 44px !important;
-  font-size: 18px !important;
-}
-
-/* ── Footer carrello: bottoni più alti ── */
-.pos-footer-sec {
-  min-height: 52px !important;
-  height: 52px !important;
-  font-size: 10px !important;
-  min-width: 56px !important;
-}
-.pos-footer-sec .pos-sec-icon {
-  font-size: 20px !important;
-}
-.pos-btn-cassa {
-  min-height: 52px !important;
-  height: 52px !important;
-  font-size: 18px !important;
-}
-
-/* ── Input prezzo nella card: più facile da toccare ── */
-.pos-price-input {
-  min-height: 36px !important;
-  padding: 6px 6px !important;
-  font-size: 14px !important;
-  width: 68px !important;
-}
-
 /* ── Riepilogo spunte: righe più alte ── */
 .riepilogo-row {
   min-height: 56px !important;
@@ -818,11 +309,6 @@ button[touch-action="manipulation"],
 .riepilogo-btn-close {
   min-height: 50px !important;
   font-size: 15px !important;
-}
-
-/* ── Counter banner ordini: testo leggibile ── */
-#ord-counter-banner .ord-counter-pulse > div:first-child {
-  font-size: 32px !important;
 }
 
 /* ── Numpad overlay: tasti più grandi ── */
@@ -897,121 +383,6 @@ button[touch-action="manipulation"],
 }
 .pos-big-btn-confirm:active { opacity: .85 !important; }
 .pos-big-btn-confirm:disabled { opacity: .4 !important; }
-
-/* ══════════════════════════════════════════════════════════════════════════════
-   SUB-TAB "ORDINARE" — pannello scorrevole dal basso
-   Copre parzialmente il carrello, animazione slide-up.
-   ══════════════════════════════════════════════════════════════════════════════ */
-
-/* Pannello principale: posizione fissa in basso, altezza ~70% schermo */
-#subtab-ordinare {
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  height: 72vh !important;
-  background: #1a1a1a !important;
-  border-top: 2px solid var(--accent) !important;
-  border-radius: 18px 18px 0 0 !important;
-  z-index: 3500 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  /* Stato iniziale: nascosto sotto lo schermo */
-  transform: translateY(100%) !important;
-  transition: transform .32s cubic-bezier(.32,1,.23,1) !important;
-  box-shadow: 0 -8px 40px rgba(0,0,0,.6) !important;
-}
-
-/* Stato aperto: scorre verso l'alto */
-#subtab-ordinare.open {
-  transform: translateY(0) !important;
-}
-
-/* Maniglia visiva in cima al pannello (touch handle) */
-#subtab-ordinare-handle {
-  padding: 8px 0 4px !important;
-  text-align: center !important;
-  flex-shrink: 0 !important;
-}
-.subtab-handle-bar {
-  display: inline-block !important;
-  width: 40px !important;
-  height: 4px !important;
-  background: #444 !important;
-  border-radius: 2px !important;
-}
-
-/* Header del pannello: titolo + pulsante chiudi */
-.subtab-ordinare-header {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  padding: 4px 16px 10px !important;
-  border-bottom: 1px solid #2a2a2a !important;
-  flex-shrink: 0 !important;
-}
-
-/* Area scrollabile con la lista articoli */
-.subtab-ordinare-body {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-  padding: 8px 12px !important;
-}
-
-/* Gruppo per fornitore */
-.subtab-forn-group {
-  margin-bottom: 14px !important;
-  background: #1e1e1e !important;
-  border-radius: 10px !important;
-  overflow: hidden !important;
-  border: 1px solid #2a2a2a !important;
-}
-
-/* Intestazione del gruppo fornitore */
-.subtab-forn-title {
-  padding: 8px 12px !important;
-  background: #222 !important;
-  border-bottom: 1px solid #2a2a2a !important;
-  display: flex !important;
-  align-items: center !important;
-  flex-wrap: wrap !important;
-  gap: 4px !important;
-}
-
-/* Singolo articolo nella lista */
-.subtab-ordinare-item {
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px !important;
-  padding: 8px 12px !important;
-  border-bottom: 1px solid #242424 !important;
-}
-.subtab-ordinare-item:last-child { border-bottom: none !important; }
-
-/* Footer del pannello con tasto CONFERMA grande */
-.subtab-ordinare-footer {
-  padding: 12px 16px 20px !important;
-  border-top: 1px solid #2a2a2a !important;
-  flex-shrink: 0 !important;
-}
-
-/* Tasto CONFERMA ORDINE A FORNITORI — grande, arancione */
-.subtab-confirm-btn {
-  width: 100% !important;
-  padding: 16px !important;
-  background: linear-gradient(135deg, #dd6b20, var(--accent)) !important;
-  border: none !important;
-  border-radius: 14px !important;
-  color: #111 !important;
-  font-size: 15px !important;
-  font-weight: 900 !important;
-  letter-spacing: .5px !important;
-  cursor: pointer !important;
-  touch-action: manipulation !important;
-}
-.subtab-confirm-btn:active { opacity: .85 !important; }
-
 
 
 
@@ -1134,7 +505,6 @@ button[touch-action="manipulation"],
   white-space: nowrap;
   transition: background .12s;
 }
-#ct-btn-clienti:active { background: rgba(246,173,85,.1); }
 #ct-btn-clienti:active { background: rgba(255,215,0,.1); }
 
 /* Badge numero clienti */
@@ -1305,13 +675,14 @@ button[touch-action="manipulation"],
   font-family: inherit;
 }
 
-/* ── Body carrello — centrato, con spazio per footer ─────────────── */
+/* ── Body carrello — centrato, spazio footer ─────────────── */
 #cart-body {
   max-width: var(--ct-max);
   margin: 0 auto;
-  padding: 8px 8px 150px;
   box-sizing: border-box;
   width: 100%;
+  padding: 8px 10px 200px !important;
+  background: var(--pos-bg) !important;
 }
 
 /* ── Stato vuoto ─────────────────────────────────────────────────── */
@@ -1566,13 +937,14 @@ button[touch-action="manipulation"],
 .ct-punit {
   width: 100%;
   max-width: 56px;
+  min-height: 32px;
   text-align: center;
   font-size: 9px;
   color: #555;
   background: transparent;
   border: none;
   border-bottom: 1px dashed #333;
-  padding: 1px 1px;
+  padding: 4px 2px;
   margin-top: 1px;
   font-family: monospace;
   cursor: text;
@@ -1721,15 +1093,30 @@ button[touch-action="manipulation"],
 .ct-badge--yellow { background: rgba(255,215,0,.12);   color: var(--ct-yellow); }
 .ct-badge--blue   { background: rgba(49,130,206,.12);  color: #63b3ed; }
 
-/* Nota ordine */
-#cart-order-nota-row { padding: 8px 10px; }
-.pos-nota-ordine {
-  width: 100%; padding: 8px 10px;
-  border: 1px solid var(--ct-border); border-radius: 8px;
-  background: #111; color: var(--ct-muted); font-size: 12px;
-  resize: none; font-family: inherit; outline: none;
+/* Nota ordine (textarea sopra footer carrello) */
+.pos-nota-ordine-wrap {
+  padding: 0 10px 8px !important;
 }
-.pos-nota-ordine:focus { border-color: var(--ct-yellow); }
+#cart-order-nota-row {
+  padding: 8px 10px !important;
+}
+.pos-nota-ordine {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 8px 10px !important;
+  border: 1px solid var(--ct-border) !important;
+  border-radius: 8px !important;
+  background: #111 !important;
+  color: var(--ct-muted) !important;
+  font-size: 12px !important;
+  resize: none !important;
+  font-family: inherit !important;
+  outline: none !important;
+}
+.pos-nota-ordine:focus {
+  border-color: var(--ct-yellow) !important;
+  color: var(--ct-text) !important;
+}
 
 /* ── POPUP COLORE ORDINE ─────────────────────────────────────────── */
 .ct-color-popup {
@@ -1812,31 +1199,6 @@ button[touch-action="manipulation"],
   animation: ctWarn .25s ease 2;
 }
 @keyframes ctWarn { 0%{transform:scale(1)} 50%{transform:scale(1.08)} 100%{transform:scale(1)} }
-
-/* ── TAB ORDINI FORNITORE — cof-* namespace ──────────────────────── */
-.cof-group { background: var(--ct-card); border: 1px solid #333; border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
-.cof-header { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid #222; }
-.cof-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-.cof-color-label { font-size: 12px; font-weight: 700; color: var(--ct-muted); }
-.cof-forn-inp {
-  flex: 1; background: transparent; border: none;
-  border-bottom: 1px dashed #444; color: var(--ct-text);
-  font-size: 13px; font-weight: 700; padding: 2px 4px; outline: none;
-  font-family: inherit;
-}
-.cof-forn-inp:focus { border-bottom-color: var(--ct-yellow); }
-.cof-count { font-size: 11px; color: var(--ct-muted); white-space: nowrap; }
-.cof-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #1a1b1d; }
-.cof-thumb { width: 38px; height: 38px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: #252628; }
-.cof-thumb--empty { display: flex; align-items: center; justify-content: center; font-size: 16px; }
-.cof-info { flex: 1; min-width: 0; }
-.cof-nome { font-size: 12px; font-weight: 700; color: var(--ct-text); white-space: normal; word-break: break-word; }
-.cof-meta { font-size: 10px; color: var(--ct-muted); margin-top: 2px; }
-.cof-meta b { color: #ddd; }
-.cof-nota { font-size: 10px; color: #f6ad55; font-style: italic; margin-top: 2px; }
-.cof-right { text-align: right; flex-shrink: 0; }
-.cof-qty { font-size: 11px; color: var(--ct-muted); }
-.cof-sub { font-size: 14px; font-weight: 800; color: var(--ct-yellow); }
 
 /* ── Flash aggiunta articolo ─────────────────────────────────────── */
 .cart-item-flash { animation: ctFlash .5s ease; }

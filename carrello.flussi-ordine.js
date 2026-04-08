@@ -69,8 +69,8 @@ function apriSubTabOrdinare(){
 
   // Costruisce l'HTML del pannello
   var h = '';
-  h += '<div id="subtab-ordinare-handle"><div class="subtab-handle-bar"></div></div>';
-  h += '<div class="subtab-ordinare-header">';
+  h += '<div id="ord-forn-handle"><div class="ord-forn-handle-bar"></div></div>';
+  h += '<div class="ord-forn-header">';
   h += '<span style="font-size:18px;font-weight:900;color:var(--accent);">📦 Da Ordinare</span>';
   h += '<button onclick="chiudiSubTabOrdinare()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:4px;">✕</button>';
   h += '</div>';
@@ -78,18 +78,18 @@ function apriSubTabOrdinare(){
   if(!daOrdinare.length){
     h += '<div style="padding:40px 20px;text-align:center;color:var(--muted);">Nessun articolo marcato "Da ordinare".<br><small>Premi 📦 Imballo su un articolo del carrello.</small></div>';
   } else {
-    h += '<div class="subtab-ordinare-body">';
+    h += '<div class="ord-forn-body">';
     // Itera i gruppi per fornitore
     Object.keys(gruppi).forEach(function(key){
       var g = gruppi[key];
       var nomeForn = g.codF || 'Fornitore sconosciuto';
-      h += '<div class="subtab-forn-group">';
-      h += '<div class="subtab-forn-title">';
+      h += '<div class="ord-forn-vendor-group">';
+      h += '<div class="ord-forn-vendor-title">';
       h += '<span style="font-weight:800;color:var(--text);">🏭 ' + esc(nomeForn) + '</span>';
       if(g.codF) h += '<span style="font-size:9px;color:var(--muted);margin-left:6px;">COD: ' + esc(g.codF) + '</span>';
       h += '</div>';
       g.articoli.forEach(function(it){
-        h += '<div class="subtab-ordinare-item">';
+        h += '<div class="ord-forn-line">';
         h += '<div style="flex:1;min-width:0;">';
         h += '<div style="font-size:13px;font-weight:700;color:var(--text);">' + esc(it.desc) + '</div>';
         if(it.codM) h += '<div style="font-size:10px;color:var(--accent);">' + esc(it.codM) + '</div>';
@@ -104,20 +104,20 @@ function apriSubTabOrdinare(){
   }
 
   // Tasto grande CONFERMA ORDINE A FORNITORI in fondo al pannello
-  h += '<div class="subtab-ordinare-footer">';
-  h += '<button class="subtab-confirm-btn" onclick="confermaOrdineAFornitori()">';
+  h += '<div class="ord-forn-footer">';
+  h += '<button class="ord-forn-confirm" onclick="confermaOrdineAFornitori()">';
   h += '📋 CONFERMA ORDINE A FORNITORI</button>';
   h += '</div>';
 
   // Crea o aggiorna il pannello nel DOM (Document Object Model = struttura HTML della pagina)
-  var panel = document.getElementById('subtab-ordinare');
+  var panel = document.getElementById('ord-forn-panel');
   if(!panel){
     panel = document.createElement('div');
-    panel.id = 'subtab-ordinare';
+    panel.id = 'ord-forn-panel';
     document.body.appendChild(panel);
   }
   panel.innerHTML = h;
-  panel.classList.add('open');
+  panel.classList.add('ord-forn-panel--open');
 
   // Gesture: swipe verso il basso chiude il pannello
   var startY = 0;
@@ -130,8 +130,8 @@ function apriSubTabOrdinare(){
 
 // Chiude la Sub-Tab Ordinare rimuovendo la classe "open"
 function chiudiSubTabOrdinare(){
-  var panel = document.getElementById('subtab-ordinare');
-  if(panel) panel.classList.remove('open');
+  var panel = document.getElementById('ord-forn-panel');
+  if(panel) panel.classList.remove('ord-forn-panel--open');
 }
 
 // Conferma e invia l'ordine a tutti i fornitori con articoli "daOrdinare"
