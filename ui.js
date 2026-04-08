@@ -137,7 +137,7 @@ function confermaDaFoto(){
 
 
 // --- Gestione API key per Import da foto ----------------------------------
-var APIKEY_K = 'cp4_foto_apikey';
+var APIKEY_K = window.AppKeys.APIKEY_FOTO;
 
 function getMiaApiKey(){
   return localStorage.getItem(APIKEY_K) || '';
@@ -474,7 +474,7 @@ var _ordDetailId=null;
 // -------------------------------------------------------
 //  FATTURE
 // -------------------------------------------------------
-var FATK = 'cp4_fatture';
+var FATK = window.AppKeys.FATTURE;
 var fatture = [];
 var fatFiltro = 'tutte';
 var _fatEditId = null;

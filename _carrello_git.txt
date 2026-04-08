@@ -1,4 +1,4 @@
-// ══ CARRELLO ═══════════════════════════════════════════════════════
+// ÔòÉÔòÉ CARRELLO ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
 // --- SCONTO GLOBALE -------------------------------------------
 function openScontoOverlay(){
   if(!activeCartId)return;
@@ -185,7 +185,7 @@ function deleteCart(id){
   var cart=carrelli.find(function(c){return c.id===id;});
   if(!cart)return;
   if(!_cartPossoModificare(cart)){
-    showToastGen('orange','🔒 Non puoi eliminare il carrello di un altro account');
+    showToastGen('orange','­ƒöÆ Non puoi eliminare il carrello di un altro account');
     return;
   }
   cart.deletedAt=new Date().toLocaleString('it-IT');
@@ -193,10 +193,10 @@ function deleteCart(id){
   carrelli=carrelli.filter(function(c){return c.id!==id;});
   if(activeCartId===id)activeCartId=carrelli.length?carrelli[carrelli.length-1].id:null;
   saveCarrelli();renderCartTabs();
-  showToastGen('green','🗑️ Carrello eliminato');
+  showToastGen('green','­ƒùæ´©Å Carrello eliminato');
 }
 
-// ── PERMESSI CARRELLO ────────────────────────────────────────────────────────
+// ÔöÇÔöÇ PERMESSI CARRELLO ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function _cartPossoModificare(cart){
   if(!cart) return false;
   var myKey = (typeof _currentUser !== 'undefined' && _currentUser) ? _currentUser.key : null;
@@ -206,23 +206,23 @@ function _cartPossoModificare(cart){
   return cart.commesso === myKey;
 }
 
-// Sblocca carrello inviato → torna attivo e rientra in Firebase
+// Sblocca carrello inviato ÔåÆ torna attivo e rientra in Firebase
 function cartUnlock(cartId){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
   if(!cart) return;
   if(!_cartPossoModificare(cart)){
-    showToastGen('orange','🔒 Solo il proprietario del carrello può sbloccarlo');
+    showToastGen('orange','­ƒöÆ Solo il proprietario del carrello pu├▓ sbloccarlo');
     return;
   }
   console.log('[CART] cartUnlock:', cartId);
   cart.stato = 'modifica';
   cart.locked = false;
-  saveCarrelli(); // ora saveCarrelli lo include di nuovo in Firebase perché non è più 'inviato'
+  saveCarrelli(); // ora saveCarrelli lo include di nuovo in Firebase perch├® non ├¿ pi├╣ 'inviato'
   renderCartTabs();
-  showToastGen('purple','✏️ Carrello sbloccato — modifica e aggiorna');
+  showToastGen('purple','Ô£Å´©Å Carrello sbloccato ÔÇö modifica e aggiorna');
 }
 
-// ── FORZA ACCESSO CARRELLO — triplo tap ──────────────────────────────────────
+// ÔöÇÔöÇ FORZA ACCESSO CARRELLO ÔÇö triplo tap ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 var _cartForzaTapTimer = null;
 var _cartForzaTapId = null;
 var _cartForzaTapCount = 0;
@@ -237,14 +237,14 @@ function cartForzaAccesso(cartId){
       if(!cart) return;
       var nomeComm = (typeof _roles !== 'undefined' && _roles[cart.commesso])
         ? _roles[cart.commesso].nome : (cart.commesso || 'altro account');
-      if(!confirm('⚠️ Forza accesso\n\nCarrello di ' + nomeComm + '.\n\nVuoi prendere il controllo?')) return;
+      if(!confirm('ÔÜá´©Å Forza accesso\n\nCarrello di ' + nomeComm + '.\n\nVuoi prendere il controllo?')) return;
       var chi = (typeof _currentUser !== 'undefined' && _currentUser) ? _currentUser.key : '';
       var chiNome = (typeof _currentUser !== 'undefined' && _currentUser) ? _currentUser.nome : 'Sconosciuto';
-      console.warn('[CART] cartForzaAccesso — '+chiNome+' prende controllo da '+nomeComm);
+      console.warn('[CART] cartForzaAccesso ÔÇö '+chiNome+' prende controllo da '+nomeComm);
       cart.commesso = chi;
       saveCarrelli();
       renderCartTabs();
-      showToastGen('orange','🔓 Accesso forzato — ora sei il proprietario');
+      showToastGen('orange','­ƒöô Accesso forzato ÔÇö ora sei il proprietario');
       return;
     }
     showToastGen('orange','Ancora un tap per forzare...');
@@ -255,12 +255,12 @@ function cartForzaAccesso(cartId){
   _cartForzaTapTimer = setTimeout(function(){ _cartForzaTapId=null; _cartForzaTapCount=0; }, 600);
 }
 
-// ── ELIMINA CARRELLO IN MODIFICA ────────────────────────────────────────────
+// ÔöÇÔöÇ ELIMINA CARRELLO IN MODIFICA ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 // Scollega l'ordine (se esiste ancora) e rimuove il carrello
 function eliminaCarrelloModifica(cartId){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
   if(!cart) return;
-  showConfirm('Eliminare questo carrello?\nSe l\'ordine esiste ancora rimarrà invariato.', function(){
+  showConfirm('Eliminare questo carrello?\nSe l\'ordine esiste ancora rimarr├á invariato.', function(){
     // Scollega bozza se presente
     if(cart.bozzaOrdId){
       ordini = ordini.filter(function(o){ return o.id !== cart.bozzaOrdId; });
@@ -271,14 +271,14 @@ function eliminaCarrelloModifica(cartId){
   });
 }
 
-// ── SVUOTA CARRELLO ──────────────────────────────────────────────────────────
+// ÔöÇÔöÇ SVUOTA CARRELLO ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 // Rimuove tutti gli articoli dal carrello attivo dopo conferma utente.
 // Usa showConfirm (funzione custom, non window.confirm bloccante su WebView).
 function svuotaCarrello(cartId){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
-  if(!cart || !(cart.items||[]).length){ showToastGen('yellow','Carrello già vuoto'); return; }
+  if(!cart || !(cart.items||[]).length){ showToastGen('yellow','Carrello gi├á vuoto'); return; }
   if(!_cartPossoModificare(cart)){
-    showToastGen('orange','🔒 Non puoi svuotare il carrello di un altro account');
+    showToastGen('orange','­ƒöÆ Non puoi svuotare il carrello di un altro account');
     return;
   }
   showConfirm('Svuotare il carrello "' + (cart.nome||'') + '"?\nTutti gli articoli saranno rimossi.', function(){
@@ -286,7 +286,7 @@ function svuotaCarrello(cartId){
     cart.items = [];
     saveCarrelli();
     renderCartTabs();
-    showToastGen('green','✅ Carrello svuotato');
+    showToastGen('green','Ô£à Carrello svuotato');
   });
 }
 function rinominaCart(idx){
@@ -367,7 +367,7 @@ function _codepadLiveSearch(){
   }
   // Database non ancora caricato
   if(!rows||!rows.length){
-    matchEl.innerHTML='<div style="color:var(--accent);text-align:center;padding:8px;">⏳ Database in caricamento, attendi...</div>';
+    matchEl.innerHTML='<div style="color:var(--accent);text-align:center;padding:8px;">ÔÅ│ Database in caricamento, attendi...</div>';
     return;
   }
   var code=_codepadValue.toLowerCase();
@@ -476,7 +476,7 @@ function cartAddItem(rowIdx){
 function cartDelta(cartId,idx,delta){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
-  // Fix: incremento sempre intero (1, 2, 3...) — minimo assoluto 1
+  // Fix: incremento sempre intero (1, 2, 3...) ÔÇö minimo assoluto 1
   var newQty = Math.round(parseFloat(cart.items[idx].qty)||0) + Math.round(delta);
   cart.items[idx].qty = Math.max(1, newQty);
   _cartApplicaScaglione(cart.items[idx]);
@@ -501,7 +501,7 @@ function cartSetUnit(cartId,idx,val){
   cart.items[idx].unit=val;saveCarrelli();renderCartTabs();
 }
 
-// Helper: calcola prezzo effettivo (con sconto scampolo/rotolo se attivo) — base = listino
+// Helper: calcola prezzo effettivo (con sconto scampolo/rotolo se attivo) ÔÇö base = listino
 function _prezzoEffettivo(it){
   var p = listinoPrezzoNum(it);
   var sc=it._scontoApplicato||0;
@@ -835,7 +835,7 @@ function _doCartSearch(){
   if(!q||q.trim().length<2){res.innerHTML='';return;}
   // Database non ancora caricato: avvisa l'utente
   if(!rows||!rows.length){
-    res.innerHTML='<div style="padding:12px;color:var(--accent);font-size:13px;text-align:center;">⏳ Database in caricamento, attendi...</div>';
+    res.innerHTML='<div style="padding:12px;color:var(--accent);font-size:13px;text-align:center;">ÔÅ│ Database in caricamento, attendi...</div>';
     return;
   }
   var matches=[];
@@ -897,10 +897,10 @@ function getStoricoCliente(nomeCliente){
 // --- RENDER CARRELLO ---------------------------------------
 
 // =============================================================================
-//  renderCartTabs — RISCRITTURA DEFINITIVA v3
+//  renderCartTabs ÔÇö RISCRITTURA DEFINITIVA v3
 //  Layout testata: 3 righe fisse centrate max 600px
-//  Riga 1: [📦 ORDINI — centrato]
-//  Riga 2: [👥 CLIENTI▾]  [＋ NUOVO]
+//  Riga 1: [­ƒôª ORDINI ÔÇö centrato]
+//  Riga 2: [­ƒæÑ CLIENTIÔû¥]  [´╝ï NUOVO]
 //  Riga 3: pillole nomi clienti (scroll laterale, mai trabocca)
 //  Card: nome a capo | codici 14px | prezzo blu/verde | qty interi
 // =============================================================================
@@ -908,7 +908,7 @@ function renderCartTabs(){
   var body = document.getElementById('cart-body');
   if(!body) return;
 
-  // ── TESTATA: riga unica nel wrapper (struttura già in HTML) ────────────
+  // ÔöÇÔöÇ TESTATA: riga unica nel wrapper (struttura gi├á in HTML) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   var wrap = document.getElementById('ct-header-wrap');
   var row1 = document.getElementById('ct-row-ordini');
 
@@ -923,32 +923,32 @@ function renderCartTabs(){
     return d === _oggiC || c.stato === 'inviato' || c.stato === 'modifica';
   }).length;
   row1.innerHTML =
-    '<button class="ct-pill--new" onclick="newCart()">＋ NUOVO</button>' +
+    '<button class="ct-pill--new" onclick="newCart()">´╝ï NUOVO</button>' +
     '<button id="ct-btn-clienti" onclick="ctApriClienti()" title="Scegli cliente">' +
-      '👥 CLIENTI' + (nCl ? ' <span class="ct-pill-n">' + nCl + '</span>' : '') +
+      '­ƒæÑ CLIENTI' + (nCl ? ' <span class="ct-pill-n">' + nCl + '</span>' : '') +
     '</button>' +
-    '<button id="ct-btn-ordfor" onclick="goTab(\'t-ordfor\');renderOrdFor()" title="Ordini per fornitore">📦 ORDINI</button>';
+    '<button id="ct-btn-ordfor" onclick="goTab(\'t-ordfor\');renderOrdFor()" title="Ordini per fornitore">­ƒôª ORDINI</button>';
 
-  // ── DROPDOWN CLIENTI (creato una sola volta nel body) ─────────────────────
+  // ÔöÇÔöÇ DROPDOWN CLIENTI (creato una sola volta nel body) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   if(!document.getElementById('ct-clienti-dropdown')){
     var dd = document.createElement('div');
     dd.id  = 'ct-clienti-dropdown';
     dd.innerHTML =
       '<div id="ct-clienti-backdrop" onclick="ctChiudiClienti()"></div>' +
       '<div id="ct-clienti-panel">' +
-        '<h3>👥 Clienti</h3>' +
+        '<h3>­ƒæÑ Clienti</h3>' +
         '<div id="ct-clienti-list"></div>' +
-        '<button class="ct-clienti-close" onclick="ctChiudiClienti()">✕ Chiudi</button>' +
+        '<button class="ct-clienti-close" onclick="ctChiudiClienti()">Ô£ò Chiudi</button>' +
       '</div>';
     document.body.appendChild(dd);
   }
 
-  // ── CORPO VUOTO ───────────────────────────────────────────────────────────
+  // ÔöÇÔöÇ CORPO VUOTO ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   if(!activeCartId || !carrelli.length){
     body.innerHTML =
       '<div class="ct-empty">' +
-        '<div class="ct-empty-icon">🛒</div>' +
-        '<p>Premi <b style="color:#FFD700">＋ NUOVO</b> per iniziare</p>' +
+        '<div class="ct-empty-icon">­ƒøÆ</div>' +
+        '<p>Premi <b style="color:#FFD700">´╝ï NUOVO</b> per iniziare</p>' +
       '</div>';
     return;
   }
@@ -957,7 +957,7 @@ function renderCartTabs(){
 
   var h = '';
 
-  // ── CARRELLO DI UN ALTRO ACCOUNT — overlay blocco ──────────────────────────
+  // ÔöÇÔöÇ CARRELLO DI UN ALTRO ACCOUNT ÔÇö overlay blocco ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   var _cartMio = _cartPossoModificare(cart);
   if(!_cartMio){
     var _nomeComm = (typeof _roles !== 'undefined' && _roles[cart.commesso])
@@ -965,95 +965,95 @@ function renderCartTabs(){
     h += '<div style="position:relative;background:#111;border-radius:14px;border:2px solid #2a2a2a;min-height:160px;display:flex;align-items:center;justify-content:center;">';
     h += '<div class="ord-lock-overlay" style="position:relative;border-radius:12px;padding:32px 20px;" onclick="cartForzaAccesso(' + "'" + cart.id + "'" + ')">';
     h += '<div class="ord-lock-msg">';
-    h += '<div style="font-size:30px;margin-bottom:8px">🔐</div>';
+    h += '<div style="font-size:30px;margin-bottom:8px">­ƒöÉ</div>';
     h += '<div style="font-size:15px;font-weight:900">CARRELLO DI ' + esc(_nomeComm).toUpperCase() + '</div>';
-    h += '<div style="font-size:11px;margin-top:6px;color:#aaa">' + (cart.items||[]).length + ' articoli — solo lettura</div>';
+    h += '<div style="font-size:11px;margin-top:6px;color:#aaa">' + (cart.items||[]).length + ' articoli ÔÇö solo lettura</div>';
     h += '<div style="font-size:10px;margin-top:10px;color:#666">Triplo tap per forzare accesso</div>';
     h += '</div></div></div>';
     body.innerHTML = h;
     return;
   }
 
-  // ── STATO INVIATO (read-only) ─────────────────────────────────────────────
+  // ÔöÇÔöÇ STATO INVIATO (read-only) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   if(cart.stato === 'inviato' && cart.locked){
     var totInv = (cart.items||[]).reduce(function(s,it){
       return s + _prezzoEffettivo(it) * parseFloat(it.qty||0);
     }, 0);
     h += '<div class="ct-inviato-box">';
     h += '<div class="ct-inviato-top">';
-    h += '<span style="font-size:22px">✅</span>';
+    h += '<span style="font-size:22px">Ô£à</span>';
     h += '<div style="flex:1"><div class="ct-inviato-label">Ordine inviato alla cassa</div>';
     h += '<div class="ct-inviato-nome" onclick="ctEditClienteName(\''+cart.id+'\')" style="cursor:pointer;" title="Tap per modificare">' + esc(cart.nome) + '</div></div>';
-    h += '<div class="ct-price-big">€ ' + totInv.toFixed(2) + '</div>';
+    h += '<div class="ct-price-big">Ôé¼ ' + totInv.toFixed(2) + '</div>';
     h += '</div>';
     (cart.items||[]).forEach(function(it){
       var sub = (parsePriceIT(it.prezzoUnit)*parseFloat(it.qty||0)).toFixed(2);
       h += '<div class="ct-inviato-row">';
       h += '<div style="flex:1;min-width:0;font-size:12px;color:#ccc">' + esc(it.desc||'');
       if(it.codM) h += ' <span style="color:#FFD700;font-size:10px">' + esc(it.codM) + '</span>';
-      if(it.nota) h += '<div style="font-size:10px;color:#f6ad55;font-style:italic">📝 '+esc(it.nota)+'</div>';
-      h += '</div><div class="ct-price-sm">€'+sub+'</div></div>';
+      if(it.nota) h += '<div style="font-size:10px;color:#f6ad55;font-style:italic">­ƒôØ '+esc(it.nota)+'</div>';
+      h += '</div><div class="ct-price-sm">Ôé¼'+sub+'</div></div>';
     });
     h += '<div style="display:flex;gap:8px;margin-top:14px">';
-    h += '<button onclick="cartUnlock(\'' + cart.id + '\')" class="ct-btn-yellow" style="flex:1">✏️ Sblocca e modifica</button>';
-    h += '<button onclick="goTab(\'to\')" class="ct-btn-solid" style="padding:10px 16px">📋 Ordini</button>';
+    h += '<button onclick="cartUnlock(\'' + cart.id + '\')" class="ct-btn-yellow" style="flex:1">Ô£Å´©Å Sblocca e modifica</button>';
+    h += '<button onclick="goTab(\'to\')" class="ct-btn-solid" style="padding:10px 16px">­ƒôï Ordini</button>';
     h += '</div>';
     h += '<div style="display:flex;gap:6px;margin-top:8px">';
-    h += '<button onclick="deleteCart(\'' + cart.id + '\')" class="ct-btn-ghost" style="flex:1;font-size:12px;color:#555">🗑️ Elimina carrello</button>';
+    h += '<button onclick="deleteCart(\'' + cart.id + '\')" class="ct-btn-ghost" style="flex:1;font-size:12px;color:#555">­ƒùæ´©Å Elimina carrello</button>';
     h += '</div></div>';
     body.innerHTML = h;
     return;
   }
 
-  // ── BANNER MODIFICA — striscia sottile ─────────────────────────────────
+  // ÔöÇÔöÇ BANNER MODIFICA ÔÇö striscia sottile ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   if(cart.stato === 'modifica'){
     h += '<div class="ct-banner-mod">';
-    h += '<span style="font-size:13px">✏️</span>';
-    h += '<span class="ct-banner-mod-title" onclick="ctEditClienteName(\''+cart.id+'\')" style="cursor:pointer;" title="Tap per modificare">' + esc(cart.nome) + ' — MODIFICA</span>';
+    h += '<span style="font-size:13px">Ô£Å´©Å</span>';
+    h += '<span class="ct-banner-mod-title" onclick="ctEditClienteName(\''+cart.id+'\')" style="cursor:pointer;" title="Tap per modificare">' + esc(cart.nome) + ' ÔÇö MODIFICA</span>';
     h += '</div>';
   }
 
-  // ── BARRA CERCA — compatta ──────────────────────────────────────────────
+  // ÔöÇÔöÇ BARRA CERCA ÔÇö compatta ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   h += '<div id="cart-action-btns">';
   h += '<button class="ct-btn-cerca" onclick="openCodeNumpad()">';
-  h += '🔍 CERCA PER CODICE</button></div>';
+  h += '­ƒöì CERCA PER CODICE</button></div>';
   h += '<div id="cart-search-wrap">';
-  h += '<input type="text" id="cart-search" placeholder="🔎 Cerca per nome, specifiche..." ';
+  h += '<input type="text" id="cart-search" placeholder="­ƒöÄ Cerca per nome, specifiche..." ';
   h += 'style="width:100%;padding:10px 14px;border:1px solid #2e3033;border-radius:10px;font-size:13px;background:#1e1e1e;color:#f0f0f0;box-sizing:border-box" ';
   h += 'oninput="renderCartSearch()" autocomplete="off">';
   h += '</div>';
   h += '<div id="cart-search-results" style="padding:0 8px"></div>';
 
-  // ── LISTA VUOTA ───────────────────────────────────────────────────────────
+  // ÔöÇÔöÇ LISTA VUOTA ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   if(!(cart.items||[]).length){
     h += '<div class="ct-empty" style="padding:30px 20px">';
-    h += '<div class="ct-empty-icon">📦</div>';
+    h += '<div class="ct-empty-icon">­ƒôª</div>';
     h += '<p>Cerca un articolo o premi <b style="color:#FFD700">CERCA PER CODICE</b></p>';
     h += '</div>';
   } else {
 
-    // ── TOTALE STICKY ─────────────────────────────────────────────────────
+    // ÔöÇÔöÇ TOTALE STICKY ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
     var tot     = (cart.items||[]).reduce(function(s,it){ return s + _prezzoEffettivo(it) * parseFloat(it.qty||0); }, 0);
     var scontoGl = cart.scontoGlobale;
     var totFin   = scontoGl ? tot * (1 - scontoGl/100) : tot;
     h += '<div class="ct-sticky-total">';
-    h += '<span class="ct-sticky-val">€ ' + totFin.toFixed(2) + '</span>';
+    h += '<span class="ct-sticky-val">Ôé¼ ' + totFin.toFixed(2) + '</span>';
     if(scontoGl) h += '<span class="ct-sconto-badge">-'+scontoGl+'%</span>';
     h += '<span class="ct-sticky-n">' + (cart.items||[]).length + ' art.</span>';
     h += '<button onclick="openScontoOverlay()" class="ct-btn-sconto">% Sconto</button>';
     h += '</div>';
 
-    // ── GRIGLIA ARTICOLI — stessa struttura tab ordini ─────────────
+    // ÔöÇÔöÇ GRIGLIA ARTICOLI ÔÇö stessa struttura tab ordini ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
     h += '<div class="ord-items-wrap">';
     h += '<div class="ord-grid ord-grid-head">';
     h += '<div class="ord-gh">Prodotto</div>';
-    h += '<div class="ord-gh ord-gh-c">Qtà</div>';
+    h += '<div class="ord-gh ord-gh-c">Qt├á</div>';
     h += '<div class="ord-gh ord-gh-c">Prezzo</div>';
     h += '<div class="ord-gh ord-gh-c">Tot</div>';
     h += '</div>';
     h += '</div>';
 
-    // ── CARD ARTICOLI ──────────────────────────────────────────────────────
+    // ÔöÇÔöÇ CARD ARTICOLI ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
     (cart.items||[]).forEach(function(it, idx){
       var p            = listinoPrezzoNum(it);
       var q            = parseFloat(it.qty) || 0;
@@ -1078,7 +1078,7 @@ function renderCartTabs(){
       var pScontato    = scApplica ? p * (1 - scAttivo/100) : p;
       var sub          = (pScontato * q).toFixed(2);
 
-      // Cod. Magazzino — 7 cifre se numerico
+      // Cod. Magazzino ÔÇö 7 cifre se numerico
       var codM7 = it.codM
         ? (String(it.codM).match(/^\d+$/) ? String(it.codM).padStart(7,'0') : it.codM)
         : '';
@@ -1096,17 +1096,17 @@ function renderCartTabs(){
       h += '<div class="' + cardClass + '" id="cart-row-' + idx + '"' +
            (cardStyle ? ' style="' + cardStyle + '"' : '') + '>';
 
-      // ── RIGA GRIGLIA: stessa struttura ord-grid 50%|15%|15%|20% ──────
+      // ÔöÇÔöÇ RIGA GRIGLIA: stessa struttura ord-grid 50%|15%|15%|20% ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
       h += '<div class="ord-grid ord-grid-row' + (idx%2===0 ? ' ord-grid-even' : ' ord-grid-odd') + '">';
 
       // Colonna prodotto: nome + codici
       h += '<div class="ord-gc-desc">';
-      h += '<div class="ord-item-name">' + esc(it.desc || '—') + '</div>';
+      h += '<div class="ord-item-name">' + esc(it.desc || 'ÔÇö') + '</div>';
       var codes = '';
       if(codM7) codes += '<span class="ord-code-mag">' + esc(codM7) + '</span>';
       // Cod.Forn editabile
       codes += '<span class="ord-code-forn" style="display:inline-flex;align-items:center;gap:2px;">Forn: ';
-      codes += '<input class="ct-codf-inp" value="' + esc(codF) + '" placeholder="—" ' +
+      codes += '<input class="ct-codf-inp" value="' + esc(codF) + '" placeholder="ÔÇö" ' +
                'oninput="ctSetCodF(\'' + cart.id + '\',' + idx + ',this.value)" ' +
                'onclick="event.stopPropagation();this.select()" ' +
                'onkeydown="if(event.key===\'Enter\')this.blur()">';
@@ -1114,14 +1114,14 @@ function renderCartTabs(){
       h += '<div class="ord-item-codes">' + codes + '</div>';
       h += '</div>';
 
-      // Colonna quantità — stepper interattivo
+      // Colonna quantit├á ÔÇö stepper interattivo
       h += '<div class="ord-gc-qty ct-grid-qty">';
       h += '<div class="ct-qty ct-qty--compact">';
-      h += '<button class="ct-qty-btn" onclick="cartDelta(\'' + cart.id + '\',' + idx + ',-1)">−</button>';
+      h += '<button class="ct-qty-btn" onclick="cartDelta(\'' + cart.id + '\',' + idx + ',-1)">ÔêÆ</button>';
       h += '<button class="ct-qty-val" onclick="openQtyNumpad(\'' + cart.id + '\',' + idx + ')">' + Math.round(q) + '</button>';
-      h += '<button class="ct-qty-btn" onclick="cartDelta(\'' + cart.id + '\',' + idx + ',1)">＋</button>';
+      h += '<button class="ct-qty-btn" onclick="cartDelta(\'' + cart.id + '\',' + idx + ',1)">´╝ï</button>';
       h += '</div>';
-      var units = ['pz','mt','kg','lt','cf','ml','gr','mm','cm','m²','m³'];
+      var units = ['pz','mt','kg','lt','cf','ml','gr','mm','cm','m┬▓','m┬│'];
       var curUnit = it.unit || 'pz';
       h += '<select class="ct-um-select ct-um--mini" onchange="cartSetUnit(\'' + cart.id + '\',' + idx + ',this.value)">';
       units.forEach(function(u){
@@ -1130,39 +1130,39 @@ function renderCartTabs(){
       h += '</select>';
       h += '</div>';
 
-      // Colonna prezzo — prezzo base sempre visibile, scontato sotto se attivo
+      // Colonna prezzo ÔÇö prezzo base sempre visibile, scontato sotto se attivo
       h += '<div class="ord-gc-price" id="prz-' + idx + '">';
       var hasSconto = scApplica && pScontato < p - 0.005;
       if(hasSconto){
         var savU = (p - pScontato).toFixed(2);
-        h += '<div class="ct-old--orig">€' + p.toFixed(2) + '</div>';
-        h += '<div class="ct-sub--final">€' + pScontato.toFixed(2) + '</div>';
-        h += '<div style="font-size:8px;color:#f6ad55;text-align:center;">-€' + savU + '</div>';
+        h += '<div class="ct-old--orig">Ôé¼' + p.toFixed(2) + '</div>';
+        h += '<div class="ct-sub--final">Ôé¼' + pScontato.toFixed(2) + '</div>';
+        h += '<div style="font-size:8px;color:#f6ad55;text-align:center;">-Ôé¼' + savU + '</div>';
       } else {
-        h += '<div style="font-size:12px;font-weight:900;color:#999">€' + p.toFixed(2) + '</div>';
+        h += '<div style="font-size:12px;font-weight:900;color:#999">Ôé¼' + p.toFixed(2) + '</div>';
       }
       h += '<input class="ct-punit" type="text" inputmode="decimal" value="' +
            esc(it.prezzoUnit||'0') + '" ' +
            'onchange="cartSetPrezzo(\'' + cart.id + '\',' + idx + ',this.value)" ' +
-           'onclick="this.select()" title="€/unità">';
+           'onclick="this.select()" title="Ôé¼/unit├á">';
       h += '</div>';
 
       // Colonna totale
       h += '<div class="ord-gc-sub">';
       if(hasSconto){
         var savT = ((p - pScontato) * q).toFixed(2);
-        h += '<div class="ct-old--orig">€' + (p * q).toFixed(2) + '</div>';
-        h += '<div class="ct-sub--final">€' + sub + '</div>';
-        h += '<div style="font-size:8px;color:#f6ad55;text-align:center;">-€' + savT + '</div>';
+        h += '<div class="ct-old--orig">Ôé¼' + (p * q).toFixed(2) + '</div>';
+        h += '<div class="ct-sub--final">Ôé¼' + sub + '</div>';
+        h += '<div style="font-size:8px;color:#f6ad55;text-align:center;">-Ôé¼' + savT + '</div>';
       } else {
         var subColor = isTuttoRotolo ? '#fc8181' : (isFR ? '#f6ad55' : 'var(--accent)');
-        h += '<div style="font-size:13px;font-weight:900;color:' + subColor + '">€' + sub + '</div>';
+        h += '<div style="font-size:13px;font-weight:900;color:' + subColor + '">Ôé¼' + sub + '</div>';
       }
       h += '</div>';
 
       h += '</div>'; // fine ord-grid row
 
-      // ── ICONBAR: Forbici+% | Note | Ordina | Cestino ─────────────────────
+      // ÔöÇÔöÇ ICONBAR: Forbici+% | Note | Ordina | Cestino ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
       h += '<div class="ct-iconbar">';
 
       // FORBICI (tap=scampolo, doppio tap=rotolo) + input % inline
@@ -1199,7 +1199,7 @@ function renderCartTabs(){
       }
       if(scAtt > 0){
         var risparmio = (parsePriceIT(it._prezzoOriginale||it._prezzoBase||it.prezzoUnit) * q * scAtt / 100).toFixed(2);
-        h += '<span class="ct-sc-risp"' + (isScag ? ' style="color:#63b3ed"' : '') + '>-€' + risparmio + '</span>';
+        h += '<span class="ct-sc-risp"' + (isScag ? ' style="color:#63b3ed"' : '') + '>-Ôé¼' + risparmio + '</span>';
       }
       h += '</div>';
       h += '</div>';
@@ -1235,7 +1235,7 @@ function renderCartTabs(){
 
       h += '</div>'; // fine ct-iconbar
 
-      // ── PANNELLI A COMPARSA ───────────────────────────────────────────────
+      // ÔöÇÔöÇ PANNELLI A COMPARSA ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
       var pNoId = 'ctp-no-' + idx;
       var _pKey = cart.id + '-' + idx;
 
@@ -1249,16 +1249,16 @@ function renderCartTabs(){
 
       // Preview nota (se presente)
       if(hasNota){
-        h += '<div class="ct-nota-prev">📝 ' + esc(it.nota) + '</div>';
+        h += '<div class="ct-nota-prev">­ƒôØ ' + esc(it.nota) + '</div>';
       }
 
       // Badge stati attivi
       var badges = '';
       if(isTuttoRotolo) badges += '<span class="ct-badge ct-badge--red">ROTOLO INTERO</span> ';
-      if(scagAtt) badges += '<span class="ct-badge ct-badge--blue">📊 -'+(scagAtt.sconto||0)+'% da '+scagAtt.qtaMin+'pz</span> ';
+      if(scagAtt) badges += '<span class="ct-badge ct-badge--blue">­ƒôè -'+(scagAtt.sconto||0)+'% da '+scagAtt.qtaMin+'pz</span> ';
       if(isDaOrd){
         var bc = it._ordColore || '#e53e3e';
-        badges += '<span class="ct-badge" style="background:'+bc+'22;color:'+bc+';border:1px solid '+bc+'44">🛒 ORDINA</span> ';
+        badges += '<span class="ct-badge" style="background:'+bc+'22;color:'+bc+';border:1px solid '+bc+'44">­ƒøÆ ORDINA</span> ';
       }
       if(badges) h += '<div class="ct-badges">' + badges + '</div>';
 
@@ -1267,39 +1267,39 @@ function renderCartTabs(){
 
   } // fine items.length > 0
 
-  // ── NOTA ORDINE ───────────────────────────────────────────────────────────
+  // ÔöÇÔöÇ NOTA ORDINE ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   h += '<div id="cart-order-nota-row">';
-  h += '<textarea class="pos-nota-ordine" rows="2" placeholder="📋 Nota ordine..." ' +
+  h += '<textarea class="pos-nota-ordine" rows="2" placeholder="­ƒôï Nota ordine..." ' +
        'oninput="cartSetNotaOrdine(\'' + cart.id + '\',this.value)">' + esc(cart.nota||'') + '</textarea>';
   h += '</div>';
 
-  // ── STICKY FOOTER ─────────────────────────────────────────────────────────
+  // ÔöÇÔöÇ STICKY FOOTER ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
   var tot2    = (cart.items||[]).reduce(function(s,it){ return s + _prezzoEffettivo(it) * parseFloat(it.qty||0); }, 0);
   var tot2Fin = cart.scontoGlobale ? tot2*(1-cart.scontoGlobale/100) : tot2;
   h += '<div id="cart-pos-footer">';
   h += '<div class="ct-footer">';
-  h += '<div class="ct-footer-tot"><span class="ct-footer-sym">€</span>' + tot2Fin.toFixed(2) + '</div>';
+  h += '<div class="ct-footer-tot"><span class="ct-footer-sym">Ôé¼</span>' + tot2Fin.toFixed(2) + '</div>';
   h += '<div class="ct-footer-btns">';
-  h += '<button class="ct-fbtn ct-fbtn--danger" onclick="svuotaCarrello(\'' + cart.id + '\')">🗑️<span>SVUOTA</span></button>';
-  // Tasto Avvisa Ufficio — solo se non è modifica e non è già inviato
+  h += '<button class="ct-fbtn ct-fbtn--danger" onclick="svuotaCarrello(\'' + cart.id + '\')">­ƒùæ´©Å<span>SVUOTA</span></button>';
+  // Tasto Avvisa Ufficio ÔÇö solo se non ├¿ modifica e non ├¿ gi├á inviato
   if(cart.stato !== 'modifica' && cart.stato !== 'inviato'){
     var haBozza = !!cart.bozzaOrdId;
     h += '<button class="ct-fbtn ct-fbtn--avvisa' + (haBozza ? ' ct-fbtn--avvisa-on' : '') + '" ' +
          (!(cart.items||[]).length ? 'disabled ' : '') +
          'onclick="avvisaUfficio(\'' + cart.id + '\')">' +
-         (haBozza ? '📡' : '📢') + '<span>' + (haBozza ? 'AGGIORNA' : 'UFFICIO') + '</span></button>';
+         (haBozza ? '­ƒôí' : '­ƒôó') + '<span>' + (haBozza ? 'AGGIORNA' : 'UFFICIO') + '</span></button>';
   }
-  h += '<button class="ct-fbtn ct-fbtn--riepilogo" onclick="openRiepilogoOrdine(\'' + cart.id + '\')">👀<span>RIEPILOGO</span></button>';
+  h += '<button class="ct-fbtn ct-fbtn--riepilogo" onclick="openRiepilogoOrdine(\'' + cart.id + '\')">­ƒæÇ<span>RIEPILOGO</span></button>';
   if(cart.stato === 'modifica'){
-    h += '<button class="ct-fbtn ct-fbtn--danger" onclick="eliminaCarrelloModifica(\'' + cart.id + '\')" title="Elimina carrello">🗑️<span>ELIMINA</span></button>';
+    h += '<button class="ct-fbtn ct-fbtn--danger" onclick="eliminaCarrelloModifica(\'' + cart.id + '\')" title="Elimina carrello">­ƒùæ´©Å<span>ELIMINA</span></button>';
     h += '<button class="ct-fbtn ct-fbtn--cassa" id="ctf-cassa-' + cart.id + '" ' +
          'onclick="ctCassaSingleClick(this,\'aggiornaOrdine(\\x27' + cart.id + '\\x27)\')">' +
-         '✏️<span>AGGIORNA</span></button>';
+         'Ô£Å´©Å<span>AGGIORNA</span></button>';
   } else {
     h += '<button class="ct-fbtn ct-fbtn--cassa" id="ctf-cassa-' + cart.id + '" ' +
          (!(cart.items||[]).length ? 'disabled ' : '') +
          'onclick="ctCassaSingleClick(this,\'inviaOrdine(\\x27' + cart.id + '\\x27)\')">' +
-         '🛍️<span>CONFERMA</span></button>';
+         '­ƒøì´©Å<span>CONFERMA</span></button>';
   }
   h += '</div>';
   h += '</div>';
@@ -1309,9 +1309,9 @@ function renderCartTabs(){
 }
 
 // =============================================================================
-//  CLIENTI DROPDOWN — Menu raggruppato per giorno
+//  CLIENTI DROPDOWN ÔÇö Menu raggruppato per giorno
 // =============================================================================
-var _gg = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+var _gg = ['Domenica','Luned├¼','Marted├¼','Mercoled├¼','Gioved├¼','Venerd├¼','Sabato'];
 
 function ctApriClienti(){
   var dd = document.getElementById('ct-clienti-dropdown');
@@ -1342,7 +1342,7 @@ function ctRenderClientiList(){
   });
 
   if(!carrelliOggi.length){
-    list.innerHTML = '<div style="text-align:center;color:#555;padding:20px;font-size:13px;">Nessun cliente oggi.<br>Premi ＋ NUOVO per iniziare.</div>';
+    list.innerHTML = '<div style="text-align:center;color:#555;padding:20px;font-size:13px;">Nessun cliente oggi.<br>Premi ´╝ï NUOVO per iniziare.</div>';
     return;
   }
 
@@ -1352,10 +1352,10 @@ function ctRenderClientiList(){
     var ci       = item.ci;
     var n        = (cart.items||[]).length;
     var isActive = cart.id === activeCartId;
-    var stato    = cart.stato === 'inviato' ? '✅ ' : cart.stato === 'modifica' ? '✏️ ' : '';
+    var stato    = cart.stato === 'inviato' ? 'Ô£à ' : cart.stato === 'modifica' ? 'Ô£Å´©Å ' : '';
     h += '<button class="ct-clienti-btn' + (isActive ? ' active' : '') + '" ' +
          'onclick="ctSelezionaCliente(' + ci + ')">' +
-         '<span onclick="ctEditClienteName(\''+cart.id+'\')" style="cursor:pointer">' + stato + esc(cart.nome || '—') + '</span>' +
+         '<span onclick="ctEditClienteName(\''+cart.id+'\')" style="cursor:pointer">' + stato + esc(cart.nome || 'ÔÇö') + '</span>' +
          (n ? '<span class="ct-clienti-n">' + n + ' art.</span>' : '') +
          '</button>';
   });
@@ -1376,7 +1376,7 @@ var CT_FORN_KEY = 'cp4_forniColore';
 
 // ctTogglePanel: mostra/nasconde pannello a comparsa (sconto|nota)
 // Stato salvato in _ctPanelState (JS puro, non nei dati carrello/Firebase)
-var _ctPanelState = {}; // chiave: cartId+'-'+idx → 'sconto'|'nota'|null
+var _ctPanelState = {}; // chiave: cartId+'-'+idx ÔåÆ 'sconto'|'nota'|null
 function ctTogglePanel(cartId, idx, tipo){
   var key = cartId + '-' + idx;
   var ids = { sconto: 'ctp-sc-', nota: 'ctp-no-' };
@@ -1402,36 +1402,36 @@ function ctTogglePanel(cartId, idx, tipo){
 // ctForbiciClick: singolo click sulle forbici = ciclo scampolo/fine-rotolo
 // Il singolo click deve essere ignorato se fa parte di un dblclick.
 // Usiamo un timer: se entro 250ms arriva il secondo click (dblclick nativo),
-// il singolo viene annullato — il dblclick gestisce "Tutto il Rotolo".
+// il singolo viene annullato ÔÇö il dblclick gestisce "Tutto il Rotolo".
 // ctToggleScontiMenu: apre/chiude il menu sconti compatto nella iconbar
-var _ctScontiMenuState = {}; // chiave: cartId+'-'+idx → true/false
+var _ctScontiMenuState = {}; // chiave: cartId+'-'+idx ÔåÆ true/false
 function ctToggleScontiMenu(cartId, idx){
   var key = cartId + '-' + idx;
   _ctScontiMenuState[key] = !_ctScontiMenuState[key];
   renderCartTabs();
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ctForbiciTap — TAP SINGOLO / DOPPIO TAP sulle forbici
-// Funziona su iPhone Safari dove ondblclick non è affidabile.
+// ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+// ctForbiciTap ÔÇö TAP SINGOLO / DOPPIO TAP sulle forbici
+// Funziona su iPhone Safari dove ondblclick non ├¿ affidabile.
 //
 // Logica a timer (unico onClick):
-//   1° tap → segna _ctForbiciPending[idx]=true, avvia timer 380ms
-//   2° tap entro 380ms → annulla timer → ROTOLO INTERO
-//   Timer scade → tap singolo confermato → ciclo scampolo normale
+//   1┬░ tap ÔåÆ segna _ctForbiciPending[idx]=true, avvia timer 380ms
+//   2┬░ tap entro 380ms ÔåÆ annulla timer ÔåÆ ROTOLO INTERO
+//   Timer scade ÔåÆ tap singolo confermato ÔåÆ ciclo scampolo normale
 //
-// 380ms è calibrato: abbastanza per un doppio tap intenzionale,
+// 380ms ├¿ calibrato: abbastanza per un doppio tap intenzionale,
 // abbastanza corto da non sembrare lento su tap singolo.
-// ═══════════════════════════════════════════════════════════════════════════
+// ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
 var _ctForbiciTimers  = {};
 var _ctForbiciPending = {};
 
 function ctForbiciTap(cartId, idx){
-  // Singolo tap: cicla OFF → Scampolo → Rotolo → Scaglionato → OFF
+  // Singolo tap: cicla OFF ÔåÆ Scampolo ÔåÆ Rotolo ÔåÆ Scaglionato ÔåÆ OFF
   cartCycleScampolo(cartId, idx);
 }
 
-// ctTuttoRotolo: attiva o disattiva la modalità ROTOLO INTERO
+// ctTuttoRotolo: attiva o disattiva la modalit├á ROTOLO INTERO
 // Bordo rosso sulla card, nota automatica "ROTOLO INTERO", flag _tuttoRotolo
 function ctTuttoRotolo(cartId, idx){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
@@ -1472,11 +1472,11 @@ function ctApriColori(cartId, idx){
   var it = cart.items[idx];
 
   var colori = [
-    { label:'🔴 Rosso',   val:'#e53e3e' },
-    { label:'🟢 Verde',   val:'#38a169' },
-    { label:'🔵 Blu',     val:'#3182ce' },
-    { label:'🟡 Giallo',  val:'#e2c400' },
-    { label:'✕ Rimuovi', val:''         },
+    { label:'­ƒö┤ Rosso',   val:'#e53e3e' },
+    { label:'­ƒƒó Verde',   val:'#38a169' },
+    { label:'­ƒöÁ Blu',     val:'#3182ce' },
+    { label:'­ƒƒí Giallo',  val:'#e2c400' },
+    { label:'Ô£ò Rimuovi', val:''         },
   ];
 
   var popup = document.createElement('div');
@@ -1490,7 +1490,7 @@ function ctApriColori(cartId, idx){
     if(c.val) html += ' style="border-color:' + c.val + '"';
     html += ' onclick="ctSetColore(\'' + cartId + '\',' + idx + ',\'' + c.val + '\')">';
     html += c.label;
-    if(isActive) html += ' ✓';
+    if(isActive) html += ' Ô£ô';
     html += '</button>';
   });
   popup.innerHTML = html;
@@ -1528,7 +1528,7 @@ function ctSetColore(cartId, idx, colore){
 
 
 // ctSetCodF: salva il Codice Fornitore editato direttamente nella card
-// Il campo è un <input> inline — si salva a ogni keystroke con debounce
+// Il campo ├¿ un <input> inline ÔÇö si salva a ogni keystroke con debounce
 var _ctCodFTimers = {};
 function ctSetCodF(cartId, idx, val){
   clearTimeout(_ctCodFTimers[cartId + '_' + idx]);
@@ -1546,21 +1546,21 @@ var _ctCassaTimer = null;
 var _ctCassaPending = false;
 function ctCassaSingleClick(btn, action){
   if(_ctCassaPending){
-    // SECONDO TAP — conferma!
+    // SECONDO TAP ÔÇö conferma!
     clearTimeout(_ctCassaTimer);
     _ctCassaPending = false;
     btn.classList.remove('ct-fbtn--warn');
     var sp = btn.querySelector('span');
-    if(sp) sp.textContent = '✅ Invio...';
+    if(sp) sp.textContent = 'Ô£à Invio...';
     // Esegui l'azione (inviaOrdine o aggiornaOrdine)
     if(action) setTimeout(function(){ eval(action); }, 100);
   } else {
-    // PRIMO TAP — mostra avviso
+    // PRIMO TAP ÔÇö mostra avviso
     _ctCassaPending = true;
     btn.classList.add('ct-fbtn--warn');
     var sp = btn.querySelector('span');
     var orig = sp ? sp.textContent : '';
-    if(sp) sp.textContent = '⚠ Tocca di nuovo!';
+    if(sp) sp.textContent = 'ÔÜá Tocca di nuovo!';
     _ctCassaTimer = setTimeout(function(){
       btn.classList.remove('ct-fbtn--warn');
       if(sp) sp.textContent = orig;
@@ -1569,7 +1569,7 @@ function ctCassaSingleClick(btn, action){
   }
 }
 
-// apriModalFoto: foto a tutto schermo — onclick su miniatura
+// apriModalFoto: foto a tutto schermo ÔÇö onclick su miniatura
 function apriModalFoto(src){
   var ex = document.getElementById('ct-modal-foto');
   if(ex){ ex.remove(); return; }
@@ -1578,7 +1578,7 @@ function apriModalFoto(src){
   m.className = 'ct-modal-foto';
   m.innerHTML = '<div class="ct-modal-box">' +
     '<button class="ct-modal-close" ' +
-    'onclick="document.getElementById(\'ct-modal-foto\').remove()">✕</button>' +
+    'onclick="document.getElementById(\'ct-modal-foto\').remove()">Ô£ò</button>' +
     '<img src="' + src + '" class="ct-modal-img" alt="">' +
     '</div>';
   m.addEventListener('click', function(e){ if(e.target===m) m.remove(); });
@@ -1586,7 +1586,7 @@ function apriModalFoto(src){
 }
 
 // =============================================================================
-//  TAB ORDINI PER COLORE/FORNITORE — #t-ordfor
+//  TAB ORDINI PER COLORE/FORNITORE ÔÇö #t-ordfor
 // =============================================================================
 
 // Salva/carica nomi fornitori per colore in localStorage
@@ -1665,7 +1665,7 @@ function renderOrdFor(){
     h += '<div class="cof-header" style="border-color:' + col + '">';
     h += '<span class="cof-dot" style="background:' + col + '"></span>';
     h += '<span class="cof-color-label">' + colLabel + '</span>';
-    // Campo nome fornitore — input cliccabile, si salva onblur/enter
+    // Campo nome fornitore ÔÇö input cliccabile, si salva onblur/enter
     h += '<input class="cof-forn-inp" ' +
          'value="' + esc(fornNome) + '" ' +
          'placeholder="Nome fornitore..." ' +
@@ -1682,19 +1682,19 @@ function renderOrdFor(){
       var sub  = (parsePriceIT(it.prezzoUnit)*(parseFloat(it.qty)||0)).toFixed(2);
       h += '<div class="cof-row">';
       if(it.foto) h += '<img class="cof-thumb" src="' + it.foto + '" alt="" onclick="apriModalFoto(this.src)">';
-      else        h += '<div class="cof-thumb cof-thumb--empty">📦</div>';
+      else        h += '<div class="cof-thumb cof-thumb--empty">­ƒôª</div>';
       h += '<div class="cof-info">';
-      h += '<div class="cof-nome">' + esc(it.desc||'—') + '</div>';
+      h += '<div class="cof-nome">' + esc(it.desc||'ÔÇö') + '</div>';
       h += '<div class="cof-meta">';
       if(codM)    h += '<span>Cod.Mag: <b>' + esc(codM) + '</b></span> ';
       if(it.codF) h += '<span>Cod.Forn: <b>' + esc(it.codF) + '</b></span> ';
       h += '<span>Cart: <b>' + esc(entry.cartNome) + '</b></span>';
       h += '</div>';
-      if(it.nota) h += '<div class="cof-nota">📝 ' + esc(it.nota) + '</div>';
+      if(it.nota) h += '<div class="cof-nota">­ƒôØ ' + esc(it.nota) + '</div>';
       h += '</div>';
       h += '<div class="cof-right">';
       h += '<div class="cof-qty">' + (parseFloat(it.qty)||0) + ' ' + (it.unit||'pz') + '</div>';
-      h += '<div class="cof-sub">€' + sub + '</div>';
+      h += '<div class="cof-sub">Ôé¼' + sub + '</div>';
       h += '</div>';
       h += '</div>'; // fine cof-row
     });
@@ -1726,9 +1726,9 @@ function ctToggleNome(cartId, idx){
   if(card) card.classList.toggle('ct-card--expanded');
 }
 
-// ctCalcolaLive — aggiorna i prezzi nel DOM in tempo reale SENZA salvare su Firebase.
+// ctCalcolaLive ÔÇö aggiorna i prezzi nel DOM in tempo reale SENZA salvare su Firebase.
 // Viene chiamata da oninput sull'input %. onchange salva poi definitivamente.
-// Parametri: inputEl = <input> %, idx = indice card, baseStr = prezzo originale, qty = quantità
+// Parametri: inputEl = <input> %, idx = indice card, baseStr = prezzo originale, qty = quantit├á
 function ctCalcolaLive(inputEl, idx, baseStr, qty){
   var perc   = parseFloat(inputEl.value) || 0;
   var base   = parsePriceIT(String(baseStr)) || 0;
@@ -1738,39 +1738,39 @@ function ctCalcolaLive(inputEl, idx, baseStr, qty){
   // Aggiorna preview nel pannello
   var ppEl = document.getElementById('pp-sc-' + idx);
   if(ppEl){
-    ppEl.querySelector('.ct-pp-orig').textContent = 'Orig: €' + (base*q).toFixed(2);
-    ppEl.querySelector('.ct-pp-fin').textContent  = 'Fin: €'  + (finale*q).toFixed(2);
+    ppEl.querySelector('.ct-pp-orig').textContent = 'Orig: Ôé¼' + (base*q).toFixed(2);
+    ppEl.querySelector('.ct-pp-fin').textContent  = 'Fin: Ôé¼'  + (finale*q).toFixed(2);
   }
-  // Aggiorna cella prezzo unitario (prz-IDX) — nella griglia è la colonna "Prezzo"
+  // Aggiorna cella prezzo unitario (prz-IDX) ÔÇö nella griglia ├¿ la colonna "Prezzo"
   var przEl = document.getElementById('prz-' + idx);
   if(przEl){
     var origEl = przEl.querySelector('.ct-old--orig');
     var finEl  = przEl.querySelector('.ct-sub--final');
     if(perc > 0 && base > finale + 0.005){
-      if(origEl) origEl.textContent = '€' + base.toFixed(2);
-      if(finEl)  finEl.textContent  = '€' + finale.toFixed(2);
+      if(origEl) origEl.textContent = 'Ôé¼' + base.toFixed(2);
+      if(finEl)  finEl.textContent  = 'Ôé¼' + finale.toFixed(2);
       // Se non esistono ancora (era prezzo normale), riscrivi
       if(!origEl && !finEl){
-        przEl.innerHTML = '<div class="ct-old--orig">€' + base.toFixed(2) + '</div>' +
-          '<div class="ct-sub--final">€' + finale.toFixed(2) + '</div>' +
+        przEl.innerHTML = '<div class="ct-old--orig">Ôé¼' + base.toFixed(2) + '</div>' +
+          '<div class="ct-sub--final">Ôé¼' + finale.toFixed(2) + '</div>' +
           przEl.querySelector('.ct-punit').outerHTML;
       }
     }
   }
-  // Aggiorna cella totale — è il nextElementSibling di prz-IDX nella griglia
+  // Aggiorna cella totale ÔÇö ├¿ il nextElementSibling di prz-IDX nella griglia
   if(przEl && przEl.nextElementSibling){
     var totCell = przEl.nextElementSibling;
     if(perc > 0 && base > finale + 0.005){
-      totCell.innerHTML = '<div class="ct-old--orig">€' + (base*q).toFixed(2) + '</div>' +
-        '<div class="ct-sub--final">€' + (finale*q).toFixed(2) + '</div>';
+      totCell.innerHTML = '<div class="ct-old--orig">Ôé¼' + (base*q).toFixed(2) + '</div>' +
+        '<div class="ct-sub--final">Ôé¼' + (finale*q).toFixed(2) + '</div>';
     } else {
-      totCell.innerHTML = '<div style="font-size:14px;font-weight:900;color:var(--accent)">€' + (finale*q).toFixed(2) + '</div>';
+      totCell.innerHTML = '<div style="font-size:14px;font-weight:900;color:var(--accent)">Ôé¼' + (finale*q).toFixed(2) + '</div>';
     }
   }
 }
 
 
-// ── RIEPILOGO ORDINE (checklist operativa) ────────────────────────────────────
+// ÔöÇÔöÇ RIEPILOGO ORDINE (checklist operativa) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 var _riepilogoChecks = {}; // id_carrello + idx -> bool
 
 function openRiepilogoOrdine(cartId){
@@ -1794,13 +1794,13 @@ function openRiepilogoOrdine(cartId){
   // Header
   h += '<div class="riepilogo-header">';
   h += '<div>';
-  h += '<div class="riepilogo-title">📋 ' + esc(cart.nome) + '</div>';
-  h += '<div class="riepilogo-meta">' + (cart.items||[]).length + ' articoli &nbsp;·&nbsp; <span style="color:var(--accent);font-weight:800;">€' + totFin.toFixed(2) + '</span>';
+  h += '<div class="riepilogo-title">­ƒôï ' + esc(cart.nome) + '</div>';
+  h += '<div class="riepilogo-meta">' + (cart.items||[]).length + ' articoli &nbsp;┬À&nbsp; <span style="color:var(--accent);font-weight:800;">Ôé¼' + totFin.toFixed(2) + '</span>';
   if(cart.scontoGlobale) h += ' <span style="font-size:10px;color:var(--pos-muted);">(-' + cart.scontoGlobale + '%)</span>';
   h += '</div></div>';
   h += '<div style="display:flex;gap:6px;align-items:center;">';
   h += '<span class="riepilogo-counter" id="riepilogo-counter">' + checked + '/' + (cart.items||[]).length + '</span>';
-  h += '<button onclick="closeRiepilogo()" class="riepilogo-close">✕</button>';
+  h += '<button onclick="closeRiepilogo()" class="riepilogo-close">Ô£ò</button>';
   h += '</div></div>';
 
   // Lista articoli
@@ -1811,20 +1811,20 @@ function openRiepilogoOrdine(cartId){
     var sub = (_prezzoEffettivo(it) * (parseFloat(it.qty)||0)).toFixed(2);
     h += '<label class="riepilogo-row' + (isChecked ? ' riepilogo-row-done' : '') + '" onclick="toggleRiepilogoCheck(\'' + cartId + '\',' + idx + ')">';
     h += '<div class="riepilogo-check' + (isChecked ? ' riepilogo-check-on' : '') + '">';
-    h += isChecked ? '✓' : '';
+    h += isChecked ? 'Ô£ô' : '';
     h += '</div>';
     h += '<div class="riepilogo-item-info">';
-    h += '<div class="riepilogo-item-name">' + esc(it.desc || '—') + '</div>';
+    h += '<div class="riepilogo-item-name">' + esc(it.desc || 'ÔÇö') + '</div>';
     var meta = '';
     if(codM7) meta += '<span style="color:var(--accent);">' + esc(codM7) + '</span>';
-    if(codM7 && it.codF) meta += ' · ';
+    if(codM7 && it.codF) meta += ' ┬À ';
     if(it.codF) meta += '<span style="color:#fc8181;">' + esc(it.codF) + '</span>';
     if(meta) h += '<div class="riepilogo-item-code">' + meta + '</div>';
-    if(it.nota) h += '<div class="riepilogo-item-nota">📝 ' + esc(it.nota) + '</div>';
+    if(it.nota) h += '<div class="riepilogo-item-nota">­ƒôØ ' + esc(it.nota) + '</div>';
     h += '</div>';
     h += '<div class="riepilogo-item-right">';
     h += '<div class="riepilogo-item-qty">' + (parseFloat(it.qty)||0) + ' ' + (it.unit||'pz') + '</div>';
-    h += '<div class="riepilogo-item-sub">€' + sub + '</div>';
+    h += '<div class="riepilogo-item-sub">Ôé¼' + sub + '</div>';
     h += '</div>';
     h += '</label>';
   });
@@ -1832,7 +1832,7 @@ function openRiepilogoOrdine(cartId){
 
   // Footer modal
   h += '<div class="riepilogo-footer">';
-  h += '<button onclick="resetRiepilogoChecks(\'' + cartId + '\')" class="riepilogo-btn-reset">↺ Reset</button>';
+  h += '<button onclick="resetRiepilogoChecks(\'' + cartId + '\')" class="riepilogo-btn-reset">Ôå║ Reset</button>';
   h += '<button onclick="closeRiepilogo()" class="riepilogo-btn-close">Chiudi</button>';
   h += '</div>';
   h += '</div>'; // fine modal
@@ -1879,11 +1879,11 @@ function ripetiOrdine(ordIdx,cartId){
 }
 
 // --- INVIA ORDINE -------------------------------------------
-// ══════════════════════════════════════════════════════════════════════════════
-// SUB-TAB "ORDINARE" — pannello scorrevole dal basso con articoli da ordinare
+// ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
+// SUB-TAB "ORDINARE" ÔÇö pannello scorrevole dal basso con articoli da ordinare
 // Si apre con doppio tap sull'icona carrello nel menu in basso (DOM = Document Object Model).
 // Raggruppa gli articoli contrassegnati "daOrdinare" per fornitore (codF).
-// ══════════════════════════════════════════════════════════════════════════════
+// ÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉÔòÉ
 
 // Variabile per gestire il doppio tap sull'icona del carrello nella bottom bar
 var _cartDoubleTapTimer = null;
@@ -1913,7 +1913,7 @@ function apriSubTabOrdinare(){
     (cart.items||[]).forEach(function(it){
       if(it.daOrdinare){
         daOrdinare.push({
-          desc: it.desc || '—',
+          desc: it.desc || 'ÔÇö',
           codM: it.codM || '',   // codice interno (magazzino)
           codF: it.codF || '',   // codice fornitore (recuperato da Firebase NoSQL)
           qty:  it.qty  || 1,
@@ -1936,12 +1936,12 @@ function apriSubTabOrdinare(){
   var h = '';
   h += '<div id="subtab-ordinare-handle"><div class="subtab-handle-bar"></div></div>';
   h += '<div class="subtab-ordinare-header">';
-  h += '<span style="font-size:18px;font-weight:900;color:var(--accent);">📦 Da Ordinare</span>';
-  h += '<button onclick="chiudiSubTabOrdinare()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:4px;">✕</button>';
+  h += '<span style="font-size:18px;font-weight:900;color:var(--accent);">­ƒôª Da Ordinare</span>';
+  h += '<button onclick="chiudiSubTabOrdinare()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:4px;">Ô£ò</button>';
   h += '</div>';
 
   if(!daOrdinare.length){
-    h += '<div style="padding:40px 20px;text-align:center;color:var(--muted);">Nessun articolo marcato "Da ordinare".<br><small>Premi 📦 Imballo su un articolo del carrello.</small></div>';
+    h += '<div style="padding:40px 20px;text-align:center;color:var(--muted);">Nessun articolo marcato "Da ordinare".<br><small>Premi ­ƒôª Imballo su un articolo del carrello.</small></div>';
   } else {
     h += '<div class="subtab-ordinare-body">';
     // Itera i gruppi per fornitore
@@ -1950,7 +1950,7 @@ function apriSubTabOrdinare(){
       var nomeForn = g.codF || 'Fornitore sconosciuto';
       h += '<div class="subtab-forn-group">';
       h += '<div class="subtab-forn-title">';
-      h += '<span style="font-weight:800;color:var(--text);">🏭 ' + esc(nomeForn) + '</span>';
+      h += '<span style="font-weight:800;color:var(--text);">­ƒÅ¡ ' + esc(nomeForn) + '</span>';
       if(g.codF) h += '<span style="font-size:9px;color:var(--muted);margin-left:6px;">COD: ' + esc(g.codF) + '</span>';
       h += '</div>';
       g.articoli.forEach(function(it){
@@ -1971,7 +1971,7 @@ function apriSubTabOrdinare(){
   // Tasto grande CONFERMA ORDINE A FORNITORI in fondo al pannello
   h += '<div class="subtab-ordinare-footer">';
   h += '<button class="subtab-confirm-btn" onclick="confermaOrdineAFornitori()">';
-  h += '📋 CONFERMA ORDINE A FORNITORI</button>';
+  h += '­ƒôï CONFERMA ORDINE A FORNITORI</button>';
   h += '</div>';
 
   // Crea o aggiorna il pannello nel DOM (Document Object Model = struttura HTML della pagina)
@@ -1989,7 +1989,7 @@ function apriSubTabOrdinare(){
   panel.addEventListener('touchstart', function(e){ startY = e.touches[0].clientY; }, {passive:true});
   panel.addEventListener('touchend', function(e){
     var dy = e.changedTouches[0].clientY - startY;
-    if(dy > 60) chiudiSubTabOrdinare(); // swipe giù > 60px = chiudi
+    if(dy > 60) chiudiSubTabOrdinare(); // swipe gi├╣ > 60px = chiudi
   }, {passive:true});
 }
 
@@ -2000,7 +2000,7 @@ function chiudiSubTabOrdinare(){
 }
 
 // Conferma e invia l'ordine a tutti i fornitori con articoli "daOrdinare"
-// Per ora mostra un riepilogo testuale e notifica — espandibile con invio email/WhatsApp
+// Per ora mostra un riepilogo testuale e notifica ÔÇö espandibile con invio email/WhatsApp
 function confermaOrdineAFornitori(){
   var daOrd = [];
   carrelli.forEach(function(cart){
@@ -2009,19 +2009,19 @@ function confermaOrdineAFornitori(){
     });
   });
   if(!daOrd.length){ showToastGen('yellow','Nessun articolo da ordinare'); return; }
-  showToastGen('green','✅ Ordine confermato a ' + daOrd.length + ' articoli');
+  showToastGen('green','Ô£à Ordine confermato a ' + daOrd.length + ' articoli');
   chiudiSubTabOrdinare();
 }
 
-// ── AVVISA UFFICIO — crea bozza ordine visibile in tab ordini ──────
+// ÔöÇÔöÇ AVVISA UFFICIO ÔÇö crea bozza ordine visibile in tab ordini ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function avvisaUfficio(cartId){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||(!(cart.items||[]).length)){showToastGen('red','Aggiungi almeno un articolo prima');return;}
 
   if(cart.bozzaOrdId){
-    // Bozza già attiva: aggiorna
+    // Bozza gi├á attiva: aggiorna
     _aggiornaBozzaOrdine(cart);
-    showToastGen('green','📢 Ufficio aggiornato!');
+    showToastGen('green','­ƒôó Ufficio aggiornato!');
     return;
   }
 
@@ -2029,7 +2029,7 @@ function avvisaUfficio(cartId){
   var bozza={
     id:bozzaId,
     numero:null,
-    nomeCliente:cart.nome||'—',
+    nomeCliente:cart.nome||'ÔÇö',
     ora:new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}),
     data:new Date().toLocaleDateString('it-IT'),
     dataISO:new Date().toISOString().slice(0,10),
@@ -2045,7 +2045,7 @@ function avvisaUfficio(cartId){
   cart.bozzaOrdId=bozzaId;
   saveCarrelli();
   renderCartTabs();
-  showToastGen('green','📢 Ufficio avvisato! Vedono già gli articoli.');
+  showToastGen('green','­ƒôó Ufficio avvisato! Vedono gi├á gli articoli.');
 }
 
 // Aggiorna la bozza con gli articoli correnti del carrello
@@ -2054,7 +2054,7 @@ function _aggiornaBozzaOrdine(cart){
   var bozza=ordini.find(function(o){return o.id===cart.bozzaOrdId;});
   if(!bozza||bozza.stato!=='bozza')return;
   bozza.items=JSON.parse(JSON.stringify(cart.items||[]));
-  bozza.nomeCliente=cart.nome||'—';
+  bozza.nomeCliente=cart.nome||'ÔÇö';
   bozza.nota=cart.nota||'';
   saveOrdini();
 }
@@ -2145,19 +2145,19 @@ function inviaOrdine(cartId){
   }
 
   // Segna il carrello come "inviato" localmente (read-only, non va su Firebase)
-  // saveCarrelli() filtra automaticamente i carrelli inviati — non li condivide
+  // saveCarrelli() filtra automaticamente i carrelli inviati ÔÇö non li condivide
   cart.stato='inviato';
   cart.ordId=ord.id;
   cart.locked=true;
-  saveCarrelli();   // ← scrive su Firebase solo i carrelli ancora attivi
+  saveCarrelli();   // ÔåÉ scrive su Firebase solo i carrelli ancora attivi
   _lastAddedItem=null;
   feedbackSend();
   renderCartTabs();
-  showToastGen('green','✅ Ordine #'+numOrd+' inviato! — '+ord.nomeCliente+' — €'+tot.toFixed(2));
+  showToastGen('green','Ô£à Ordine #'+numOrd+' inviato! ÔÇö '+ord.nomeCliente+' ÔÇö Ôé¼'+tot.toFixed(2));
 }
 
 
-// ── Modifica nome cliente dal carrello ───────────────────────────
+// ÔöÇÔöÇ Modifica nome cliente dal carrello ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function ctEditClienteName(cartId){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
   if(!cart) return;
@@ -2171,10 +2171,10 @@ function ctEditClienteName(cartId){
     if(ord){ ord.nomeCliente = nome.trim(); saveOrdini(); }
   }
   renderCartTabs();
-  showToastGen('green', '✏️ Cliente aggiornato');
+  showToastGen('green', 'Ô£Å´©Å Cliente aggiornato');
 }
 
-// ── Imposta quantità minima scaglione (carrello) ─────────────────
+// ÔöÇÔöÇ Imposta quantit├á minima scaglione (carrello) ÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇÔöÇ
 function cartSetScaglioneQta(cartId, idx, val){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
   if(!cart || !cart.items[idx]) return;
@@ -2182,7 +2182,7 @@ function cartSetScaglioneQta(cartId, idx, val){
   saveCarrelli(); renderCartTabs();
 }
 
-// ── Override saveCarrelli: aggiorna automaticamente le bozze attive ──
+// ÔöÇÔöÇ Override saveCarrelli: aggiorna automaticamente le bozze attive ÔöÇÔöÇ
 // (core.js definisce saveCarrelli; qui la estendiamo senza toccare database.js)
 (function(){
   var _origSaveCarrelli = saveCarrelli;

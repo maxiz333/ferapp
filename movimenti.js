@@ -441,8 +441,8 @@ function _confirmCancel(){
 // ------------------------------------------------------------------
 //  FEATURE 7 - Backup automatico
 // ------------------------------------------------------------------
-var BAK_INT_K = 'cp4_backup_interval';
-var BAK_LAST_K = 'cp4_backup_last';
+var BAK_INT_K = window.AppKeys.BACKUP_INTERVAL;
+var BAK_LAST_K = window.AppKeys.BACKUP_LAST;
 
 function getBackupInterval() {
   var v = localStorage.getItem(BAK_INT_K);

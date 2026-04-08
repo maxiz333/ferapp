@@ -185,18 +185,18 @@ function redoAction(){
 
 // [SECTION: DATABASE] ------------------------------------------------------
 //  Costanti chiavi localStorage, variabili globali, dati di default
-var SK='cp4_current',HK='cp4_history',RK='cp4_removed',CK='cp4_cestino',CATK='cp4_categorie',MAGK='cp4_magazzino',MOVK='cp4_movimenti';
+var SK=window.AppKeys.CURRENT,HK=window.AppKeys.HISTORY,RK=window.AppKeys.REMOVED,CK=window.AppKeys.CESTINO,CATK=window.AppKeys.CATEGORIE,MAGK=window.AppKeys.MAGAZZINO,MOVK=window.AppKeys.MOVIMENTI;
 // CTK: chiave separata per i cartellini (NON sovrascritta da Firebase/rows)
-var CTK='cp4_cartellini';
+var CTK=window.AppKeys.CARTELLINI;
 var ctRows=[]; // array SOLO cartellini — separato da rows[] che è il database Firebase
 var MAGEXT_K='magazzino_ext'; // nodo Firebase per i 14.000 articoli
 var _magExtLoaded=false; // flag: articoli gi- caricati da Firebase
-var lsGet=function(k,d){try{var v=localStorage.getItem(k);return v!=null?JSON.parse(v):d;}catch(e){return d;}};
-var lsSet=function(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
+var lsGet=function(k,d){return window.AppStorage.get(k,d);};
+var lsSet=function(k,v){window.AppStorage.set(k,v);};
 
 // [SECTION: UTILS] ---------------------------------------------------------
 /** Converte stringa prezzo italiana (es. "12,50") in float */
-function parsePriceIT(s){ return parseFloat(String(s||'0').replace(',','.'))||0; }
+function parsePriceIT(s){ return window.AppUtils.parsePriceIT(s); }
 
 // Sconti forbice: rotolo = % fissa sul listino (non azzerare)
 var SCONTO_ROTOLO_DEFAULT_PCT = 10;
@@ -301,7 +301,7 @@ function checkScorta(i, nuovaQty, prevQty){
   }
 }
 
-function autoSize(p){return parsePriceIT(p)<100?'small':'large';}
+function autoSize(p){return window.AppUtils.autoSize(p);}
 
 // Categorie default ferramenta
 var CAT_DEFAULT=[
@@ -324,7 +324,7 @@ var CAT_DEFAULT=[
 function toggleTheme(){
   var body=document.body;
   var isLight=body.classList.toggle('light-mode');
-  localStorage.setItem('cp4_theme', isLight?'light':'dark');
+  localStorage.setItem(window.AppKeys.THEME, isLight?'light':'dark');
   _updateThemeBtn(isLight);
 }
 function _updateThemeBtn(isLight){
@@ -334,7 +334,7 @@ function _updateThemeBtn(isLight){
   if(label)label.textContent=isLight?'Tema scuro':'Tema chiaro';
 }
 function initTheme(){
-  var t=localStorage.getItem('cp4_theme');
+  var t=localStorage.getItem(window.AppKeys.THEME);
   var isLight=(t==='light');
   if(isLight) document.body.classList.add('light-mode');
   _updateThemeBtn(isLight);
@@ -405,7 +405,7 @@ function init(){
   // Avvia sull'inventario
   goTab('t0');
 }
-function esc(s){return (String(s===null||s===undefined?'':s)).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function esc(s){return window.AppUtils.esc(s);}
 function sel(id,val,opts,onch){
   return '<select id="'+id+'" onchange="'+onch+'">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===val?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select>';
 }
@@ -673,51 +673,18 @@ function updateBadge(){
   updateStats();
 }
 
-function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();}
+function norm(s){return window.AppUtils.norm(s);}
 function stem(w){
-  if(w.length<5) return w;
-  var rules=[/zioni$/,/zione$/,/tori$/,/tore$/,/elli$/,/ella$/,/ello$/,/etti$/,/etta$/,/etto$/,/ali$/,/ale$/,/ori$/,/ore$/,/ari$/,/are$/,/ici$/,/ico$/,/ica$/,/osi$/,/oso$/,/nti$/,/nte$/,/oli$/,/ola$/,/olo$/];
-  var stems=['zion','zion','tor','tor','ell','ell','ell','ett','ett','ett','al','al','or','or','ar','ar','ic','ic','ic','os','os','nt','nt','ol','ol','ol'];
-  for(var j=0;j<rules.length;j++) if(rules[j].test(w)) return w.replace(rules[j],stems[j]);
-  return w.replace(/[aeiou]$/,'');
+  return window.AppUtils.stem(w);
 }
 function lev(a,b){
-  if(a===b) return 0;
-  var dp=[];
-  for(var i=0;i<=b.length;i++){dp[i]=[i];for(var j=1;j<=a.length;j++) dp[i][j]=i===0?j:0;}
-  for(var i=1;i<=b.length;i++) for(var j=1;j<=a.length;j++)
-    dp[i][j]=b[i-1]===a[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j-1],dp[i][j-1],dp[i-1][j]);
-  return dp[b.length][a.length];
+  return window.AppUtils.lev(a,b);
 }
 function wordScore(qw,tw){
-  if(qw===tw) return 100;
-  if(tw.startsWith(qw)) return 85;
-  if(qw.startsWith(tw)&&tw.length>=3) return 78;
-  var qs=stem(qw),ts=stem(tw);
-  if(qs&&ts&&qs===ts) return 72;
-  if(qs&&ts&&ts.startsWith(qs)&&qs.length>=4) return 62;
-  if(qw.length>=5&&tw.length>=4){
-    var tol=qw.length<=6?1:2;
-    if(lev(qw,tw)<=tol) return 55;
-    if(qs.length>=4&&ts.length>=4&&lev(qs,ts)<=1) return 45;
-  }
-  return 0;
+  return window.AppUtils.wordScore(qw,tw);
 }
 function fuzzyScore(query,text){
-  var q=norm(query),t=norm(text);
-  if(!q) return 100;
-  if(t.includes(q)) return 100;
-  var qw=q.split(' ').filter(function(w){return w.length>1;});
-  var tw=t.split(' ').filter(Boolean);
-  if(!qw.length) return 0;
-  var tot=0;
-  for(var wi=0;wi<qw.length;wi++){
-    var best=0;
-    for(var ti=0;ti<tw.length;ti++){best=Math.max(best,wordScore(qw[wi],tw[ti]));if(best===100) break;}
-    if(best===0) return 0;
-    tot+=best;
-  }
-  return tot/qw.length;
+  return window.AppUtils.fuzzyScore(query,text);
 }
 function doFilter(){
   var q=(document.getElementById('si')||{value:''}).value.trim();
@@ -1956,7 +1923,7 @@ function searchHistory(){
 var editorSettings={priceColor:'#000000',borderColor:'#aaaaaa',smW:67,smH:38,lgW:94,lgH:39,barrato:false,shape:'',frame:'',frameColor:'#aaaaaa',promoText:'PROMO',bg:'#ffffff'};
 
 function loadEditorSettings(){
-  var s=lsGet('cp4_editor',null);
+  var s=lsGet(window.AppKeys.EDITOR,null);
   if(s) editorSettings=Object.assign(editorSettings,s);
   document.getElementById('ec-price-color').value=editorSettings.priceColor;
   document.getElementById('ec-border-color').value=editorSettings.borderColor;
@@ -2012,7 +1979,7 @@ function applyEditor(){
   editorSettings.barrato=document.getElementById('ec-barrato').checked;
   var fc=document.getElementById('ec-frame-color');
   if(fc) editorSettings.frameColor=fc.value;
-  lsSet('cp4_editor',editorSettings);
+  lsSet(window.AppKeys.EDITOR,editorSettings);
   applyEditorCSS();
   renderEditorPreview();
   genTags();
@@ -2125,7 +2092,7 @@ function renderEditorPreview(){
 
 function resetEditor(){
   editorSettings={priceColor:'#000000',borderColor:'#aaaaaa',smW:67,smH:38,lgW:94,lgH:39,barrato:false,shape:'',frame:'',frameColor:'#aaaaaa',promoText:'PROMO',bg:'#ffffff'};
-  lsSet('cp4_editor',editorSettings);
+  lsSet(window.AppKeys.EDITOR,editorSettings);
   loadEditorSettings();
   applyEditorCSS();
   renderEditorPreview();
@@ -2138,7 +2105,7 @@ function ec_setShape(val){
   document.querySelectorAll('.ec-shape-btn').forEach(function(b){
     b.classList.toggle('active', b.getAttribute('data-shape')===val);
   });
-  lsSet('cp4_editor',editorSettings);
+  lsSet(window.AppKeys.EDITOR,editorSettings);
   applyEditorCSS();
   renderEditorPreview();
   genTags();
@@ -2149,7 +2116,7 @@ function ec_setFrame(val){
   document.querySelectorAll('.ec-frame-btn').forEach(function(b){
     b.classList.toggle('active', b.getAttribute('data-frame')===val);
   });
-  lsSet('cp4_editor',editorSettings);
+  lsSet(window.AppKeys.EDITOR,editorSettings);
   applyEditorCSS();
   renderEditorPreview();
   genTags();
@@ -2162,7 +2129,7 @@ function ec_setPromoText(val){
   document.querySelectorAll('.ec-promo-txt-btn').forEach(function(b){
     b.classList.toggle('active', b.getAttribute('data-val')===val);
   });
-  lsSet('cp4_editor',editorSettings);
+  lsSet(window.AppKeys.EDITOR,editorSettings);
   applyEditorCSS();
   renderEditorPreview();
   genTags();
@@ -2173,7 +2140,7 @@ function ec_setBg(val){
   document.querySelectorAll('.ec-bg-btn').forEach(function(b){
     b.classList.toggle('active', b.getAttribute('data-val')===val);
   });
-  lsSet('cp4_editor',editorSettings);
+  lsSet(window.AppKeys.EDITOR,editorSettings);
   applyEditorCSS();
   renderEditorPreview();
   genTags();
@@ -2187,7 +2154,7 @@ function ec_updateSliderVal(sliderId, labelId, unit){
   label.textContent=slider.value+unit;
   // Salva nei settings
   editorSettings[sliderId]=parseFloat(slider.value);
-  lsSet('cp4_editor',editorSettings);
+  lsSet(window.AppKeys.EDITOR,editorSettings);
   applyEditorCSS();
   renderEditorPreview();
   genTags();
@@ -2199,7 +2166,7 @@ function ec_updateSliderVal(sliderId, labelId, unit){
 var giornaliniNomi={};
 
 function loadGiornaliniNomi(){
-  var s=lsGet('cp4_giornomi',null);
+  var s=lsGet(window.AppKeys.GIORNOMI,null);
   if(s) giornaliniNomi=s;
 }
 
@@ -2226,7 +2193,7 @@ function renderGiornaliniRename(){
 function saveGiornaliniNome(val,nome){
   if(nome.trim()) giornaliniNomi[val]=nome.trim();
   else delete giornaliniNomi[val];
-  lsSet('cp4_giornomi',giornaliniNomi);
+  lsSet(window.AppKeys.GIORNOMI,giornaliniNomi);
   // aggiorna label nella tab promo se aperta
   renderPromo();
 }

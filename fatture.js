@@ -1,7 +1,7 @@
 // ══ FATTURE ══════════════════════════════════════════════════════
 // [SECTION: FORNITORI] -----------------------------------------------------
 //  Fatture (emesse/ricevute) e Ordini a Fornitori
-var ORFK = 'cp4_ordfornitori';
+var ORFK = window.AppKeys.ORDFORNITORI;
 var ordFornitori = [];
 var ordForFiltro = 'tutti';
 var _ofRighe = [];

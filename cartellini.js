@@ -401,7 +401,7 @@ function ct_svuota(){
 function ct_genAnteprima(){
   if(!ctRows.length){ showToastGen('red','⚠️ Nessun cartellino'); return; }
   // Carica e applica le impostazioni editor
-  var savedEd = lsGet('cp4_editor', null);
+  var savedEd = lsGet(window.AppKeys.EDITOR, null);
   if(savedEd && typeof editorSettings !== 'undefined') Object.assign(editorSettings, savedEd);
   if(typeof applyEditorCSS==='function') applyEditorCSS();
   // Genera HTML direttamente da ctRows SENZA toccare rows/save
