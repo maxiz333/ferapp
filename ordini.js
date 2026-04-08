@@ -2670,35 +2670,47 @@ function cancelEditProdotto(){
 // ── LOCK COLLABORATIVO — forza accesso con triplo tap ────────────
 function ordForceLock(ordId, gi){
   var ord = ordini[gi];
-  if(!ord || ord.id !== ordId){ ord = ordini.find(function(x){ return x && x.id === ordId; }); }
-  if(!ord){ console.error('[LOCK] ordForceLock — ordine non trovato:', ordId); return; }
+  if(!ord || ord.id !== ordId){
+    ord = ordini.find(function(x){ return x && x.id === ordId; });
+  }
+  if(!ord){
+    console.error('[LOCK] ordForceLock — ordine non trovato:', ordId);
+    return;
+  }
+
   var key = _lockKey(ordId);
   var currentLock = _ordLocks[key];
   var holderName = currentLock ? (currentLock.name || 'altro account') : 'altro account';
-  console.warn('[LOCK] ordForceLock — tentativo sblocco forzato su:', ordId, 'da:', holderName);
+
   if(!confirm('⚠️ Sblocco forzato\n\n' + holderName + ' sta lavorando su questo ordine.\n\nVuoi forzare l\'accesso?')){
-    console.log('[LOCK] ordForceLock — annullato dall\'utente');
     return;
   }
-  console.warn('[LOCK] ordForceLock — CONFERMATO, prendo il lock su:', ordId);
+
   ordAcquireOrderLock(ordId, { force: true }, function(ok){
     if(!ok){
       showToastGen('red','❌ Impossibile aggiornare il lock su Firebase');
       return;
     }
+
     var o = ordini.find(function(x){ return x && x.id === ordId; });
-    if(!o) return;
-    var chi = (typeof _currentUser !== 'undefined' && _currentUser) ? _currentUser.nome : 'Sconosciuto';
-    var ora = new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
-    if(!o.modificheDiff) o.modificheDiff = [];
-    o.modificheDiff.unshift('⚠️ ' + ora + ' — Lock forzato da ' + chi + ' (era: ' + holderName + ')');
-    o.modificato = true;
-    o.modificatoAt = new Date().toLocaleString('it-IT');
-    o.modificatoAtISO = new Date().toISOString();
-    saveOrdini();
+    if(o){
+      var chi = (typeof _currentUser !== 'undefined' && _currentUser) ? _currentUser.nome : 'Sconosciuto';
+      var ora = new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+      if(!o.modificheDiff) o.modificheDiff = [];
+      o.modificheDiff.unshift('⚠️ ' + ora + ' — Lock forzato da ' + chi + ' (era: ' + holderName + ')');
+      o.modificato = true;
+      o.modificatoAt = new Date().toLocaleString('it-IT');
+      o.modificatoAtISO = new Date().toISOString();
+      saveOrdini();
+    }
+
     showToastGen('orange','🔓 Lock forzato — ora lavori tu');
     if(typeof ordRefreshLockUI === 'function') ordRefreshLockUI();
     else renderOrdini();
+
+    // Dopo la forzatura apri subito l'editor sul device corrente.
+    var gi2 = ordini.findIndex(function(x){ return x && x.id === ordId; });
+    if(gi2 >= 0) modificaOrdineDaTab(gi2);
   });
 }
 

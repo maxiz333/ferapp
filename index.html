@@ -379,7 +379,19 @@ body.light-mode #confirm-overlay > div { background:#fff; }
       <!-- popolato da ct_updateDashboard() -->
     </div>
 
-    <!-- Riga 3: Barra di ricerca -->
+    <!-- Riga 3: Tab Da fare / Fatti -->
+    <div id="ct-tabs" style="display:flex;gap:6px;margin-top:8px;">
+      <button id="ct-tab-dafare" onclick="ct_setTab('dafare')"
+        style="flex:1;min-height:36px;border-radius:10px;border:none;background:var(--accent);color:#111;font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation;">
+        📋 Da fare <span id="ct-count-dafare" style="font-size:11px;opacity:.7;"></span>
+      </button>
+      <button id="ct-tab-fatti" onclick="ct_setTab('fatti')"
+        style="flex:1;min-height:36px;border-radius:10px;border:1px solid #2a2a2a;background:transparent;color:#555;font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation;">
+        ✅ Fatti <span id="ct-count-fatti" style="font-size:11px;opacity:.7;"></span>
+      </button>
+    </div>
+
+    <!-- Riga 4: Barra di ricerca -->
     <div style="position:relative;margin-top:8px;">
       <input type="text" id="ct-search" placeholder="🔍 Cerca articolo dal database e aggiungi..." autocomplete="off"
         style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1px solid #2a2a2a;background:#1a1a1a;color:var(--text);font-size:16px;outline:none;-webkit-appearance:none;"
@@ -972,8 +984,6 @@ body.light-mode #confirm-overlay > div { background:#fff; }
   </div>
 </div>
 <div id="print-area"></div>
-<script src="https://cdn.jsdelivr.net/npm/firebase@9.23.0/firebase-app-compat.js"></script>
-
 <!-- ═══ OVERLAYS CARRELLO (numpad, ricevuta, edit-ordine) ═══ -->
 <div id="numpad-overlay" onclick="if(event.target.id==='numpad-overlay')closeNumpad()">
   <div id="numpad-box">

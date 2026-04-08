@@ -250,17 +250,22 @@ document.addEventListener('DOMContentLoaded', function(){
 
 (function(){
   try{
-    _fb=firebase.initializeApp({
-      apiKey:"AIzaSyAOCzTjXWAkYEsCkHEMNYQCdnzf6HGaDWY",
-      authDomain:"ferramenta-2b546.firebaseapp.com",
-      databaseURL:"https://ferramenta-2b546-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId:"ferramenta-2b546",
-      storageBucket:"ferramenta-2b546.firebasestorage.app",
-      messagingSenderId:"103703473598",
-      appId:"1:103703473598:web:8f505c79eea852f324ddef"
-    });
+    if(firebase && firebase.apps && firebase.apps.length){
+      _fb = firebase.app();
+    } else {
+      _fb=firebase.initializeApp({
+        apiKey:"AIzaSyAOCzTjXWAkYEsCkHEMNYQCdnzf6HGaDWY",
+        authDomain:"ferramenta-2b546.firebaseapp.com",
+        databaseURL:"https://ferramenta-2b546-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId:"ferramenta-2b546",
+        storageBucket:"ferramenta-2b546.firebasestorage.app",
+        messagingSenderId:"103703473598",
+        appId:"1:103703473598:web:8f505c79eea852f324ddef"
+      });
+    }
     _fbDb=firebase.database();
     _fbReady=true;
+    _authLoad(); // ricarica nomi/PIN/colori da Firebase ora che la connessione è disponibile
     _initLockListener();
     _initAccountBusyListener();
     // Snapshot degli ID gi- presenti PRIMA di connettersi - cos- al primo sync non scattano notifiche
@@ -589,6 +594,22 @@ function ordUnlock(ordId){
   _accountBusyClear();
 }
 
+function ordIsLockedByOther(ordId){
+  var key = _lockKey(ordId);
+  var lock = _ordLocks[key];
+  var myId = (_currentUser ? _currentUser.key : _deviceId);
+  var fg = _ordForceLockGrace[key];
+  if(fg && Date.now() < fg) return false;
+  var gu = _ordLockUiGrace[key];
+  if(gu && Date.now() < gu && (!lock || String(lock.by) === String(myId))) return false;
+  if(!lock) return false;
+  if(String(lock.by) === String(myId)) return false;
+  var at = lock.at;
+  if(typeof at !== 'number' || isNaN(at)) return false;
+  if(Date.now() - at > LOCK_EXPIRE) return false;
+  return lock;
+}
+
 // ── LOCK PER-ACCOUNT: segnala su Firebase che questo account è occupato ──────
 // Struttura Firebase: accountBusy/{accountKey} = { ordId, name, at }
 var _myAccountBusyOrdId = null; // traccia l'ordine su cui siamo occupati
@@ -639,21 +660,7 @@ function getAccountBusyWarning(ordId){
   return warnings.join(' · ');
 }
 
-function ordIsLockedByOther(ordId){
-  var key = _lockKey(ordId);
-  var lock = _ordLocks[key];
-  var myId = (_currentUser ? _currentUser.key : _deviceId);
-  var fg = _ordForceLockGrace[key];
-  if(fg && Date.now() < fg) return false;
-  var gu = _ordLockUiGrace[key];
-  if(gu && Date.now() < gu && (!lock || String(lock.by) === String(myId))) return false;
-  if(!lock) return false;
-  if(String(lock.by) === String(myId)) return false;
-  var at = lock.at;
-  if(typeof at !== 'number' || isNaN(at)) return false;
-  if(Date.now() - at > LOCK_EXPIRE) return false;
-  return lock;
-}
+// ordIsLockedByOther — stub sopra (lock disabilitato)
 
 function _initLockListener(){
   if(!_fbReady || !_fbDb) return;
@@ -728,9 +735,9 @@ function _authLoad(){
       }
     });
   }
-  // Carica anche da Firebase
+  // Carica anche da Firebase — listener real-time così ogni device riceve aggiornamenti
   if(_fbReady && _fbDb){
-    _fbDb.ref('auth').once('value', function(snap){
+    _fbDb.ref('auth').on('value', function(snap){
       var d = snap.val();
       if(d){
         Object.keys(d).forEach(function(k){
@@ -741,9 +748,9 @@ function _authLoad(){
           }
         });
         _authSaveLocal();
-        // Aggiorna nomi sulla schermata login se visibile
+        // Aggiorna schermata login se visibile
         _authRenderLogin();
-        // Aggiorna header se loggato (potrebbe aver cambiato nome/colore da altro device)
+        // Aggiorna header se loggato
         if(_currentUser && _roles[_currentUser.key]){
           _currentUser.nome = _roles[_currentUser.key].nome;
           _currentUser.colore = _roles[_currentUser.key].colore;

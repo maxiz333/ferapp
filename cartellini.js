@@ -90,6 +90,23 @@ var renderTable = (function(_origRenderTable){
 // ═══════════════════════════════════════════════════════════════════════════════
 
 var _fbSyncingCt = false; // flag per evitare loop sync Firebase cartellini
+var _ctTab = 'dafare'; // tab attiva: 'dafare' | 'fatti'
+
+function ct_setTab(tab){
+  _ctTab = tab;
+  var btnDf = document.getElementById('ct-tab-dafare');
+  var btnFt = document.getElementById('ct-tab-fatti');
+  if(btnDf && btnFt){
+    if(tab === 'dafare'){
+      btnDf.style.background = 'var(--accent)'; btnDf.style.color = '#111'; btnDf.style.border = 'none';
+      btnFt.style.background = 'transparent'; btnFt.style.color = '#555'; btnFt.style.border = '1px solid #2a2a2a';
+    } else {
+      btnFt.style.background = '#38a169'; btnFt.style.color = '#fff'; btnFt.style.border = 'none';
+      btnDf.style.background = 'transparent'; btnDf.style.color = '#555'; btnDf.style.border = '1px solid #2a2a2a';
+    }
+  }
+  CT.render();
+}
 
 var CT = {
   COLORS: [
@@ -117,7 +134,6 @@ var CT = {
     }
   },
 
-  // ── RENDER lista cartellini ───────────────────────────────────────
   // ── RENDER lista cartellini — formato tabella compatta ──────────
   render: function(){
     var list   = document.getElementById('ct-list');
@@ -125,8 +141,28 @@ var CT = {
     var footer = document.getElementById('ct-footer');
     if(!list) return;
 
-    if(!ctRows.length){
-      if(empty)  empty.style.display  = 'block';
+    // Filtra per tab attiva
+    var isFatti = (_ctTab === 'fatti');
+
+    // Aggiorna contatori nei tab
+    var nDf = ctRows.filter(function(r){ return !r.fatto; }).length;
+    var nFt = ctRows.filter(function(r){ return !!r.fatto; }).length;
+    var cDf = document.getElementById('ct-count-dafare');
+    var cFt = document.getElementById('ct-count-fatti');
+    if(cDf) cDf.textContent = nDf ? '('+nDf+')' : '';
+    if(cFt) cFt.textContent = nFt ? '('+nFt+')' : '';
+
+    // Indici reali nel ctRows per la tab corrente
+    var realIndices = [];
+    ctRows.forEach(function(r, i){ if(isFatti ? !!r.fatto : !r.fatto) realIndices.push(i); });
+
+    if(!realIndices.length){
+      if(empty){
+        empty.style.display = 'block';
+        empty.innerHTML = isFatti
+          ? '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">✅</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino fatto</div><div style="font-size:13px;color:#333;">Spunta un articolo per spostarlo qui.</div>'
+          : '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">🏷️</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino</div><div style="font-size:13px;color:#333;line-height:1.5;">Cerca un articolo in alto<br>oppure importa un file CSV.</div>';
+      }
       list.style.display  = 'none';
       if(footer) footer.style.display = 'none';
       CT.updateDashboard();
@@ -135,20 +171,21 @@ var CT = {
 
     if(empty)  empty.style.display  = 'none';
     list.style.display  = 'block';
-    if(footer) footer.style.display = 'flex';
+    if(footer) footer.style.display = isFatti ? 'none' : 'flex';
 
     var h = '<table style="width:100%;border-collapse:collapse;font-size:11px;">';
     h += '<thead><tr style="background:#1a1a1a;position:sticky;top:110px;z-index:10;">';
     h += '<th style="padding:6px 4px;text-align:left;color:var(--accent);font-size:10px;">Prodotto</th>';
     h += '<th style="padding:6px 2px;text-align:center;color:#888;font-size:10px;width:52px;">Cod.F</th>';
-    h += '<th style="padding:6px 2px;text-align:center;color:#888;font-size:10px;width:48px;">\u20AC Vec</th>';
-    h += '<th style="padding:6px 2px;text-align:center;color:var(--accent);font-size:10px;width:54px;">\u20AC Nuovo</th>';
+    h += '<th style="padding:6px 2px;text-align:center;color:#888;font-size:10px;width:48px;">€ Vec</th>';
+    h += '<th style="padding:6px 2px;text-align:center;color:var(--accent);font-size:10px;width:54px;">€ Nuovo</th>';
     h += '<th style="padding:6px 2px;text-align:center;color:#888;font-size:10px;width:32px;">Dim</th>';
     h += '<th style="padding:6px 2px;text-align:center;color:#888;font-size:10px;width:40px;">Col</th>';
-    h += '<th style="padding:6px 0;width:24px;"></th>';
+    h += '<th style="padding:6px 0;width:48px;"></th>';
     h += '</tr></thead><tbody>';
 
-    ctRows.forEach(function(r, i){
+    realIndices.forEach(function(realIdx){
+      var r = ctRows[realIdx];
       var c = CT.color(r.giornalino||'');
       var promoOn = (r.barrato==='si' || r.promo==='si');
 
@@ -156,53 +193,81 @@ var CT = {
 
       // Prodotto
       h += '<td style="padding:6px 4px;">';
-      h += '<div style="font-size:12px;font-weight:700;color:#e8e8e8;line-height:1.2;">'+esc(r.desc||'\u2014')+'</div>';
+      h += '<div style="font-size:12px;font-weight:700;color:#e8e8e8;line-height:1.2;">'+esc(r.desc||'—')+'</div>';
       if(r.codM) h += '<div style="font-size:9px;color:var(--accent);margin-top:1px;">'+esc(r.codM)+'</div>';
+      if(r.fatto) h += '<div style="font-size:9px;color:#38a169;margin-top:1px;">✅ '+esc(r.fattoData||'')+'</div>';
       h += '</td>';
 
-      // Cod.F editabile
+      // Cod.F
       h += '<td style="padding:2px;text-align:center;">';
-      h += '<input type="text" value="'+esc(r.codF||'')+'" placeholder="\u2014"';
-      h += ' onchange="ct_setCodF('+i+',this.value)"';
-      h += ' style="width:100%;padding:3px 2px;border:none;border-bottom:1px dashed #333;background:transparent;color:#fc8181;font-size:10px;text-align:center;outline:none;box-sizing:border-box;">';
+      if(!isFatti){
+        h += '<input type="text" value="'+esc(r.codF||'')+'" placeholder="—"';
+        h += ' onchange="ct_setCodF('+realIdx+',this.value)"';
+        h += ' style="width:100%;padding:3px 2px;border:none;border-bottom:1px dashed #333;background:transparent;color:#fc8181;font-size:10px;text-align:center;outline:none;box-sizing:border-box;">';
+      } else {
+        h += '<span style="color:#fc8181;font-size:10px;">'+esc(r.codF||'—')+'</span>';
+      }
       h += '</td>';
 
       // Prezzo vecchio
       h += '<td style="padding:2px;text-align:center;">';
-      if(promoOn){
-        h += '<input type="text" value="'+esc(r.prezzoOld||'')+'" placeholder="\u2014"';
-        h += ' onchange="ct_setPrezzoOld('+i+',this.value)"';
-        h += ' style="width:100%;padding:3px 2px;border:none;border-bottom:1px dashed #e53e3e44;background:transparent;color:#fc8181;font-size:10px;font-weight:700;text-align:center;text-decoration:line-through;outline:none;box-sizing:border-box;">';
+      if(!isFatti){
+        if(promoOn){
+          h += '<input type="text" value="'+esc(r.prezzoOld||'')+'" placeholder="—"';
+          h += ' onchange="ct_setPrezzoOld('+realIdx+',this.value)"';
+          h += ' style="width:100%;padding:3px 2px;border:none;border-bottom:1px dashed #e53e3e44;background:transparent;color:#fc8181;font-size:10px;font-weight:700;text-align:center;text-decoration:line-through;outline:none;box-sizing:border-box;">';
+        } else {
+          h += '<button onclick="ct_togglePromo('+realIdx+')" style="border:none;background:transparent;color:#333;font-size:10px;cursor:pointer;padding:2px;">✂</button>';
+        }
       } else {
-        h += '<button onclick="ct_togglePromo('+i+')" style="border:none;background:transparent;color:#333;font-size:10px;cursor:pointer;padding:2px;">\u2702</button>';
+        h += '<span style="color:#fc8181;font-size:10px;text-decoration:line-through;">'+esc(r.prezzoOld||'')+'</span>';
       }
       h += '</td>';
 
       // Prezzo nuovo
       h += '<td style="padding:2px;text-align:center;">';
-      h += '<input type="text" value="'+esc(r.prezzo||'')+'" placeholder="\u20AC"';
-      h += ' onchange="ct_setPrezzo('+i+',this.value)"';
-      h += ' style="width:100%;padding:3px 2px;border:none;border-bottom:1px solid var(--accent)44;background:transparent;color:var(--accent);font-size:12px;font-weight:900;text-align:center;outline:none;box-sizing:border-box;">';
+      if(!isFatti){
+        h += '<input type="text" value="'+esc(r.prezzo||'')+'" placeholder="€"';
+        h += ' onchange="ct_setPrezzo('+realIdx+',this.value)"';
+        h += ' style="width:100%;padding:3px 2px;border:none;border-bottom:1px solid var(--accent)44;background:transparent;color:var(--accent);font-size:12px;font-weight:900;text-align:center;outline:none;box-sizing:border-box;">';
+      } else {
+        h += '<span style="color:var(--accent);font-size:12px;font-weight:900;">'+esc(r.prezzo||'—')+'</span>';
+      }
       h += '</td>';
 
       // Dimensione
       h += '<td style="padding:2px;text-align:center;">';
-      h += '<select onchange="ct_setSize('+i+',this.value)" style="width:100%;padding:1px;border:none;background:transparent;color:#888;font-size:9px;outline:none;-webkit-appearance:none;appearance:none;text-align:center;cursor:pointer;">';
-      h += '<option value="small"'+(r.size==='small'?' selected':'')+'>P</option>';
-      h += '<option value="large"'+(r.size==='large'?' selected':'')+'>G</option>';
-      h += '</select></td>';
+      if(!isFatti){
+        h += '<select onchange="ct_setSize('+realIdx+',this.value)" style="width:100%;padding:1px;border:none;background:transparent;color:#888;font-size:9px;outline:none;-webkit-appearance:none;appearance:none;text-align:center;cursor:pointer;">';
+        h += '<option value="small"'+(r.size==='small'?' selected':'')+'>P</option>';
+        h += '<option value="large"'+(r.size==='large'?' selected':'')+'>G</option>';
+        h += '</select>';
+      } else {
+        h += '<span style="color:#555;font-size:9px;">'+(r.size==='large'?'G':'P')+'</span>';
+      }
+      h += '</td>';
 
-      // Colore tendina
+      // Colore
       h += '<td style="padding:2px;text-align:center;">';
-      h += '<select onchange="ct_setColor('+i+',this.value)" style="width:100%;padding:1px;border:none;background:'+c.bg+';color:'+c.dot+';font-size:9px;font-weight:800;outline:none;border-radius:4px;cursor:pointer;">';
-      CT.COLORS.forEach(function(col){
-        h += '<option value="'+col.val+'" style="background:#111;color:'+col.dot+';"'+(((r.giornalino||'')===col.val)?' selected':'')+'>'+col.label+'</option>';
-      });
-      h += '</select></td>';
+      if(!isFatti){
+        h += '<select onchange="ct_setColor('+realIdx+',this.value)" style="width:100%;padding:1px;border:none;background:'+c.bg+';color:'+c.dot+';font-size:9px;font-weight:800;outline:none;border-radius:4px;cursor:pointer;">';
+        CT.COLORS.forEach(function(col){
+          h += '<option value="'+col.val+'" style="background:#111;color:'+col.dot+';"'+((( r.giornalino||'')===col.val)?' selected':'')+'>'+col.label+'</option>';
+        });
+        h += '</select>';
+      } else {
+        h += '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+c.dot+';"></span>';
+      }
+      h += '</td>';
 
-      // Elimina
-      h += '<td style="padding:2px;text-align:center;">';
-      h += '<button onclick="ct_del('+i+')" style="border:none;background:transparent;color:#e53e3e66;font-size:14px;cursor:pointer;padding:0;touch-action:manipulation;">\u2715</button>';
+      // Azioni: ✓ / ↩ + ✕
+      h += '<td style="padding:2px;text-align:center;white-space:nowrap;">';
+      if(!isFatti){
+        h += '<button onclick="ct_toggleFatto('+realIdx+')" title="Segna come fatto" style="border:none;background:transparent;color:#38a16966;font-size:16px;cursor:pointer;padding:0 3px;touch-action:manipulation;">✓</button>';
+      } else {
+        h += '<button onclick="ct_toggleFatto('+realIdx+')" title="Rimetti in Da fare" style="border:none;background:transparent;color:#d69e2e88;font-size:13px;cursor:pointer;padding:0 3px;touch-action:manipulation;">↩</button>';
+      }
+      h += '<button onclick="ct_del('+realIdx+')" style="border:none;background:transparent;color:#e53e3e66;font-size:14px;cursor:pointer;padding:0 2px;touch-action:manipulation;">✕</button>';
       h += '</td>';
 
       h += '</tr>';
@@ -309,6 +374,15 @@ function ct_del(i){
   CT.save(); CT.render();
   updateBadge && updateBadge();
   showToastGen('red','🗑️ Rimosso dai cartellini');
+}
+
+function ct_toggleFatto(i){
+  if(!ctRows[i]) return;
+  var era = !!ctRows[i].fatto;
+  ctRows[i].fatto = !era;
+  ctRows[i].fattoData = !era ? new Date().toLocaleDateString('it-IT') : '';
+  CT.save(); CT.render();
+  showToastGen(!era ? 'green' : 'yellow', !era ? '✅ Cartellino fatto!' : '↩ Rimesso in Da fare');
 }
 
 function ct_svuota(){
