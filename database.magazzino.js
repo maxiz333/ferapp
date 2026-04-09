@@ -4,6 +4,9 @@
 //  Inventario, scorte, soglie, movimenti qty, categorie, magazzino
 var invSottoScorta=false;
 var invGiornalino=false;
+function _syncMagIdxFirebase(i){
+  if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(i);
+}
 
 function filterSottoScorta(){
   invSottoScorta=!invSottoScorta;
@@ -163,6 +166,7 @@ function deltaQta(i,delta){
   // re-render solo la tab attiva
   var t0=document.getElementById('t0');
   if(t0&&t0.classList.contains('active')) renderInventario();
+  _syncMagIdxFirebase(i);
 }
 
 // -- SCHEDA PRODOTTO dal Magazzino -----------------------------------------
@@ -507,6 +511,7 @@ function saveMagRow(i,field,val){
       // ri-render dopo cambio categoria (gi- chiamato nel template)
     }
   }
+  _syncMagIdxFirebase(i);
 }
 
 function _updateMagQtyRow(i, qty){
@@ -568,6 +573,7 @@ function saveQta(i,val){
       inp.style.borderColor=isLow?'#e53e3e':'var(--border)';
     }
   });
+  _syncMagIdxFirebase(i);
 }
 
 // -- SOGLIA SCORTA MINIMA -------------------------------------------------
@@ -601,6 +607,7 @@ function saveSoglia(){
   });
   _sogliaSnapshot=null;
   document.getElementById('sq').classList.remove('open');
+  _syncMagIdxFirebase(sogliaIdx);
   sogliaIdx=null;
 }
 function closeSoglia(){

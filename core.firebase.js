@@ -7,6 +7,48 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 
 (function(){
+  function _safeLsGet(k, d){
+    try{
+      var v = localStorage.getItem(k);
+      return v != null ? JSON.parse(v) : d;
+    }catch(e){ return d; }
+  }
+  function _applySharedValue(path, key, globalVarName, fallbackDefault){
+    _fbDb.ref(path).on('value', function(snap){
+      var d = snap.val();
+      if(d == null){
+        if(typeof window[globalVarName] !== 'undefined'){
+          // Primo bootstrap: se Firebase è vuoto ma esiste locale, pubblica il locale.
+          var local = _safeLsGet(key, fallbackDefault);
+          if(local != null && (Array.isArray(local) ? local.length : Object.keys(local || {}).length)){
+            _fbSharedSyncing[path] = true;
+            try{ _fbDb.ref(path).set(local); }catch(e){}
+            setTimeout(function(){ _fbSharedSyncing[path] = false; }, 250);
+          }
+        }
+        return;
+      }
+      if(_fbSharedSyncing[path]) return;
+      _fbSharedSyncing[path] = true;
+      try{
+        window[globalVarName] = d;
+        window.AppStorage.set(key, d);
+        if(globalVarName === 'categorie'){
+          if(typeof renderCatTree === 'function') renderCatTree();
+          if(typeof renderMagazzino === 'function') renderMagazzino();
+          if(typeof renderInventario === 'function') renderInventario();
+        } else if(globalVarName === 'carrelliCestino' || globalVarName === 'ordiniCestino'){
+          if(typeof renderCestino === 'function') renderCestino();
+        } else if(globalVarName === 'movimenti'){
+          if(typeof renderMovimenti === 'function') renderMovimenti();
+        }
+      }catch(e){
+        console.error('FB shared sync apply errore:', path, e);
+      }
+      setTimeout(function(){ _fbSharedSyncing[path] = false; }, 250);
+    });
+  }
+
   try{
     if(firebase && firebase.apps && firebase.apps.length){
       _fb = firebase.app();
@@ -82,19 +124,13 @@ document.addEventListener('DOMContentLoaded', function(){
       // Flag SEPARATO: non interferisce con la sync degli ordini
       if(_fbSyncingCart) return;
       var d = snap.val();
-      // Firebase manda null se non ci sono carrelli attivi — normale
+      // Firebase manda null se non ci sono carrelli — normale
       var fresh = d ? _fbFix(d) : [];
-      // Fonde i carrelli Firebase con quelli locali già inviati (che non sono su Firebase)
-      // Mantiene i carrelli "inviato" che ho già localmente — non li perde
-      var inviatiLocali = carrelli.filter(function(c){ return c.stato === 'inviato'; });
-      var merged = fresh.concat(inviatiLocali.filter(function(inv){
-        return !fresh.find(function(f){ return f.id === inv.id; });
-      }));
-      if(JSON.stringify(merged) === JSON.stringify(carrelli)) return;
+      if(JSON.stringify(fresh) === JSON.stringify(carrelli)) return;
       _fbSyncingCart = true;
       try{
-        console.log('[CART] sync Firebase — attivi:', fresh.length, 'inviati locali:', inviatiLocali.length);
-        carrelli = merged;
+        console.log('[CART] sync Firebase — totale condiviso:', fresh.length);
+        carrelli = fresh;
         lsSet(CARTK, carrelli);
         updateCartBadge();
         // Se activeCartId non esiste più tra i carrelli attivi, prendi l'ultimo attivo
@@ -109,6 +145,16 @@ document.addEventListener('DOMContentLoaded', function(){
       }catch(e){ console.error('[CART] sync Firebase errore:', e); }
       setTimeout(function(){ _fbSyncingCart = false; }, 300);
     });
+
+    // Dataset condivisi: identici su tutti gli account/dispositivi
+    _applySharedValue('shared/categorie', window.AppKeys.CATEGORIE, 'categorie', []);
+    _applySharedValue('shared/carrelli_cestino', window.AppKeys.CARRELLI_CESTINO, 'carrelliCestino', []);
+    _applySharedValue('shared/ordini_archivio', window.AppKeys.ORDINI_ARCHIVIO, 'ordiniArchivio', []);
+    _applySharedValue('shared/ordini_cestino', window.AppKeys.ORDINI_CESTINO, 'ordiniCestino', []);
+    _applySharedValue('shared/movimenti', window.AppKeys.MOVIMENTI, 'movimenti', []);
+    _applySharedValue('shared/clienti', window.AppKeys.CLIENTI, 'clienti', {});
+    _applySharedValue('shared/fatture', window.AppKeys.FATTURE, 'fatture', []);
+    _applySharedValue('shared/ordini_fornitori', window.AppKeys.ORDFORNITORI, 'ordFornitori', []);
 
     // ── Avvia caricamento catalogo IMMEDIATAMENTE all'apertura ──
     if(document.readyState === 'loading'){

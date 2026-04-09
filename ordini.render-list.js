@@ -9,14 +9,7 @@ function renderOrdini(){
   var searchVal=(document.getElementById('ord-search')||{}).value||'';
   var searchLow=searchVal.trim().toLowerCase();
 
-  // ── BOZZE — rileggi sempre da localStorage per sicurezza ──
-  var _freshOrdini = lsGet(ORDK, []);
-  // Merge: aggiungi bozze presenti in localStorage ma non in memoria
-  _freshOrdini.forEach(function(fo){
-    if(fo && fo.stato==='bozza' && !ordini.find(function(o){return o.id===fo.id;})){
-      ordini.unshift(fo);
-    }
-  });
+  // Fonte unica: ordini[] arriva dal realtime Firebase (niente merge locale)
 
   // Bozze incluse nel flusso normale (filtro "nuovo" o "tutti")
   var filtered = ordini.filter(function(o){

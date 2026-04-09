@@ -279,12 +279,11 @@ function inviaOrdine(cartId){
     },1500);
   }
 
-  // Segna il carrello come "inviato" localmente (read-only, non va su Firebase)
-  // saveCarrelli() filtra automaticamente i carrelli inviati — non li condivide
+  // Segna il carrello come "inviato": resta condiviso su Firebase in tempo reale
   cart.stato='inviato';
   cart.ordId=ord.id;
   cart.locked=true;
-  saveCarrelli();   // ← scrive su Firebase solo i carrelli ancora attivi
+  saveCarrelli();
   _lastAddedItem=null;
   feedbackSend();
   renderCartTabs();

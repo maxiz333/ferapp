@@ -1,20 +1,47 @@
 // ══ PUSH FIREBASE + SALVA CARRELLI / ORDINI ═══════════════════════
 function _fbPush(ref,data){if(!_fbReady||_fbSyncing)return;try{_fbDb.ref(ref).set(data);}catch(e){}}
 
+// Sync unificata localStorage -> Firebase per dataset condivisi globali
+var _fbSharedSyncing = {};
+function _fbSharedPathForKey(k){
+  var AK = window.AppKeys || {};
+  var map = {};
+  map[AK.CATEGORIE] = 'shared/categorie';
+  map[AK.CARRELLI_CESTINO] = 'shared/carrelli_cestino';
+  map[AK.ORDINI_ARCHIVIO] = 'shared/ordini_archivio';
+  map[AK.ORDINI_CESTINO] = 'shared/ordini_cestino';
+  map[AK.MOVIMENTI] = 'shared/movimenti';
+  map[AK.CLIENTI] = 'shared/clienti';
+  map[AK.FATTURE] = 'shared/fatture';
+  map[AK.ORDFORNITORI] = 'shared/ordini_fornitori';
+  return map[k] || null;
+}
+
+if(typeof lsSet === 'function' && !window.__LSSET_FB_SHARED_PATCHED__){
+  window.__LSSET_FB_SHARED_PATCHED__ = true;
+  var _origLsSet = lsSet;
+  lsSet = function(k, v){
+    _origLsSet(k, v);
+    var path = _fbSharedPathForKey(k);
+    if(!path) return;
+    if(_fbSharedSyncing[path]) return;
+    if(!_fbReady || !_fbDb) return;
+    try{
+      _fbDb.ref(path).set(v == null ? null : v);
+    }catch(e){
+      console.error('FB shared sync save errore:', path, e);
+    }
+  };
+}
+
 function saveCarrelli(){
   _takeSnapshot();
   lsSet(CARTK, carrelli);
   updateCartBadge();
-  // Su Firebase vanno SOLO i carrelli attivi (non inviati e non eliminati)
-  // I carrelli "inviato" restano solo in localStorage — su Firebase spariscono
-  // Questo è lo stesso comportamento degli ordini: una volta processato, esce dalla coda condivisa
-  var daCondividere = carrelli.filter(function(c){
-    return c.stato !== 'inviato';
-  });
   if(_fbReady && _fbDb && !_fbSyncingCart){
     try{
-      _fbDb.ref('carrelli').set(daCondividere.length ? daCondividere : null);
-      console.log('[CART] saveCarrelli — Firebase aggiornato, attivi:', daCondividere.length, 'totale locale:', carrelli.length);
+      _fbDb.ref('carrelli').set(carrelli.length ? carrelli : null);
+      console.log('[CART] saveCarrelli — Firebase aggiornato, totale condiviso:', carrelli.length);
     }catch(e){ console.error('[CART] saveCarrelli Firebase FALLITO:', e); }
   }
 }

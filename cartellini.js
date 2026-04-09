@@ -400,12 +400,18 @@ function ct_svuota(){
 
 function ct_genAnteprima(){
   if(!ctRows.length){ showToastGen('red','⚠️ Nessun cartellino'); return; }
+  // In anteprima/stampa vanno solo i cartellini ancora "da fare"
+  var printableRows = ctRows.filter(function(r){ return !r.fatto; });
+  if(!printableRows.length){
+    showToastGen('yellow','ℹ️ Tutti i cartellini sono segnati come fatti');
+    return;
+  }
   // Carica e applica le impostazioni editor
   var savedEd = lsGet(window.AppKeys.EDITOR, null);
   if(savedEd && typeof editorSettings !== 'undefined') Object.assign(editorSettings, savedEd);
   if(typeof applyEditorCSS==='function') applyEditorCSS();
   // Genera HTML direttamente da ctRows SENZA toccare rows/save
-  var html = buildTagsHTML(ctRows, false);
+  var html = buildTagsHTML(printableRows, false);
   // Popola print-area per la stampa
   var printArea = document.getElementById('print-area');
   if(printArea) printArea.innerHTML = html;
