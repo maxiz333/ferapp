@@ -17,9 +17,7 @@ function closeOrdDetail(){
   renderOrdini();
 }
 function _odTot(ord){
-  return (ord.items||[]).reduce(function(s,it){
-    return s+ parsePriceIT(it.prezzoUnit)*parseFloat(it.qty||0);
-  },0);
+  return ordTotaleSenzaCongelati(ord);
 }
 function _odRender(ord){
   try{
@@ -48,9 +46,12 @@ function _odRenderItems(ord){
   var el=document.getElementById('ord-detail-items');
   if(!el)return;
   var h='';
-  var items=ord.items||[];
-  for(var i=0;i<items.length;i++){
-    var it=items[i];
+  var idxs=ordineIndiciOrdineDisplay(ord);
+  for(var k=0;k<idxs.length;k++){
+    var i=idxs[k];
+    var it=(ord.items||[])[i];
+    if(!it) continue;
+    var isFz=ordItemCongelato(it);
     var desc=it.desc||'';
     var qty=parseFloat(it.qty||1);
     var unit=it.unit||'pz';
@@ -59,6 +60,20 @@ function _odRenderItems(ord){
     var isSc=it.scampolo||false;
     var isHs=it.hasScaglioni||false;
     var expanded=it._expanded||false;
+
+    if(isFz){
+      h+='<div style="opacity:.88;background:#1a1a22;border:1px solid #353540;border-radius:10px;margin-bottom:8px;overflow:hidden;" id="odi-'+i+'">';
+      h+='<div style="padding:8px 10px;">';
+      h+='<div style="font-size:10px;color:#9ca3af;margin-bottom:6px;font-weight:800;letter-spacing:.3px;">Rimosso dal banco</div>';
+      h+='<div style="font-size:13px;font-weight:700;color:#a0a0a8;">'+esc(desc)+'</div>';
+      h+='<div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;">';
+      h+='<span style="color:#888;font-size:12px;">'+qty+' '+esc(unit)+'</span>';
+      h+='<span style="color:#444;">×</span>';
+      h+='<input type="text" value="'+esc(pu)+'" oninput="odUpd('+i+',\'prezzoUnit\',this.value)" style="width:56px;background:#111;border:1px solid #444;border-radius:6px;color:#63b3ed;font-size:12px;font-weight:700;text-align:right;padding:4px;">';
+      h+='<span style="color:#666;font-size:11px;margin-left:auto;">escluso da totale</span>';
+      h+='</div></div></div>';
+      continue;
+    }
 
     h+='<div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;margin-bottom:8px;overflow:hidden;" id="odi-'+i+'">';
 
@@ -161,12 +176,13 @@ function _odRenderItems(ord){
 function odUpd(i,field,val){
   var ord=ordini.find(function(o){return o.id===_ordDetailId;});
   if(!ord||!ord.items[i])return;
+  if(ordItemCongelato(ord.items[i])&&field!=='prezzoUnit') return;
   ord.items[i][field]=val;
   if(field==='qty'||field==='prezzoUnit'){
     var pu=(ord.items[i].prezzoUnit||'0').toString().replace(',','.');
     var sub=(parseFloat(pu)*parseFloat(ord.items[i].qty||0)).toFixed(2);
     var elS=document.getElementById('ods-'+i);
-    if(elS)elS.textContent='-'+sub;
+    if(elS) elS.textContent=ordItemCongelato(ord.items[i])?'—':'-'+sub;
     var elQ=document.getElementById('odq-'+i);
     if(elQ&&field==='qty')elQ.textContent=val;
     var tot=_odTot(ord);
@@ -175,10 +191,12 @@ function odUpd(i,field,val){
   }
   ord.totale=_odTot(ord).toFixed(2);
   saveOrdini();
+  _odSyncCartFromOrdIfBozza(ord);
 }
 function odDQ(i,delta){
   var ord=ordini.find(function(o){return o.id===_ordDetailId;});
   if(!ord||!ord.items[i])return;
+  if(ordItemCongelato(ord.items[i])) return;
   var cur=parseFloat(ord.items[i].qty||1);
   var nv=Math.max(1,Math.round(cur+delta));
   ord.items[i].qty=nv;
@@ -195,6 +213,12 @@ function odDQ(i,delta){
   if(elT)elT.textContent='- '+tot.toFixed(2);
   ord.totale=tot.toFixed(2);
   saveOrdini();
+  _odSyncCartFromOrdIfBozza(ord);
+}
+function _odSyncCartFromOrdIfBozza(ord){
+  if(!ord||ord.stato!=='bozza') return;
+  var cB=carrelli.find(function(x){ return x.bozzaOrdId===ord.id; });
+  if(cB){ cB.items=ordItemsSoloAttiviDeep(ord.items); saveCarrelli(); }
 }
 function _odApplicaScaglione(it){
   if(!it.hasScaglioni || !it.scaglioni || !it.scaglioni.length) return;
@@ -224,12 +248,14 @@ function odToggleExpand(i){
 function odToggleScampolo(i){
   var ord=ordini.find(function(o){return o.id===_ordDetailId;});
   if(!ord||!ord.items[i]) return;
+  if(ordItemCongelato(ord.items[i])) return;
   ord.items[i].scampolo=!ord.items[i].scampolo;
   saveOrdini(); _odRenderItems(ord); renderOrdini();
 }
 function odToggleScaglioni(i){
   var ord=ordini.find(function(o){return o.id===_ordDetailId;});
   if(!ord||!ord.items[i]) return;
+  if(ordItemCongelato(ord.items[i])) return;
   ord.items[i].hasScaglioni=!ord.items[i].hasScaglioni;
   if(ord.items[i].hasScaglioni && !ord.items[i].scaglioni) ord.items[i].scaglioni=[];
   saveOrdini(); _odRenderItems(ord); renderOrdini();
@@ -307,6 +333,7 @@ function ordDetailStampa(){
   var tot=_odTot(ord).toFixed(2);
   var righe='';
   (ord.items||[]).forEach(function(it){
+    if(ordItemCongelato(it)) return;
     var sub=( parsePriceIT(it.prezzoUnit)*parseFloat(it.qty||0)).toFixed(2);
     righe+='<tr><td>'+esc(it.desc||'')+'</td><td style="text-align:center;">'+it.qty+' '+esc(it.unit||'pz')+'</td><td style="text-align:right;">-'+esc(it.prezzoUnit||'0')+'</td><td style="text-align:right;font-weight:bold;">-'+sub+'</td></tr>';
   });

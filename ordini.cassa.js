@@ -14,9 +14,10 @@ function openCassa(gi){
   document.getElementById('cassa-info').style.fontSize='11px';
   document.getElementById('cassa-cliente').style.fontSize='18px';
   var tot=0;
-  var nItems=(ord.items||[]).length;
+  var itemsCassa=(ord.items||[]).filter(function(it){ return !ordItemCongelato(it); });
+  var nItems=itemsCassa.length;
   var bodyH='';
-  (ord.items||[]).forEach(function(it,i){
+  itemsCassa.forEach(function(it,i){
     var pu=parsePriceIT(it.prezzoUnit);
     var q=parseFloat(it.qty||0);
     var sub=(pu*q).toFixed(2);

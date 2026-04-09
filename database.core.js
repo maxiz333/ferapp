@@ -72,6 +72,72 @@ function ordItemLineUnitSelling(it){
   }
   return p;
 }
+
+/** Riga congelata (rimossa dal banco ma tenuta in bozza/ordine). */
+function ordItemCongelato(it){ return !!(it && it.congelato); }
+
+/** Indici righe per lista ordini: articoli attivi prima, congelati sempre in fondo. */
+function ordineIndiciOrdineDisplay(ord){
+  return ordineIndiciItemsDisplay(ord.items||[]);
+}
+/** Stesso ordinamento attivi→congelati su un array items (es. overlay modifica). */
+function ordineIndiciItemsDisplay(items){
+  items=items||[];
+  var out=[];
+  for(var i=0;i<items.length;i++){ if(!ordItemCongelato(items[i])) out.push(i); }
+  for(var j=0;j<items.length;j++){ if(ordItemCongelato(items[j])) out.push(j); }
+  return out;
+}
+
+/** Totale € solo righe non congelate (tab ordini, cassa, stampa). */
+function ordTotaleSenzaCongelati(ord){
+  return (ord.items||[]).reduce(function(s,it){
+    if(ordItemCongelato(it)) return s;
+    return s + parsePriceIT(it.prezzoUnit)*parseFloat(it.qty||0);
+  },0);
+}
+
+/** Solo articoli attivi — per sync carrello ↔ bozza. */
+function ordItemsSoloAttiviDeep(items){
+  return JSON.parse(JSON.stringify((items||[]).filter(function(it){ return !ordItemCongelato(it); })));
+}
+
+/** True se due righe ordine rappresentano lo stesso articolo (per undo rimozione carrello). */
+function ordineItemMatchPerUndo(a,b){
+  if(!a||!b) return false;
+  return (a.desc||'')===(b.desc||'') && String(a.codM||'')===String(b.codM||'') && String(a.codF||'')===String(b.codF||'') &&
+    Math.abs(parseFloat(a.qty||0)-parseFloat(b.qty||0))<0.0001;
+}
+
+/** Max righe cronologia operazioni su ordine (persistenza in ordini[]). */
+var ORDINE_STORICO_MAX = 400;
+
+/** Bozza attiva o ordine in modifica collegato al carrello — per cronologia. */
+function ordinePerCarrelloStorico(cart){
+  if(!cart||typeof ordini==='undefined'||!ordini) return null;
+  if(cart.bozzaOrdId){
+    var o=ordini.find(function(x){ return x.id===cart.bozzaOrdId; });
+    if(o&&o.stato==='bozza') return o;
+  }
+  if(cart.ordId && cart.stato==='modifica'){
+    return ordini.find(function(x){ return x.id===cart.ordId; })||null;
+  }
+  return null;
+}
+
+/** Aggiunge una riga alla cronologia ordine (più recente in testa). */
+function ordineAppendStorico(ord, descrizione){
+  if(!ord||!descrizione) return;
+  if(!ord.storicoOperazioni) ord.storicoOperazioni = [];
+  var d=new Date();
+  ord.storicoOperazioni.unshift({
+    at: d.toISOString(),
+    label: d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+    msg: String(descrizione).slice(0,500)
+  });
+  if(ord.storicoOperazioni.length > ORDINE_STORICO_MAX) ord.storicoOperazioni.length = ORDINE_STORICO_MAX;
+}
+
 /** Legge e trimma il valore di un input per id */
 function gf(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; }
 var rows=[], removed=new Set(lsGet(RK,[])), cestino=lsGet(CK,[]);

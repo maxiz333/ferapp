@@ -26,14 +26,12 @@
       var bozza = ordini.find(function(o){ return o.id === cart.bozzaOrdId; });
       if(bozza && bozza.stato === 'bozza'){
         // Aggiorna la bozza con i dati finali del carrello
-        var tot = (cart.items||[]).reduce(function(s,it){
-          return s + (_prezzoEffettivo(it) * parseFloat(it.qty||0));
-        }, 0);
+        var prevFrozen=(bozza.items||[]).filter(function(it){ return ordItemCongelato(it); }).map(function(it){ return JSON.parse(JSON.stringify(it)); });
         bozza.stato     = 'nuovo';
         bozza.numero    = getNextOrdNum();
-        bozza.items     = JSON.parse(JSON.stringify(cart.items||[]));
+        bozza.items     = JSON.parse(JSON.stringify(cart.items||[])).concat(prevFrozen);
         bozza.nota      = cart.nota || '';
-        bozza.totale    = tot.toFixed(2);
+        bozza.totale    = ordTotaleSenzaCongelati(bozza).toFixed(2);
         bozza.scontoGlobale = cart.scontoGlobale || null;
         bozza.commesso  = (typeof _currentUser !== 'undefined' && _currentUser) ? _currentUser.key : (cart.commesso || '');
         bozza.promozione= new Date().toLocaleString('it-IT');
@@ -91,7 +89,16 @@ function ordMostraModifiche(ordId){
   var existing = document.getElementById('modpop_' + ordId);
   if(existing){ existing.remove(); return; }
   var diff = (ord.modificheDiff && ord.modificheDiff.length) ? ord.modificheDiff : null;
-  var msg = diff ? diff.join('\n') : ('Modificato il ' + (ord.modificatoAt || '—'));
+  var msg;
+  if(ord.storicoOperazioni && ord.storicoOperazioni.length){
+    msg = ord.storicoOperazioni.slice().reverse().map(function(r){
+      return (r.label||'') + ' — ' + (r.msg||'');
+    }).join('\n');
+  } else if(diff){
+    msg = diff.join('\n');
+  } else {
+    msg = 'Modificato il ' + (ord.modificatoAt || '—');
+  }
   // Trova la card e inserisce il popup subito dopo la banda stato
   var cards = document.querySelectorAll('.ord-card');
   var target = null;

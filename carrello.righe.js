@@ -1,4 +1,11 @@
 // --- CARRELLO - OPERAZIONI ARTICOLI ---------------------------
+function _cartLabelModalita(it){
+  if(!it) return 'listino';
+  if(it.scampolo) return 'SCA';
+  if(it.fineRotolo||it._tuttoRotolo) return 'ROT';
+  if(it._scaglionato) return 'Scaglioni';
+  return 'listino';
+}
 function cartAddItem(rowIdx){
   if(!activeCartId)return;
   var cart=carrelli.find(function(c){return c.id===activeCartId;});if(!cart)return;
@@ -11,6 +18,11 @@ function cartAddItem(rowIdx){
     nota:'',_scaglioniAperti:false,daOrdinare:false};
   (cart.items=cart.items||[]).push(newItem);
   _lastAddedItem={rowIdx:rowIdx,item:JSON.parse(JSON.stringify(newItem))};
+  var oSt=ordinePerCarrelloStorico(cart);
+  if(oSt){
+    ordineAppendStorico(oSt,'Aggiunto: '+(newItem.desc||'articolo'));
+    if(typeof saveOrdini==='function') saveOrdini();
+  }
   saveCarrelli();
   feedbackAdd();
   // Avviso stock basso
@@ -26,34 +38,56 @@ function cartAddItem(rowIdx){
   var s=document.getElementById('cart-search');if(s)s.value='';
   var rs=document.getElementById('cart-search-results');if(rs)rs.innerHTML='';
   renderCartTabs();
-  // Flash sull'ultimo articolo aggiunto
+  // Flash sull'ultimo articolo aggiunto (in cima alla lista)
   setTimeout(function(){
-    var items=document.querySelectorAll('.cart-item-row');
-    var last=items[items.length-1];
-    if(last){last.classList.add('cart-item-flash');last.scrollIntoView({behavior:'smooth',block:'nearest'});}
+    var lastIdx = (cart.items||[]).length - 1;
+    var el = lastIdx >= 0 ? document.getElementById('cart-row-' + lastIdx) : null;
+    if(el){ el.classList.add('cart-item-flash'); el.scrollIntoView({behavior:'smooth',block:'nearest'}); }
   },50);
 }
 function cartDelta(cartId,idx,delta){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
+  var oldQ=Math.round(parseFloat(cart.items[idx].qty)||0);
   // Fix: incremento sempre intero (1, 2, 3...) — minimo assoluto 1
-  var newQty = Math.round(parseFloat(cart.items[idx].qty)||0) + Math.round(delta);
+  var newQty = oldQ + Math.round(delta);
   cart.items[idx].qty = Math.max(1, newQty);
   _cartApplicaScaglione(cart.items[idx]);
+  var o=ordinePerCarrelloStorico(cart);
+  if(o&&oldQ!==cart.items[idx].qty){
+    var it=cart.items[idx];
+    ordineAppendStorico(o,'Quantità '+((it&&it.desc)||'?')+': '+oldQ+' → '+it.qty+' '+(it.unit||'pz'));
+    if(typeof saveOrdini==='function') saveOrdini();
+  }
   saveCarrelli();renderCartTabs();
 }
 function cartSetQty(cartId,idx,val){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
+  var oldQ=Math.round(parseFloat(cart.items[idx].qty)||0);
   // Fix: solo interi, minimo 1
   cart.items[idx].qty = Math.max(1, Math.round(parseFloat(val)||1));
   _cartApplicaScaglione(cart.items[idx]);
+  var o=ordinePerCarrelloStorico(cart);
+  if(o&&oldQ!==cart.items[idx].qty){
+    var it=cart.items[idx];
+    ordineAppendStorico(o,'Quantità '+((it&&it.desc)||'?')+': '+oldQ+' → '+it.qty+' '+(it.unit||'pz'));
+    if(typeof saveOrdini==='function') saveOrdini();
+  }
   saveCarrelli();renderCartTabs();
 }
 function cartSetPrezzo(cartId,idx,val){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
-  cart.items[idx].prezzoUnit=val;saveCarrelli();renderCartTabs();
+  var it=cart.items[idx];
+  var oldP=String(it.prezzoUnit||'');
+  it.prezzoUnit=val;
+  var o=ordinePerCarrelloStorico(cart);
+  if(o&&oldP!==String(val)){
+    ordineAppendStorico(o,'Prezzo '+((it.desc)||'?')+': €'+oldP+' → €'+val);
+    if(typeof saveOrdini==='function') saveOrdini();
+  }
+  saveCarrelli();renderCartTabs();
 }
 function cartSetUnit(cartId,idx,val){
   var cart=carrelli.find(function(c){return c.id===cartId;});
@@ -77,22 +111,20 @@ function cartCycleScampolo(cartId,idx){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
   var it=cart.items[idx];
+  var prevLab=_cartLabelModalita(it);
   if(!it.scampolo && !it.fineRotolo && !it._tuttoRotolo && !it._scaglionato){
-    if(!ensurePrezzoOriginaleDaListino(it, true)){
-      showToastGen('orange','Listino non disponibile: imposta prezzo o cerca da magazzino');
-      return;
-    }
+    ensurePrezzoOriginaleDaListino(it, true);
     it.scampolo=true; it.fineRotolo=false; it._tuttoRotolo=false; it._scaglionato=false;
     it._scontoTipo='scampolo';
     if(!it._scontoApplicato) it._scontoApplicato=SCONTO_SCAMPOLO_DEFAULT_PCT;
   } else if(it.scampolo){
-    if(!ensurePrezzoOriginaleDaListino(it, true)) return;
+    ensurePrezzoOriginaleDaListino(it, true);
     it.scampolo=false; it.fineRotolo=true; it._tuttoRotolo=true; it._scaglionato=false;
     it._scontoTipo='rotolo';
     it._scontoApplicato = SCONTO_ROTOLO_DEFAULT_PCT;
     it.nota='ROTOLO INTERO';
   } else if(it.fineRotolo || it._tuttoRotolo){
-    if(!ensurePrezzoOriginaleDaListino(it, true)) return;
+    ensurePrezzoOriginaleDaListino(it, true);
     it.scampolo=false; it.fineRotolo=false; it._tuttoRotolo=false; it._scaglionato=true;
     it._scontoTipo='scaglionato';
     if(it.nota==='ROTOLO INTERO') it.nota='';
@@ -105,15 +137,33 @@ function cartCycleScampolo(cartId,idx){
     delete it._prezzoOriginale;
     if(restoreC && parsePriceIT(restoreC) > 0) it.prezzoUnit = restoreC;
   }
+  var o=ordinePerCarrelloStorico(cart);
+  if(o){
+    var nl=_cartLabelModalita(it);
+    if(prevLab!==nl){
+      var desc=(it.desc||'?');
+      if(nl==='SCA') ordineAppendStorico(o,'Modalità Scampolo (SCA): '+desc);
+      else if(nl==='ROT') ordineAppendStorico(o,'Modalità Rotolo (ROT): '+desc);
+      else if(nl==='Scaglioni') ordineAppendStorico(o,'Modalità scaglioni: '+desc);
+      else ordineAppendStorico(o,'Prezzo listino: '+desc);
+      if(typeof saveOrdini==='function') saveOrdini();
+    }
+  }
   saveCarrelli();renderCartTabs();
 }
 function cartSetScontoScampolo(cartId,idx,val){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
   var it=cart.items[idx];
+  var oldSc=it._scontoApplicato;
   it._scontoApplicato=parseFloat(val)||0;
   if(it.scampolo||it.fineRotolo||it._scaglionato){
     ensurePrezzoOriginaleDaListino(it, true);
+  }
+  var o=ordinePerCarrelloStorico(cart);
+  if(o&&(it.scampolo||it.fineRotolo||it._scaglionato)&&(oldSc!==it._scontoApplicato)){
+    ordineAppendStorico(o,'Sconto '+((it.desc)||'?')+': '+(oldSc!=null?oldSc+'%':'—')+' → '+it._scontoApplicato+'% ('+_cartLabelModalita(it)+')');
+    if(typeof saveOrdini==='function') saveOrdini();
   }
   saveCarrelli();renderCartTabs();
 }
@@ -166,7 +216,32 @@ function cartRemoveItem(cartId,idx){
   _takeSnapshot();
   _fbSyncing=true; // blocca Firebase durante operazione
   var removed=(cart.items||[]).splice(idx,1)[0];
-  lsSet(CARTK,carrelli);updateCartBadge();_fbPush('carrelli',carrelli);
+  if(cart.bozzaOrdId){
+    var bozza=typeof ordini!=='undefined'?ordini.find(function(o){return o.id===cart.bozzaOrdId;}):null;
+    if(bozza&&bozza.stato==='bozza'){
+      var oldFrozen=(bozza.items||[]).filter(function(it){ return ordItemCongelato(it); }).map(function(it){ return JSON.parse(JSON.stringify(it)); });
+      var fz=JSON.parse(JSON.stringify(removed));
+      fz.congelato=true;
+      bozza.items=JSON.parse(JSON.stringify(cart.items||[])).concat(oldFrozen).concat([fz]);
+      ordineAppendStorico(bozza,'Rimosso (congelato): '+(removed.desc||'?'));
+      if(typeof saveOrdini==='function') saveOrdini();
+    }
+  }
+  // Ordine confermato sbloccato in modifica: stesso schema bozza — riga in fondo come congelata
+  if(cart.stato==='modifica' && cart.ordId){
+    var ordMod=typeof ordini!=='undefined'?ordini.find(function(o){return o.id===cart.ordId;}):null;
+    if(ordMod){
+      var oldFrOrd=(ordMod.items||[]).filter(function(it){ return ordItemCongelato(it); }).map(function(it){ return JSON.parse(JSON.stringify(it)); });
+      var fzOrd=JSON.parse(JSON.stringify(removed));
+      fzOrd.congelato=true;
+      ordMod.items=JSON.parse(JSON.stringify(cart.items||[])).concat(oldFrOrd).concat([fzOrd]);
+      ordMod.totale=ordTotaleSenzaCongelati(ordMod).toFixed(2);
+      ordineAppendStorico(ordMod,'Rimosso (congelato): '+(removed.desc||'?'));
+      if(typeof saveOrdini==='function') saveOrdini();
+    }
+  }
+  if(typeof saveCarrelli==='function') saveCarrelli();
+  else{ lsSet(CARTK,carrelli);updateCartBadge();_fbPush('carrelli',carrelli); }
   setTimeout(function(){_fbSyncing=false;},1000);
   renderCartTabs();
   // Undo toast
@@ -176,7 +251,38 @@ function cartRemoveItem(cartId,idx){
   var btn=document.createElement('button');
   btn.textContent='Annulla';
   btn.style.cssText='padding:4px 12px;border-radius:6px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;';
-  btn.onclick=function(){(cart.items||[]).splice(idx,0,removed);saveCarrelli();renderCartTabs();t.remove();};
+  btn.onclick=function(){
+    delete removed.congelato;
+    (cart.items||[]).splice(idx,0,removed);
+    if(cart.bozzaOrdId){
+      var bz=typeof ordini!=='undefined'?ordini.find(function(o){return o.id===cart.bozzaOrdId;}):null;
+      if(bz&&bz.stato==='bozza'){
+        var fr=(bz.items||[]).filter(function(it){ return ordItemCongelato(it); });
+        var found=false;
+        fr=fr.filter(function(it){
+          if(!found&&ordineItemMatchPerUndo(it,removed)){ found=true; return false; }
+          return true;
+        });
+        bz.items=JSON.parse(JSON.stringify(cart.items||[])).concat(fr);
+        if(typeof saveOrdini==='function') saveOrdini();
+      }
+    }
+    if(cart.stato==='modifica' && cart.ordId){
+      var oUndo=typeof ordini!=='undefined'?ordini.find(function(x){return x.id===cart.ordId;}):null;
+      if(oUndo){
+        var frO=(oUndo.items||[]).filter(function(it){ return ordItemCongelato(it); });
+        var fo=false;
+        frO=frO.filter(function(it){
+          if(!fo&&ordineItemMatchPerUndo(it,removed)){ fo=true; return false; }
+          return true;
+        });
+        oUndo.items=JSON.parse(JSON.stringify(cart.items||[])).concat(frO);
+        oUndo.totale=ordTotaleSenzaCongelati(oUndo).toFixed(2);
+        if(typeof saveOrdini==='function') saveOrdini();
+      }
+    }
+    saveCarrelli();renderCartTabs();t.remove();
+  };
   t.appendChild(btn);document.body.appendChild(t);
   setTimeout(function(){if(t.parentNode)t.remove();},5000);
 }

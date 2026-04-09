@@ -183,14 +183,29 @@ function avvisaUfficio(cartId){
   showToastGen('green','📢 Ufficio avvisato! Vedono già gli articoli.');
 }
 
-// Aggiorna la bozza con gli articoli correnti del carrello
+// Aggiorna la bozza con gli articoli correnti del carrello (i congelati restano in coda)
 function _aggiornaBozzaOrdine(cart){
   if(!cart||!cart.bozzaOrdId)return;
   var bozza=ordini.find(function(o){return o.id===cart.bozzaOrdId;});
   if(!bozza||bozza.stato!=='bozza')return;
-  bozza.items=JSON.parse(JSON.stringify(cart.items||[]));
+  var prevFrozen=(bozza.items||[]).filter(function(it){ return ordItemCongelato(it); }).map(function(it){ return JSON.parse(JSON.stringify(it)); });
+  bozza.items=JSON.parse(JSON.stringify(cart.items||[])).concat(prevFrozen);
   bozza.nomeCliente=cart.nome||'—';
   bozza.nota=cart.nota||'';
+  saveOrdini();
+}
+
+/** Sync tab Ordini mentre il carrello è in modifica (stesso schema bozza + righe congelate). Mantiene cart.ordId ↔ ord.id. */
+function _aggiornaOrdineDaCarrelloModifica(cart){
+  if(!cart||!cart.ordId||cart.stato!=='modifica') return;
+  var ord=ordini.find(function(o){ return o.id===cart.ordId; });
+  if(!ord) return;
+  var prevFrozen=(ord.items||[]).filter(function(it){ return ordItemCongelato(it); }).map(function(it){ return JSON.parse(JSON.stringify(it)); });
+  ord.items=JSON.parse(JSON.stringify(cart.items||[])).concat(prevFrozen);
+  ord.nomeCliente=cart.nome||ord.nomeCliente||'—';
+  ord.nota=cart.nota||'';
+  ord.scontoGlobale=cart.scontoGlobale||null;
+  ord.totale=ordTotaleSenzaCongelati(ord).toFixed(2);
   saveOrdini();
 }
 
@@ -300,7 +315,7 @@ function ctEditClienteName(cartId){
   cart.nome = nome.trim();
   saveCarrelli();
   // Aggiorna anche l'ordine collegato
-  if(cart.ordId){
+  if(cart.ordId && cart.stato !== 'modifica'){
     var ord = ordini.find(function(o){ return o.id === cart.ordId; });
     if(ord){ ord.nomeCliente = nome.trim(); saveOrdini(); }
   }
@@ -322,11 +337,20 @@ function cartSetScaglioneQta(cartId, idx, val){
   var _origSaveCarrelli = saveCarrelli;
   saveCarrelli = function(){
     _origSaveCarrelli();
-    // Per ogni carrello con bozza attiva, aggiorna la bozza ordine
+    var needOrdListRefresh=false;
     (carrelli||[]).forEach(function(cart){
       if(cart.bozzaOrdId && (cart.items||[]).length){
         _aggiornaBozzaOrdine(cart);
+        needOrdListRefresh=true;
+      }
+      if(cart.stato==='modifica' && cart.ordId){
+        _aggiornaOrdineDaCarrelloModifica(cart);
+        needOrdListRefresh=true;
       }
     });
+    if(needOrdListRefresh && typeof renderOrdini==='function'){
+      var to=document.getElementById('to');
+      if(to&&to.classList.contains('active')) renderOrdini();
+    }
   };
 })();

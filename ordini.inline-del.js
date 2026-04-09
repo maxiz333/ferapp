@@ -44,8 +44,7 @@ function ordInlineEdit(el, gi, ii, field){
       } else if(field === 'codF'){
         it.codF = v;
       }
-      var tot = ord.items.reduce(function(s,x){ return s + parsePriceIT(x.prezzoUnit)*parseFloat(x.qty||0); },0);
-      ord.totale = tot.toFixed(2);
+      ord.totale = ordTotaleSenzaCongelati(ord).toFixed(2);
       ord.modificato = true;
       ord.modificatoAt = new Date().toLocaleString('it-IT');
       ord.modificatoAtISO = new Date().toISOString();
@@ -54,8 +53,9 @@ function ordInlineEdit(el, gi, ii, field){
       if(!linkedCart && ord.stato === 'bozza'){
         linkedCart = carrelli.find(function(c){ return c.bozzaOrdId === ord.id; });
       }
-      if(linkedCart){ linkedCart.items = JSON.parse(JSON.stringify(ord.items)); saveCarrelli(); }
+      if(linkedCart){ linkedCart.items = ordItemsSoloAttiviDeep(ord.items); saveCarrelli(); }
       renderOrdini();
+      if(ord.stato === 'bozza' && typeof renderCartTabs === 'function') renderCartTabs();
     }
     inp.addEventListener('blur', save);
     inp.addEventListener('keydown', function(e){
@@ -102,8 +102,7 @@ function ordDelItem(el, gi, ii){
     var ord = ordini[gi];
     if(!ord || !ord.items[ii]) return;
     ord.items.splice(ii, 1);
-    var tot = ord.items.reduce(function(s,x){ return s + parsePriceIT(x.prezzoUnit)*parseFloat(x.qty||0); }, 0);
-    ord.totale = tot.toFixed(2);
+    ord.totale = ordTotaleSenzaCongelati(ord).toFixed(2);
     ord.modificato = true;
     ord.modificatoAt = new Date().toLocaleString('it-IT');
     ord.modificatoAtISO = new Date().toISOString();
@@ -112,8 +111,9 @@ function ordDelItem(el, gi, ii){
     if(!linkedCart && ord.stato === 'bozza'){
       linkedCart = carrelli.find(function(c){ return c.bozzaOrdId === ord.id; });
     }
-    if(linkedCart){ linkedCart.items = JSON.parse(JSON.stringify(ord.items)); saveCarrelli(); }
+    if(linkedCart){ linkedCart.items = ordItemsSoloAttiviDeep(ord.items); saveCarrelli(); }
     renderOrdini();
+    if(ord.stato === 'bozza' && typeof renderCartTabs === 'function') renderCartTabs();
     showToastGen('red', 'Articolo rimosso');
     return;
   }

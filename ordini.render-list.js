@@ -69,14 +69,13 @@ function renderOrdini(){
       var ost=(ord.stato==='lavorazione') ? 'nuovo' : ord.stato;
       var lockInfo = ordIsLockedByOther(ord.id);
       var nArt=(ord.items||[]).length;
-      var tot=0;
-      (ord.items||[]).forEach(function(it){tot+=parsePriceIT(it.prezzoUnit)*parseFloat(it.qty||0);});
+      var tot=ordTotaleSenzaCongelati(ord);
 
       var isBozza = (ost==='bozza');
 
-      // ── Ex-bozza promossa a ordine: colore viola solo se ancora 'nuovo' ──
+      // ── Ex-bozza promossa a ordine: rosso se ancora 'nuovo' ──
       var _isExBozza = !!(ord.promozione);
-      var sc = isBozza ? '#3182ce' : ((_isExBozza && ost==='nuovo') ? '#805ad5' : (SC[ost]||'#555'));
+      var sc = isBozza ? '#3182ce' : ((_isExBozza && ost==='nuovo') ? '#e53e3e' : (SC[ost]||'#555'));
 
       // ── CARD ORDINE — blocco massiccio con bordo colorato top ──
       var isCompleted = ost==='completato';
@@ -98,14 +97,13 @@ function renderOrdini(){
       }
 
       // ── HEADER: banda colorata con stato ──
-      var _bannerLabel = isBozza ? 'In lavorazione' : ((_isExBozza && ost==='nuovo') ? ('📡 DA BOZZA') : SL[ost]);
+      var _bannerLabel = isBozza ? 'In lavorazione' : ((_isExBozza && ost==='nuovo') ? 'ORDINE IN ARRIVO' : SL[ost]);
       var _bannerTextCol = (ost==='nuovo' && !_isExBozza && !isBozza) ? '#111' : '#fff';
       h+='<div class="ord-card-stato" style="background:'+sc+';color:'+_bannerTextCol+'">';
       h+=_bannerLabel;
       if(ord.numero) h+=' — #'+ord.numero;
-      // Etichetta "da bozza" in piccolo se ex-bozza e NON in stato nuovo (dove il banner è già viola)
       if(_isExBozza && ost!=='nuovo' && !isBozza){
-        h+=' <span style="font-size:9px;opacity:.7;font-weight:600;letter-spacing:.3px;vertical-align:middle;">📡 da bozza</span>';
+        h+=' <span style="font-size:9px;opacity:.85;font-weight:700;letter-spacing:.25px;vertical-align:middle;color:#fca5a5;">ORDINE IN ARRIVO</span>';
       }
       if(ord.modificato){
         var diffTxt = (ord.modificheDiff && ord.modificheDiff.length) ? ord.modificheDiff.join('\\n') : '';
@@ -137,10 +135,12 @@ function renderOrdini(){
 
       // _canEdit — già calcolato sopra
 
-      (ord.items||[]).forEach(function(it,ii){
+      ordineIndiciOrdineDisplay(ord).forEach(function(ii, stripe){
+        var it=ord.items[ii];
+        var isFz=ordItemCongelato(it);
         var pu=parsePriceIT(it.prezzoUnit);
         var q=parseFloat(it.qty||0);
-        var sub=(pu*q).toFixed(2);
+        var sub=isFz?'0.00':(pu*q).toFixed(2);
 
         // Calcola se c'è sconto attivo
         var prezOrigNum=0;
@@ -156,22 +156,23 @@ function renderOrdini(){
           hasSconto=prezOrigNum>prezFinNum+0.005;
         }
 
-        h+='<div class="ord-grid ord-grid-row'+(ii%2===0?' ord-grid-even':' ord-grid-odd')+'">';
+        h+='<div class="ord-grid ord-grid-row'+(stripe%2===0?' ord-grid-even':' ord-grid-odd')+(isFz?' ord-grid-row--congelato':'')+'">';
 
         // Colonna prodotto: nome + codici sotto (codF editabile con dblclick)
         h+='<div class="ord-gc-desc">';
         h+='<div class="ord-item-name" onclick="openSchedaFromOrdine('+gi+','+ii+')" style="cursor:pointer;">'+esc(it.desc||'\u2014')+'</div>';
+        if(isFz) h+='<div class="ord-congelato-badge">Rimosso dal banco</div>';
         var codes='';
         if(it.codM) codes+='<span class="ord-code-mag">'+esc(it.codM)+'</span>';
-        codes+='<span class="ord-code-forn'+(_canEdit?' ord-editable':'')+'"'+(_canEdit?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'codF\')" title="Tap per modificare"':'')+'>'+esc(it.codF||'—')+'</span>';
+        codes+='<span class="ord-code-forn'+(_canEdit&&!isFz?' ord-editable':'')+'"'+(_canEdit&&!isFz?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'codF\')" title="Tap per modificare"':'')+'>'+esc(it.codF||'—')+'</span>';
         h+='<div class="ord-item-codes">'+codes+'</div>';
         if(it.nota) h+='<div class="ord-item-nota">📝 '+esc(it.nota)+'</div>';
         if(it.daOrdinare) h+='<div class="ord-item-daord">🚚 DA ORDINARE</div>';
         h+='</div>';
 
         // Quantità + unità nella stessa cella
-        h+='<div class="ord-gc-qty'+(_canEdit?' ord-editable':'')+'"'+(_canEdit?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'qty\')" title="Tap per modificare"':'')+'>'+q;
-        if(_canEdit){
+        h+='<div class="ord-gc-qty'+(_canEdit&&!isFz?' ord-editable':'')+'"'+(_canEdit&&!isFz?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'qty\')" title="Tap per modificare"':'')+'>'+q;
+        if(_canEdit&&!isFz){
           h+='<select class="ord-unit-select" onclick="event.stopPropagation()" onchange="ordSetUnit('+gi+','+ii+',this.value)">';
           var units=['pz','mt','kg','lt','cf','ml','gr','mm','cm','m\xB2','m\xB3'];
           units.forEach(function(u){ h+='<option value="'+u+'"'+(u===(it.unit||'pz')?' selected':'')+'>'+u+'</option>'; });
@@ -181,9 +182,11 @@ function renderOrdini(){
         }
         h+='</div>';
 
-        // Prezzo unitario — con sconto sbarrato se presente
+        // Prezzo unitario — con sconto sbarrato se presente (congelato: solo prezzo editabile)
         h+='<div class="ord-gc-price'+(_canEdit?' ord-editable':'')+'"'+(_canEdit?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'price\')" title="Tap per modificare"':'')+'>';
-        if(hasSconto){
+        if(isFz){
+          h+='<span style="color:#888;">€'+pu.toFixed(2)+'</span>';
+        } else if(hasSconto){
           var savUnit = (prezOrigNum - pu).toFixed(2);
           h+='<div class="ct-old--orig">€'+prezOrigNum.toFixed(2)+'</div>';
           h+='<div class="ct-sub--final">€'+pu.toFixed(2)+'</div>';
@@ -195,7 +198,9 @@ function renderOrdini(){
 
         // Subtotale — con sconto sbarrato se presente
         h+='<div class="ord-gc-sub">';
-        if(hasSconto){
+        if(isFz){
+          h+='<span style="font-size:12px;color:#666;font-weight:700;">—</span>';
+        } else if(hasSconto){
           var savTot = ((prezOrigNum - pu) * q).toFixed(2);
           h+='<div class="ct-old--orig">€'+(prezOrigNum*q).toFixed(2)+'</div>';
           h+='<div class="ct-sub--final">€'+sub+'</div>';
@@ -211,7 +216,7 @@ function renderOrdini(){
         var hasNota2 = !!(it.nota && it.nota.trim());
         var sc2 = it._scontoApplicato||0;
         var actClass = it._scaglionato ? 'ord-actions-scaglionato' : (it._tuttoRotolo||it.fineRotolo ? 'ord-actions-rotolo' : (it.scampolo ? 'ord-actions-scampolo' : ''));
-        if(_canEdit){
+        if(_canEdit&&!isFz){
           h+='<div class="ord-item-actions '+ actClass +'" style="display:flex;gap:4px;align-items:center;padding:2px 8px;">';
           // Forbici — ciclo: OFF→SCA→ROT→SCAG→OFF
           var forbLbl2 = it._scaglionato?'SCAG':(it._tuttoRotolo?'ROT':(scOn2?(it.fineRotolo?'ROT':'SCA'):''));
@@ -232,6 +237,10 @@ function renderOrdini(){
           // Nota articolo
           h+='<button class="ord-mini-btn'+(hasNota2?' ord-mini-on':'')+'" onclick="ordEditNota('+gi+','+ii+')" title="Nota" style="margin-left:auto">📝</button>';
           h+='<span class="ord-item-del" onclick="event.stopPropagation();ordDelItem(this,'+gi+','+ii+')" title="Rimuovi articolo">×</span>';
+          h+='</div>';
+        } else if(_canEdit&&isFz){
+          h+='<div class="ord-item-actions" style="display:flex;gap:4px;align-items:center;padding:2px 8px;justify-content:flex-end;">';
+          h+='<span class="ord-item-del" onclick="event.stopPropagation();ordDelItem(this,'+gi+','+ii+')" title="Elimina dalla bozza">×</span>';
           h+='</div>';
         } else if(hasNota2||scOn2){
           h+='<div style="padding:1px 8px;font-size:9px;color:#666;">';

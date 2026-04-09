@@ -45,7 +45,7 @@ function switchCart(idx){
   if(carrelli[idx])activeCartId=carrelli[idx].id;
   renderCartTabs();
 }
-function deleteCart(id){
+function deleteCart(id, toastMsg){
   var cart=carrelli.find(function(c){return c.id===id;});
   if(!cart)return;
   if(!_cartPossoModificare(cart)){
@@ -57,7 +57,7 @@ function deleteCart(id){
   carrelli=carrelli.filter(function(c){return c.id!==id;});
   if(activeCartId===id)activeCartId=carrelli.length?carrelli[carrelli.length-1].id:null;
   saveCarrelli();renderCartTabs();
-  showToastGen('green','🗑️ Carrello eliminato');
+  showToastGen('green', toastMsg != null ? toastMsg : '🗑️ Carrello eliminato');
 }
 
 // ── PERMESSI CARRELLO ────────────────────────────────────────────────────────
@@ -135,22 +135,24 @@ function eliminaCarrelloModifica(cartId){
   });
 }
 
-// ── SVUOTA CARRELLO ──────────────────────────────────────────────────────────
-// Rimuove tutti gli articoli dal carrello attivo dopo conferma utente.
-// Usa showConfirm (funzione custom, non window.confirm bloccante su WebView).
-function svuotaCarrello(cartId){
+// ── ELIMINA ORDINE (carrello) ───────────────────────────────────────────────
+// Rimuove il carrello corrente, eventuale bozza collegata e consente Annulla/Ripristina.
+function eliminaOrdineCarrello(cartId){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
-  if(!cart || !(cart.items||[]).length){ showToastGen('yellow','Carrello già vuoto'); return; }
+  if(!cart) return;
   if(!_cartPossoModificare(cart)){
-    showToastGen('orange','🔒 Non puoi svuotare il carrello di un altro account');
+    showToastGen('orange','🔒 Non puoi eliminare il carrello di un altro account');
     return;
   }
-  showConfirm('Svuotare il carrello "' + (cart.nome||'') + '"?\nTutti gli articoli saranno rimossi.', function(){
-    _takeSnapshot(); // salva snapshot per undo
-    cart.items = [];
-    saveCarrelli();
-    renderCartTabs();
-    showToastGen('green','✅ Carrello svuotato');
+  showConfirm('Sei sicuro di voler eliminare questo ordine?', function(){
+    _takeSnapshot();
+    var c = carrelli.find(function(x){ return x.id === cartId; });
+    if(!c) return;
+    if(c.bozzaOrdId){
+      ordini = ordini.filter(function(o){ return o.id !== c.bozzaOrdId; });
+      saveOrdini();
+    }
+    deleteCart(cartId, '✅ Ordine eliminato');
   });
 }
 function rinominaCart(idx){

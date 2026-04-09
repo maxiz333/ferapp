@@ -20,8 +20,9 @@ function aggiornaOrdine(cartId){
   var ora = new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
   var diff = [];
 
-  // Articoli modificati o rimossi
+  // Articoli modificati o rimossi (ignora righe congelate sul vecchio ordine)
   vecchiItems.forEach(function(old_it){
+    if(ordItemCongelato(old_it)) return;
     var new_it = nuoviItems.find(function(x){ return x.desc === old_it.desc; });
     if(!new_it){
       diff.push('rimosso: ' + (old_it.desc||'?'));
@@ -36,10 +37,14 @@ function aggiornaOrdine(cartId){
     if(!esiste) diff.push('aggiunto: ' + (new_it.desc||'?') + ' ×' + (new_it.qty||1));
   });
 
-  // Aggiorna ordine con i dati modificati del carrello
-  ord.items=JSON.parse(JSON.stringify(cart.items));
+  // Aggiorna ordine con i dati modificati del carrello (mantieni righe congelate in coda)
+  var prevFr=(ord.items||[]).filter(function(it){ return ordItemCongelato(it); }).map(function(it){ return JSON.parse(JSON.stringify(it)); });
+  ord.items=JSON.parse(JSON.stringify(cart.items||[])).concat(prevFr);
   var notaBase = cart.nota || '';
   if(diff.length){
+    diff.forEach(function(part){
+      ordineAppendStorico(ord,'Aggiorna ordine (carrello): '+part);
+    });
     var rigaDiff = '✏️ ' + ora + ' — ' + diff.join(' · ');
     // Salva diff separatamente per il popup modificato
     if(!ord.modificheDiff) ord.modificheDiff = [];
@@ -50,8 +55,7 @@ function aggiornaOrdine(cartId){
   } else {
     ord.nota = notaBase;
   }
-  var tot=(cart.items||[]).reduce(function(s,it){return s+(_prezzoEffettivo(it)*parseFloat(it.qty||0));},0);
-  ord.totale=tot.toFixed(2);
+  ord.totale=ordTotaleSenzaCongelati(ord).toFixed(2);
   ord.scontoGlobale=cart.scontoGlobale||null;
   ord.modificato=true;
   ord.modificatoAt=new Date().toLocaleString('it-IT');

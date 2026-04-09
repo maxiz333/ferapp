@@ -37,6 +37,7 @@ function stampaRicevutaConSconti(ord){
   var totaleRisparmio = 0;
 
   items.forEach(function(it){
+    if(ordItemCongelato(it)) return;
     var pu = parsePriceIT(it.prezzoUnit);
     var q = parseFloat(it.qty || 0);
     var sub = (pu * q).toFixed(2);
@@ -118,6 +119,7 @@ function ordInviaWhatsApp(gi){
   var totaleRisparmio = 0;
 
   items.forEach(function(it){
+    if(ordItemCongelato(it)) return;
     var pu = parsePriceIT(it.prezzoUnit);
     var q = parseFloat(it.qty || 0);
     var sub = (pu * q).toFixed(2);

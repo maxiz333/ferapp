@@ -3,6 +3,7 @@
 function ordSetScaglioneQta(gi, ii, val){
   var ord=ordini[gi]; if(!ord||!ord.items[ii]) return;
   var it=ord.items[ii];
+  if(ordItemCongelato(it)) return;
   it._scaglioneQta = parseInt(val) || 10;
   if(!ensurePrezzoOriginaleDaListino(it, true)){
     showToastGen('orange','Listino non disponibile');

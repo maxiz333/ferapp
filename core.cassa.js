@@ -94,13 +94,12 @@ function _cassaModeRender(){
   lista.forEach(function(ord){
     var gi = ordini.indexOf(ord);
     var nArt = (ord.items||[]).length;
-    var tot = 0;
-    (ord.items||[]).forEach(function(it){ tot += parsePriceIT(it.prezzoUnit) * parseFloat(it.qty||0); });
+    var tot = ordTotaleSenzaCongelati(ord);
     var SC_C = {nuovo:'#f5c400', pronto:'#dd6b20'};
     var SL_C = {nuovo:'NUOVO', pronto:'PRONTO'};
     var statoNorm = (ord.stato === 'lavorazione') ? 'nuovo' : ord.stato;
-    var sc = (ord.promozione && statoNorm==='nuovo') ? '#805ad5' : (SC_C[statoNorm]||'#555');
-    var sl = (ord.promozione && statoNorm==='nuovo') ? '📡 DA BOZZA' : (SL_C[statoNorm]||'');
+    var sc = (ord.promozione && statoNorm==='nuovo') ? '#e53e3e' : (SC_C[statoNorm]||'#555');
+    var sl = (ord.promozione && statoNorm==='nuovo') ? 'ORDINE IN ARRIVO' : (SL_C[statoNorm]||'');
 
     h += '<div class="cassa-mode-card" onclick="_cassaModeApri('+gi+')" style="border-left:5px solid '+sc+';">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center;">';

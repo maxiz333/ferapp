@@ -90,6 +90,27 @@
 .ord-grid-even { background:#161616; }
 .ord-grid-odd  { background:#1c1c1c; }
 
+/* Righe congelate (rimosse dal banco, solo ref. ufficio) */
+.ord-grid-row--congelato {
+  opacity: 0.82;
+  background: #1a1a20 !important;
+}
+.ord-grid-row--congelato .ord-gc-qty,
+.ord-grid-row--congelato .ord-gc-sub { color: #666; }
+.ord-congelato-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+  color: #9ca3af;
+  background: #2d3038;
+  border: 1px solid #3d4450;
+}
+
 /* Celle grid */
 .ord-gc-desc { padding:2px 8px 2px 4px; min-width:0; }
 .ord-gc-qty {
@@ -324,10 +345,10 @@ body.light-mode .ord-card-stato--bozza { background: #dbeafe; color: #1d4ed8; }
 
 /* ── Card ex-bozza — ordine promosso da bozza a nuovo ── */
 .ord-card--exbozza {
-  border-color: #805ad555 !important;
-  border-top: 4px solid #805ad5 !important;
+  border-color: #e53e3e55 !important;
+  border-top: 4px solid #e53e3e !important;
 }
-body.light-mode .ord-card--exbozza { border-color: #805ad555 !important; }
+body.light-mode .ord-card--exbozza { border-color: #fecdd355 !important; }
 
 /* ── Tasto elimina articolo (×) ── */
 .ord-item-del {

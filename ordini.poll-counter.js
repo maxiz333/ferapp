@@ -17,7 +17,7 @@ function _updateBozzaBadge(){
     }
   }
   _bozzaBadgeLast = nBozze;
-  // Badge 📡 sul tasto tab ordini nella bottom bar
+  // Badge bozze (📝) sul tasto tab ordini nella bottom bar
   var bb=document.getElementById('bozza-badge');
   if(!bb){
     var tbbTo=document.getElementById('tbb-to');
@@ -29,7 +29,7 @@ function _updateBozzaBadge(){
     }
   }
   if(bb){
-    bb.textContent= nBozze>0 ? '📡'+nBozze : '';
+    bb.textContent= nBozze>0 ? '📝'+nBozze : '';
     bb.style.display= nBozze>0 ? '' : 'none';
   }
 }

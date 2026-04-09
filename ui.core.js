@@ -102,11 +102,11 @@ var _pendingBozzaModal = null;
 function mostraNotificaBozza(bozza){
   // -- 1. Notifica di sistema (browser) -----------------------------------
   if(_notifPermesso && 'Notification' in window && Notification.permission === 'granted'){
-    var righeText = (bozza.items||[]).map(function(it){
+    var righeText = (bozza.items||[]).filter(function(it){ return !ordItemCongelato(it); }).map(function(it){
       return it.qty + ' × ' + it.desc;
     }).join('\n');
     try {
-      var notif = new Notification('📡 Bozza in costruzione — ' + (bozza.nomeCliente||'Cliente'), {
+      var notif = new Notification('📝 Bozza in costruzione — ' + (bozza.nomeCliente||'Cliente'), {
         body: righeText + (bozza.nota ? '\n📝 ' + bozza.nota : '') + '\n\nIl banco sta preparando l\'ordine',
         tag:  'bozza_' + bozza.id,
         requireInteraction: true
@@ -136,7 +136,7 @@ function _apriBozzaModal(bozza){
   document.getElementById('bmd-ora').textContent = bozza.data + ' — ' + bozza.ora;
 
   var righeEl = document.getElementById('bmd-righe');
-  righeEl.innerHTML = (bozza.items||[]).map(function(it){
+  righeEl.innerHTML = (bozza.items||[]).filter(function(it){ return !ordItemCongelato(it); }).map(function(it){
     return '<div class="ordine-riga">' +
       '<span style="color:var(--text);font-weight:600;">' +
         '<span style="color:#63b3ed;font-size:14px;font-weight:900;">' + it.qty + '</span>' +
@@ -193,7 +193,7 @@ document.addEventListener('click', function(e){
 function mostraBozzaAggiornata(bozza){
   var nome = bozza.nomeCliente || 'Banco';
   var nArt = (bozza.items||[]).length;
-  showToastGen('blue', '📡 ' + nome + ' — bozza aggiornata (' + nArt + ' art.)');
+  showToastGen('blue', '📝 ' + nome + ' — bozza aggiornata (' + nArt + ' art.)');
 
   // Blip sonoro discreto — un singolo "blop" corto e basso
   try {

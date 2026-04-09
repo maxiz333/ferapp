@@ -93,7 +93,8 @@ function renderCartTabs(){
     h += '<div class="ct-inviato-nome" onclick="ctEditClienteName(\''+cart.id+'\')" style="cursor:pointer;" title="Tap per modificare">' + esc(cart.nome) + '</div></div>';
     h += '<div class="ct-price-big">€ ' + totInv.toFixed(2) + '</div>';
     h += '</div>';
-    (cart.items||[]).forEach(function(it){
+    var _invItems = (cart.items||[]).slice().reverse();
+    _invItems.forEach(function(it){
       var sub = (parsePriceIT(it.prezzoUnit)*parseFloat(it.qty||0)).toFixed(2);
       h += '<div class="ct-inviato-row">';
       h += '<div style="flex:1;min-width:0;font-size:12px;color:#ccc">' + esc(it.desc||'');
@@ -160,8 +161,12 @@ function renderCartTabs(){
     h += '</div>';
     h += '</div>';
 
-    // ── CARD ARTICOLI ──────────────────────────────────────────────────────
-    (cart.items||[]).forEach(function(it, idx){
+    // ── CARD ARTICOLI (ultimo aggiunto in cima; idx = indice reale in cart.items) ──
+    var _items = cart.items || [];
+    for(var _ri = _items.length - 1; _ri >= 0; _ri--){
+      var idx = _ri;
+      var it = _items[idx];
+      var displayPos = _items.length - 1 - idx;
       var p            = listinoPrezzoNum(it);
       var q            = parseFloat(it.qty) || 0;
       var isSc         = it.scampolo    || false;
@@ -204,7 +209,7 @@ function renderCartTabs(){
            (cardStyle ? ' style="' + cardStyle + '"' : '') + '>';
 
       // ── RIGA GRIGLIA: stessa struttura ord-grid 50%|15%|15%|20% ──────
-      h += '<div class="ord-grid ord-grid-row' + (idx%2===0 ? ' ord-grid-even' : ' ord-grid-odd') + '">';
+      h += '<div class="ord-grid ord-grid-row' + (displayPos%2===0 ? ' ord-grid-even' : ' ord-grid-odd') + '">';
 
       // Colonna prodotto: nome + codici
       h += '<div class="ord-gc-desc">';
@@ -370,7 +375,7 @@ function renderCartTabs(){
       if(badges) h += '<div class="ct-badges">' + badges + '</div>';
 
       h += '</div>'; // fine ct-card
-    }); // fine forEach items
+    } // fine loop items (ordine inverso)
 
   } // fine items.length > 0
 
@@ -387,14 +392,13 @@ function renderCartTabs(){
   h += '<div class="ct-footer">';
   h += '<div class="ct-footer-tot"><span class="ct-footer-sym">€</span>' + tot2Fin.toFixed(2) + '</div>';
   h += '<div class="ct-footer-btns">';
-  h += '<button class="ct-fbtn ct-fbtn--danger" onclick="svuotaCarrello(\'' + cart.id + '\')">🗑️<span>SVUOTA</span></button>';
-  // Tasto Avvisa Ufficio — solo se non è modifica e non è già inviato
-  if(cart.stato !== 'modifica' && cart.stato !== 'inviato'){
-    var haBozza = !!cart.bozzaOrdId;
-    h += '<button class="ct-fbtn ct-fbtn--avvisa' + (haBozza ? ' ct-fbtn--avvisa-on' : '') + '" ' +
+  h += '<button class="ct-fbtn ct-fbtn--danger" onclick="eliminaOrdineCarrello(\'' + cart.id + '\')">🗑️<span>Elimina ordine</span></button>';
+  // Tasto Avvisa Ufficio — solo prima bozza; con bozza attiva la sync carrello↔ufficio è automatica (saveCarrelli)
+  if(cart.stato !== 'modifica' && cart.stato !== 'inviato' && !cart.bozzaOrdId){
+    h += '<button class="ct-fbtn ct-fbtn--avvisa" ' +
          (!(cart.items||[]).length ? 'disabled ' : '') +
          'onclick="avvisaUfficio(\'' + cart.id + '\')">' +
-         (haBozza ? '📡' : '📢') + '<span>' + (haBozza ? 'AGGIORNA' : 'UFFICIO') + '</span></button>';
+         '📢<span>UFFICIO</span></button>';
   }
   h += '<button class="ct-fbtn ct-fbtn--riepilogo" onclick="openRiepilogoOrdine(\'' + cart.id + '\')">👀<span>RIEPILOGO</span></button>';
   if(cart.stato === 'modifica'){

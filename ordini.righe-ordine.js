@@ -2,6 +2,7 @@
 
 function ordToggleScampolo(gi, ii){
   var ord=ordini[gi]; if(!ord||!ord.items[ii]) return;
+  if(ordItemCongelato(ord.items[ii])) return;
   var it=ord.items[ii];
   if(!it.scampolo && !it.fineRotolo && !it._scaglionato){
     if(!ensurePrezzoOriginaleDaListino(it, true)){
@@ -41,6 +42,7 @@ function ordToggleScampolo(gi, ii){
 
 function ordSetSconto(gi, ii, val){
   var ord=ordini[gi]; if(!ord||!ord.items[ii]) return;
+  if(ordItemCongelato(ord.items[ii])) return;
   var it=ord.items[ii];
   var sc=parseFloat(val)||0;
   if(!ensurePrezzoOriginaleDaListino(it, true)){
@@ -72,29 +74,36 @@ function ordEditNota(gi, ii){
   saveOrdini();
   if(ord.stato === 'bozza'){
     var cB = carrelli.find(function(x){ return x.bozzaOrdId === ord.id; });
-    if(cB){ cB.items = JSON.parse(JSON.stringify(ord.items)); saveCarrelli(); }
+    if(cB){ cB.items = ordItemsSoloAttiviDeep(ord.items); saveCarrelli(); }
   }
   renderOrdini();
+  if(ord.stato === 'bozza' && typeof renderCartTabs === 'function') renderCartTabs();
 }
 
 function ordSetNotaOrdine(gi, val){
   var ord=ordini[gi]; if(!ord) return;
   ord.nota=val;
   saveOrdini();
+  if(ord.stato === 'bozza'){
+    var cB = carrelli.find(function(x){ return x.bozzaOrdId === ord.id; });
+    if(cB){ cB.nota = val; saveCarrelli(); }
+  }
+  if(typeof renderCartTabs === 'function') renderCartTabs();
 }
 
 function _ordRecalcSave(gi){
   var ord=ordini[gi]; if(!ord) return;
-  var tot=ord.items.reduce(function(s,x){return s+parsePriceIT(x.prezzoUnit)*parseFloat(x.qty||0);},0);
+  var tot=ordTotaleSenzaCongelati(ord);
   ord.totale=tot.toFixed(2);
   ord.modificato=true;
   ord.modificatoAt=new Date().toLocaleString('it-IT');
   saveOrdini();
   if(ord.stato === 'bozza'){
     var cB = carrelli.find(function(x){ return x.bozzaOrdId === ord.id; });
-    if(cB){ cB.items = JSON.parse(JSON.stringify(ord.items)); saveCarrelli(); }
+    if(cB){ cB.items = ordItemsSoloAttiviDeep(ord.items); saveCarrelli(); }
   }
   renderOrdini();
+  if(ord.stato === 'bozza' && typeof renderCartTabs === 'function') renderCartTabs();
 }
 
 // ── SBLOCCA/RIBLOCCA ordine completato per modifiche ─────────────
@@ -103,15 +112,17 @@ function _ordRecalcSave(gi){
 // ── Cambia unità di misura ordine ────────────────────────────────
 function ordSetUnit(gi, ii, val){
   var ord=ordini[gi]; if(!ord||!ord.items[ii]) return;
+  if(ordItemCongelato(ord.items[ii])) return;
   ord.items[ii].unit=val;
   ord.modificato=true;
   ord.modificatoAt=new Date().toLocaleString('it-IT');
   saveOrdini();
   if(ord.stato === 'bozza'){
     var cB = carrelli.find(function(x){ return x.bozzaOrdId === ord.id; });
-    if(cB){ cB.items = JSON.parse(JSON.stringify(ord.items)); saveCarrelli(); }
+    if(cB){ cB.items = ordItemsSoloAttiviDeep(ord.items); saveCarrelli(); }
   }
   renderOrdini();
+  if(ord.stato === 'bozza' && typeof renderCartTabs === 'function') renderCartTabs();
 }
 
 // ══ SCHEDA RAPIDA PRODOTTO — popup con foto, desc, posizione ════════════════
