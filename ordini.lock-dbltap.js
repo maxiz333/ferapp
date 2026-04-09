@@ -14,10 +14,6 @@ function ordForceLock(ordId, gi){
   var currentLock = _ordLocks[key];
   var holderName = currentLock ? (currentLock.name || 'altro account') : 'altro account';
 
-  if(!confirm('⚠️ Sblocco forzato\n\n' + holderName + ' sta lavorando su questo ordine.\n\nVuoi forzare l\'accesso?')){
-    return;
-  }
-
   ordAcquireOrderLock(ordId, { force: true }, function(ok){
     if(!ok){
       showToastGen('red','❌ Impossibile aggiornare il lock su Firebase');
@@ -39,10 +35,6 @@ function ordForceLock(ordId, gi){
     showToastGen('orange','🔓 Lock forzato — ora lavori tu');
     if(typeof ordRefreshLockUI === 'function') ordRefreshLockUI();
     else renderOrdini();
-
-    // Dopo la forzatura apri subito l'editor sul device corrente.
-    var gi2 = ordini.findIndex(function(x){ return x && x.id === ordId; });
-    if(gi2 >= 0) modificaOrdineDaTab(gi2);
   });
 }
 
@@ -63,7 +55,7 @@ function ordDblTap(el, action, arg1, arg2){
     clearTimeout(_ordDblTapTimer);
     if(action === 'force'){
       // Per il lock overlay: serve TRIPLO tap
-      if(_ordDblTapCount >= 2){
+      if(_ordDblTapCount >= 3){
         _ordDblTapKey = null; _ordDblTapCount = 0;
         if(_ordDblTapEl){ _ordDblTapEl.style.outline=''; _ordDblTapEl.style.outlineOffset=''; }
         _ordDblTapEl = null;
@@ -89,7 +81,7 @@ function ordDblTap(el, action, arg1, arg2){
     if(_ordDblTapEl){ _ordDblTapEl.style.outline=''; _ordDblTapEl.style.outlineOffset=''; }
     _ordDblTapKey = key;
     _ordDblTapEl = el;
-    _ordDblTapCount = 0;
+    _ordDblTapCount = 1;
     el.style.outline = '2px solid var(--accent)';
     el.style.outlineOffset = '-2px';
   }
