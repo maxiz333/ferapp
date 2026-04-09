@@ -8,11 +8,8 @@ function modificaOrdineDaTab(gi){
   var ord=ordini[gi];
   if(!ord){ console.error('[LOCK] modificaOrdineDaTab — ordine non trovato a indice:', gi); return; }
   var oid = ord.id;
-  var blocco = ordIsLockedByOther(oid);
-  if(blocco){
-    showToastGen('orange','🔒 ' + (blocco.name||'Altro account') + ' sta modificando questo ordine');
-    return;
-  }
+  // L'acquisizione lock deve avvenire sempre all'apertura ordine:
+  // usiamo solo la transaction di ordAcquireOrderLock (first-come), senza pre-check separato.
   ordAcquireOrderLock(oid, { force: false }, function(ok){
     if(!ok){
       showToastGen('orange','🔒 Ordine appena preso da un altro utente — riprova tra poco');
@@ -27,6 +24,7 @@ function modificaOrdineDaTab(gi){
     _editOrdItems = JSON.parse(JSON.stringify(ordini[gi2].items || []));
     renderEditOrdine();
     document.getElementById('edit-ord-overlay').style.display='flex';
+    if(typeof ordRefreshLockUI === 'function') ordRefreshLockUI();
   });
 }
 
