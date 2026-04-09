@@ -74,13 +74,22 @@ function renderOrdini(){
     gruppi[dk].forEach(function(ord,idxInGroup){
       var gi=ordini.indexOf(ord);
       var ost=ord.stato;
+      var lockInfo = ordIsLockedByOther(ord.id);
       var nArt=(ord.items||[]).length;
       var tot=0;
       (ord.items||[]).forEach(function(it){tot+=parsePriceIT(it.prezzoUnit)*parseFloat(it.qty||0);});
 
       // ── BOZZA INLINE — card speciale dentro il flusso normale ──
       if(ost==='bozza'){
-        h+='<div class="ord-card ord-card--bozza" data-bozza-id="'+ord.id+'" style="position:relative;">';
+        h+='<div class="ord-card ord-card--bozza" data-bozza-id="'+ord.id+'" style="position:relative;" onclick="ordCardTapLock(event,\''+ord.id+'\')">';
+        if(lockInfo){
+          h+='<div class="ord-lock-overlay" onclick="ordDblTap(this,\'force\',\''+ord.id+'\','+gi+')">';
+          h+='<div class="ord-lock-msg">';
+          h+='<div style="font-size:24px;margin-bottom:6px">🔒</div>';
+          h+='<div style="font-size:14px;font-weight:800">IN LAVORAZIONE</div>';
+          h+='<div style="font-size:10px;margin-top:8px;color:#666">Triplo tap per forzare</div>';
+          h+='</div></div>';
+        }
         h+='<div class="ord-card-stato ord-card-stato--bozza">';
         h+='📡 🔨 ⚡';
         h+='</div>';
@@ -202,14 +211,13 @@ function renderOrdini(){
       var sc = (_isExBozza && ost==='nuovo') ? '#805ad5' : (SC[ost]||'#555');
 
       // ── CARD ORDINE — blocco massiccio con bordo colorato top ──
-      var lockInfo = ordIsLockedByOther(ord.id);
       var isCompleted = ost==='completato';
       var unlocked = ord.unlocked || false;
 
       // Non editabile solo se: completato (e non sbloccato) o bloccato da altro account
       var _canEdit = !(isCompleted && !unlocked) && !lockInfo;
 
-      h+='<div class="ord-card'+(isCompleted&&!unlocked?' ord-card--done':'') + (_isExBozza&&ost==='nuovo'?' ord-card--exbozza':'')+'" style="border-top:4px solid '+sc+';position:relative;">';
+      h+='<div class="ord-card'+(isCompleted&&!unlocked?' ord-card--done':'') + (_isExBozza&&ost==='nuovo'?' ord-card--exbozza':'')+'" style="border-top:4px solid '+sc+';position:relative;" onclick="ordCardTapLock(event,\''+ord.id+'\')">';
 
       // OVERLAY LOCK - se un altro dispositivo sta lavorando
       if(lockInfo){
@@ -217,7 +225,6 @@ function renderOrdini(){
         h+='<div class="ord-lock-msg">';
         h+='<div style="font-size:24px;margin-bottom:6px">🔒</div>';
         h+='<div style="font-size:14px;font-weight:800">IN LAVORAZIONE</div>';
-        h+='<div style="font-size:11px;margin-top:4px;color:#aaa">'+esc(lockInfo.name||'Altro dispositivo')+'</div>';
         h+='<div style="font-size:10px;margin-top:8px;color:#666">Triplo tap per forzare</div>';
         h+='</div></div>';
       }

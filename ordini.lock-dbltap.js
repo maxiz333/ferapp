@@ -1,5 +1,28 @@
 // ordini.lock-dbltap.js - estratto da ordini.js
 
+var _ordTapLockPending = {};
+
+function ordCardTapLock(ev, ordId){
+  if(!ordId || typeof ordAcquireOrderLock !== 'function') return;
+  var key = String(ordId);
+  if(_ordTapLockPending[key]) return;
+  if(ev && ev.target){
+    var n = ev.target;
+    while(n){
+      if(n.classList && n.classList.contains('ord-lock-overlay')) return;
+      n = n.parentElement;
+    }
+  }
+  _ordTapLockPending[key] = true;
+  ordAcquireOrderLock(ordId, { force: false }, function(ok){
+    _ordTapLockPending[key] = false;
+    if(!ok){
+      if(typeof ordRefreshLockUI === 'function') ordRefreshLockUI();
+      else renderOrdini();
+    }
+  });
+}
+
 function ordForceLock(ordId, gi){
   var ord = ordini[gi];
   if(!ord || ord.id !== ordId){

@@ -74,8 +74,7 @@ function ordInlineEdit(el, gi, ii, field){
   ordAcquireOrderLock(oid, { force: false }, function(ok){
     el._lockPending = false;
     if(!ok){
-      var blocco = (typeof ordIsLockedByOther === 'function') ? ordIsLockedByOther(oid) : null;
-      showToastGen('orange','🔒 ' + ((blocco && blocco.name) ? blocco.name : 'Altro account') + ' sta lavorando su questo ordine');
+      showToastGen('orange','🔒 IN LAVORAZIONE — Triplo tap per forzare');
       if(typeof ordRefreshLockUI === 'function') ordRefreshLockUI();
       else renderOrdini();
       return;

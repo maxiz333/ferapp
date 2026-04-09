@@ -41,7 +41,7 @@ function setStatoOrdine(gi,stato){
   var lockInfo = ordIsLockedByOther(o.id);
   if(lockInfo){
     console.warn('[LOCK] setStatoOrdine — ordine bloccato da:', lockInfo.name, '— cambio stato bloccato');
-    showToastGen('orange','🔒 ' + (lockInfo.name||'Altro account') + ' sta lavorando su questo ordine');
+    showToastGen('orange','🔒 IN LAVORAZIONE — Triplo tap per forzare');
     return;
   }
   if(stato==='completato'){
