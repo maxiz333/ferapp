@@ -65,7 +65,7 @@ function _cassaModeStopRefresh(){
 function _cassaModeRender(){
   var cm = document.getElementById('cassa-mode-ov');
   if(!cm) return;
-  // Filtra ordini da mostrare: nuovo + lavorazione + pronto (non completati, non bozze)
+  // Filtra ordini da mostrare: nuovo + pronto (non completati, non bozze)
   var lista = ordini.filter(function(o){
     return o.stato === 'nuovo' || o.stato === 'lavorazione' || o.stato === 'pronto';
   });
@@ -96,10 +96,11 @@ function _cassaModeRender(){
     var nArt = (ord.items||[]).length;
     var tot = 0;
     (ord.items||[]).forEach(function(it){ tot += parsePriceIT(it.prezzoUnit) * parseFloat(it.qty||0); });
-    var SC_C = {nuovo:'#f5c400', lavorazione:'#3182ce', pronto:'#dd6b20'};
-    var SL_C = {nuovo:'NUOVO', lavorazione:'IN CORSO', pronto:'PRONTO'};
-    var sc = (ord.promozione && ord.stato==='nuovo') ? '#805ad5' : (SC_C[ord.stato]||'#555');
-    var sl = (ord.promozione && ord.stato==='nuovo') ? '📡 DA BOZZA' : (SL_C[ord.stato]||'');
+    var SC_C = {nuovo:'#f5c400', pronto:'#dd6b20'};
+    var SL_C = {nuovo:'NUOVO', pronto:'PRONTO'};
+    var statoNorm = (ord.stato === 'lavorazione') ? 'nuovo' : ord.stato;
+    var sc = (ord.promozione && statoNorm==='nuovo') ? '#805ad5' : (SC_C[statoNorm]||'#555');
+    var sl = (ord.promozione && statoNorm==='nuovo') ? '📡 DA BOZZA' : (SL_C[statoNorm]||'');
 
     h += '<div class="cassa-mode-card" onclick="_cassaModeApri('+gi+')" style="border-left:5px solid '+sc+';">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center;">';

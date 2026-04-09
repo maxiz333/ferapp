@@ -212,7 +212,7 @@ function mostraBozzaAggiornata(bozza){
   // Flash + mini-banner sulla card della bozza se visibile nella tab ordini
   var toTab = document.getElementById('to');
   if(toTab && toTab.classList.contains('active')){
-    var card = document.querySelector('.ord-card--bozza[data-bozza-id="'+bozza.id+'"]');
+    var card = document.querySelector('.ord-card[data-bozza-id="'+bozza.id+'"]');
     if(card){
       // Flash bordo blu
       card.style.transition = 'box-shadow .3s, border-color .3s';

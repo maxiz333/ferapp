@@ -34,7 +34,7 @@ function renderStoricoOrdini(){
     sv.innerHTML='<div style="text-align:center;color:#555;padding:30px;font-size:13px;">Nessun ordine archiviato.<br>Gli ordini completati da 7+ giorni vengono archiviati automaticamente.</div>';
     return;
   }
-  var SC={nuovo:'var(--accent)',lavorazione:'#63b3ed',pronto:'#f6ad55',completato:'#68d391'};
+  var SC={nuovo:'var(--accent)',pronto:'#f6ad55',completato:'#68d391'};
   var h='<div style="padding:8px 0 12px;text-align:center;font-size:12px;font-weight:700;color:#805ad5;">📂 STORICO — '+arch.length+' ordini archiviati</div>';
   arch.forEach(function(ord,ai){
     var nArt=(ord.items||[]).length;

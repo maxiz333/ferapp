@@ -1,6 +1,7 @@
 // ordini.filter-stato.js - estratto da ordini.js
 
 function filterOrdini(f){
+  if(f==='lavorazione') f='nuovo';
   // Chiudi vista "da ordinare"
   if(_daOrdView){
     _daOrdView=false;
@@ -26,7 +27,7 @@ function filterOrdini(f){
     var ll2=document.getElementById('ord-list');if(ll2)ll2.style.display='';
   }
   ordFiltro=f;
-  ['nuovo','lavorazione','pronto','completato','tutti'].forEach(function(x){
+  ['nuovo','pronto','completato','tutti'].forEach(function(x){
     var btn=document.getElementById('ord-f-'+x);if(!btn)return;
     var on=(x===f);
     btn.style.background=on?'var(--accent)':'transparent';
@@ -37,6 +38,7 @@ function filterOrdini(f){
 }
 function setStatoOrdine(gi,stato){
   var o=ordini[gi];if(!o)return;
+  if(stato==='lavorazione') stato='nuovo';
   console.log('[LOCK] setStatoOrdine — ordine:', o.id, 'nuovo stato:', stato);
   var lockInfo = ordIsLockedByOther(o.id);
   if(lockInfo){

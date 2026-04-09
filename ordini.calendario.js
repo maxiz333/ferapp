@@ -63,13 +63,13 @@ function renderOrdiniByDate(){
     return;
   }
 
-  var SC={nuovo:'#f5c400',lavorazione:'#3182ce',pronto:'#dd6b20',completato:'#38a169'};
-  var SL={nuovo:'NUOVO',lavorazione:'IN CORSO',pronto:'PRONTO',completato:'COMPLETATO'};
+  var SC={nuovo:'#f5c400',pronto:'#dd6b20',completato:'#38a169'};
+  var SL={nuovo:'NUOVO',pronto:'PRONTO',completato:'COMPLETATO'};
 
   var h='<div style="font-size:12px;color:#888;font-weight:800;margin-bottom:10px;letter-spacing:1px;">'+filtered.length+' ORDINE'+(filtered.length>1?'':'')+'</div>';
 
   filtered.forEach(function(ord){
-    var ost=ord.stato;
+    var ost=(ord.stato==='lavorazione') ? 'nuovo' : ord.stato;
     var sc=SC[ost]||'#555';
     var tot=0;
     (ord.items||[]).forEach(function(it){tot+=parsePriceIT(it.prezzoUnit)*parseFloat(it.qty||0);});

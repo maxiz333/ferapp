@@ -44,7 +44,7 @@ function startAutoRefresh(){
       var prevJson=_lastOrdiniJson;
       var prev=JSON.parse(prevJson)||[];
       var prevBozze=prev.filter(function(o){return o.stato==='bozza';}).length;
-      var prevNuovi=prev.filter(function(o){return o.stato==='nuovo';}).length;
+      var prevNuovi=prev.filter(function(o){return o.stato==='nuovo'||o.stato==='lavorazione';}).length;
       _lastOrdiniJson=freshJson;
       ordini=fresh;
       updateOrdBadge();
@@ -81,7 +81,7 @@ function startAutoRefresh(){
         }
       }
       // Notifica sonora per nuovi ordini normali
-      var nuovi=fresh.filter(function(o){return o.stato==='nuovo';}).length;
+      var nuovi=fresh.filter(function(o){return o.stato==='nuovo'||o.stato==='lavorazione';}).length;
       if(nuovi>prevNuovi){
         feedbackSend();
       }
@@ -114,11 +114,8 @@ function updateOrdCounter(){
   var icon='';
 
   if(ordFiltro==='nuovo'){
-    count=ordini.filter(function(o){return o.stato==='nuovo'||o.stato==='bozza';}).length;
+    count=ordini.filter(function(o){return o.stato==='nuovo'||o.stato==='lavorazione'||o.stato==='bozza';}).length;
     label='Nuov'+(count===1?'o':'i'); icon='🆕'; color='var(--accent)'; bg='linear-gradient(135deg,#1a1a00,#2a2a00)'; border='2px solid var(--accent)';
-  } else if(ordFiltro==='lavorazione'){
-    count=ordini.filter(function(o){return o.stato==='lavorazione';}).length;
-    label='In corso'; icon='⏳'; color='#63b3ed'; bg='#0d1a2a'; border='1px solid #3182ce44';
   } else if(ordFiltro==='pronto'){
     count=ordini.filter(function(o){return o.stato==='pronto';}).length;
     label='Pront'+(count===1?'o':'i'); icon='📦'; color='#f6ad55'; bg='#1a1500'; border='1px solid #dd6b2044';

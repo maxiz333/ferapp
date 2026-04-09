@@ -1,7 +1,6 @@
 // ordini.stato-carrello-link.js - estratto da ordini.js
 
 function ordSetNuovo(gi){ setStatoOrdine(gi,'nuovo'); }
-function ordSetLav(gi){ setStatoOrdine(gi,'lavorazione'); }
 function ordSetFatto(gi){ setStatoOrdine(gi,'completato'); }
 function _rimuoviCarrelloDaOrdine(ordId){
   var idx=carrelli.findIndex(function(c){return c.ordId===ordId;});

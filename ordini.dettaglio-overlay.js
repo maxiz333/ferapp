@@ -23,9 +23,10 @@ function _odTot(ord){
 }
 function _odRender(ord){
   try{
-    var COLORI={nuovo:'#f5c400',lavorazione:'#3182ce',completato:'#38a169'};
-    var LABEL={nuovo:'Nuovo',lavorazione:'In corso',completato:'Completato'};
-    var sc=COLORI[ord.stato]||'#888';
+    var COLORI={nuovo:'#f5c400',pronto:'#dd6b20',completato:'#38a169'};
+    var LABEL={nuovo:'Nuovo',pronto:'Pronto',completato:'Completato'};
+    var statoNorm=(ord.stato==='lavorazione')?'nuovo':ord.stato;
+    var sc=COLORI[statoNorm]||'#888';
     var el;
     el=document.getElementById('odh-cliente');
     if(el)el.textContent=ord.nomeCliente||'-';
@@ -35,9 +36,9 @@ function _odRender(ord){
     el=document.getElementById('odh-totale');
     if(el)el.textContent='- '+tot.toFixed(2);
     el=document.getElementById('odh-stato-badge');
-    if(el){el.textContent=LABEL[ord.stato]||ord.stato;el.style.color=sc;}
+    if(el){el.textContent=LABEL[statoNorm]||statoNorm;el.style.color=sc;}
     el=document.getElementById('ord-detail-stato');
-    if(el)el.value=ord.stato||'nuovo';
+    if(el)el.value=statoNorm||'nuovo';
     el=document.getElementById('ord-detail-nota');
     if(el)el.value=ord.nota||'';
     _odRenderItems(ord);
@@ -282,10 +283,11 @@ function ordDetailSaveNota(){
 function ordDetailSetStato(stato){
   var ord=ordini.find(function(o){return o.id===_ordDetailId;});
   if(!ord)return;
+  if(stato==='lavorazione') stato='nuovo';
   ord.stato=stato;
   saveOrdini();
-  var SC={nuovo:'#f5c400',lavorazione:'#3182ce',completato:'#38a169'};
-  var LABEL={nuovo:'Nuovo',lavorazione:'In corso',completato:'Completato'};
+  var SC={nuovo:'#f5c400',pronto:'#dd6b20',completato:'#38a169'};
+  var LABEL={nuovo:'Nuovo',pronto:'Pronto',completato:'Completato'};
   var el=document.getElementById('odh-stato-badge');
   if(el){el.textContent=LABEL[stato];el.style.color=SC[stato]||'#888';}
 }
