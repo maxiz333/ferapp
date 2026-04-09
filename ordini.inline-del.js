@@ -70,16 +70,28 @@ function ordInlineEdit(el, gi, ii, field){
     return;
   }
 
+  // Se risulta già bloccato da altri, non aprire input.
+  if(typeof ordIsLockedByOther === 'function' && ordIsLockedByOther(oid)){
+    showToastGen('orange','🔒 IN LAVORAZIONE — Triplo tap per forzare');
+    if(typeof ordRefreshLockUI === 'function') ordRefreshLockUI();
+    else renderOrdini();
+    return;
+  }
+
+  // Apri subito l'input: evita race con rerender del listener lock.
+  _startInlineEdit();
   el._lockPending = true;
   ordAcquireOrderLock(oid, { force: false }, function(ok){
     el._lockPending = false;
     if(!ok){
+      // Race: un altro account ha preso lock nel frattempo.
+      var inpNow = el.querySelector && el.querySelector('input.ord-inline-input');
+      if(inpNow) inpNow.blur();
       showToastGen('orange','🔒 IN LAVORAZIONE — Triplo tap per forzare');
       if(typeof ordRefreshLockUI === 'function') ordRefreshLockUI();
       else renderOrdini();
       return;
     }
-    _startInlineEdit();
   });
 }
 
