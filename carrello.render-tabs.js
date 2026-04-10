@@ -233,26 +233,42 @@ function renderCartTabs(){
       h += '<button class="ct-qty-val" onclick="openQtyNumpad(\'' + cart.id + '\',' + idx + ')">' + Math.round(q) + '</button>';
       h += '<button class="ct-qty-btn" onclick="cartDelta(\'' + cart.id + '\',' + idx + ',1)">＋</button>';
       h += '</div>';
-      var units = ['pz','mt','kg','lt','cf','ml','gr','mm','cm','m²','m³'];
+      var units = ['pz','mt','m','kg','lt','cf','ml','gr','mm','cm','m²','m³'];
       var curUnit = it.unit || 'pz';
       h += '<select class="ct-um-select ct-um--mini" onchange="cartSetUnit(\'' + cart.id + '\',' + idx + ',this.value)">';
       units.forEach(function(u){
         h += '<option value="' + u + '"' + (u === curUnit ? ' selected' : '') + '>' + u + '</option>';
       });
       h += '</select>';
+      if(itemUsesPrezzoPerBaseUm(it.unit)){
+        var bd = itemBaseUmScontoDisplay(it);
+        var suffPB = itemPrezzoBaseUmSuffix(it.unit);
+        var qhPB = itemUmQtyHint(it.unit);
+        h += '<div class="ct-pb-inline" id="cart-pb-' + idx + '">';
+        h += '<span class="ct-pb-tag" title="Prezzo per ' + esc(suffPB) + ', quantità in ' + esc(qhPB) + '">Base</span>';
+        h += '<input type="text" class="ct-pb-inp" inputmode="decimal" ';
+        h += 'value="' + esc(it._prezzoUnitaBase || '') + '" placeholder="—" ';
+        h += 'title="Prezzo listino ' + esc(suffPB) + ' · qtà ' + esc(qhPB) + '" ';
+        h += 'oninput="cartInputPrezzoUnitaBase(\'' + cart.id + '\',' + idx + ',this)" ';
+        h += 'onclick="event.stopPropagation();this.select()" />';
+        h += '<span class="ct-pb-disc" id="cart-pb-disc-' + idx + '">';
+        if(bd && bd.hasSc){
+          h += '<span class="ct-pb-struck">€' + formatPrezzoUnitDisplay(bd.b0) + '</span>';
+          h += '<span class="ct-pb-final">€' + formatPrezzoUnitDisplay(bd.b1) + '</span>';
+          h += '<span class="ct-pb-sav">-€' + formatPrezzoUnitDisplay(bd.savPerBase) + '</span>';
+        }
+        h += '</span></div>';
+      }
       h += '</div>';
 
-      // Colonna prezzo — prezzo base sempre visibile, scontato sotto se attivo
-      h += '<div class="ord-gc-price" id="prz-' + idx + '">';
+      // Colonna prezzo — listino/sconto convertito + input €/UM riga
       var hasSconto = scApplica && pScontato < p - 0.005;
+      h += '<div class="ord-gc-price" id="prz-' + idx + '">';
+      h += '<div id="cart-prz-strip-' + idx + '"' + (hasSconto ? '' : ' style="display:none"') + '">';
       if(hasSconto){
-        var savU = (p - pScontato).toFixed(2);
-        h += '<div class="ct-old--orig">€' + p.toFixed(2) + '</div>';
-        h += '<div class="ct-sub--final">€' + pScontato.toFixed(2) + '</div>';
-        h += '<div style="font-size:8px;color:#f6ad55;text-align:center;">-€' + savU + '</div>';
-      } else {
-        h += '<div style="font-size:12px;font-weight:900;color:#999">€' + p.toFixed(2) + '</div>';
+        h += htmlPrezzoUnitScontoRiga(p, pScontato);
       }
+      h += '</div>';
       h += '<input class="ct-punit" type="text" inputmode="decimal" value="' +
            esc(it.prezzoUnit||'0') + '" ' +
            'onchange="cartSetPrezzo(\'' + cart.id + '\',' + idx + ',this.value)" ' +
@@ -260,12 +276,9 @@ function renderCartTabs(){
       h += '</div>';
 
       // Colonna totale
-      h += '<div class="ord-gc-sub">';
+      h += '<div class="ord-gc-sub" id="cart-sub-' + idx + '">';
       if(hasSconto){
-        var savT = ((p - pScontato) * q).toFixed(2);
-        h += '<div class="ct-old--orig">€' + (p * q).toFixed(2) + '</div>';
-        h += '<div class="ct-sub--final">€' + sub + '</div>';
-        h += '<div style="font-size:8px;color:#f6ad55;text-align:center;">-€' + savT + '</div>';
+        h += htmlTotaleScontoRiga(p * q, parseFloat(sub));
       } else {
         var subColor = isTuttoRotolo ? '#fc8181' : (isFR ? '#f6ad55' : 'var(--accent)');
         h += '<div style="font-size:13px;font-weight:900;color:' + subColor + '">€' + sub + '</div>';
@@ -309,8 +322,8 @@ function renderCartTabs(){
              'onclick="event.stopPropagation();this.select()">';
         h += '<span style="font-size:9px;color:#63b3ed;">pz</span>';
       }
-      if(scAtt > 0){
-        var risparmio = (parsePriceIT(it._prezzoOriginale||it._prezzoBase||it.prezzoUnit) * q * scAtt / 100).toFixed(2);
+      if(scAtt > 0 && scApplica){
+        var risparmio = ((p - pScontato) * q).toFixed(2);
         h += '<span class="ct-sc-risp"' + (isScag ? ' style="color:#63b3ed"' : '') + '>-€' + risparmio + '</span>';
       }
       h += '</div>';

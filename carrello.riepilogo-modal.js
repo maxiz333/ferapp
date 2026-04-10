@@ -49,6 +49,8 @@ function openRiepilogoOrdine(cartId){
     if(it.codF) meta += '<span style="color:#fc8181;">' + esc(it.codF) + '</span>';
     if(meta) h += '<div class="riepilogo-item-code">' + meta + '</div>';
     if(it.nota) h += '<div class="riepilogo-item-nota">📝 ' + esc(it.nota) + '</div>';
+    var pbRp = itemRigaNotaPrezzoBasePlain(it);
+    if(pbRp) h += '<div class="riepilogo-item-nota" style="color:#a0a0a8;">' + esc(pbRp) + '</div>';
     h += '</div>';
     h += '<div class="riepilogo-item-right">';
     h += '<div class="riepilogo-item-qty">' + (parseFloat(it.qty)||0) + ' ' + (it.unit||'pz') + '</div>';

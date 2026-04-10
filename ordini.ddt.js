@@ -38,9 +38,12 @@ function stampaDDT(cartId){
     totale += pu * qty;
     var codice = it.codM || it.codF || '';
     var unit = it.unit || 'pz';
+    var descCell = esc(it.desc || '') + (it.specs ? '<br><i style="color:#666;font-size:10px;">' + esc(it.specs) + '</i>' : '');
+    var pbDdt = itemRigaNotaPrezzoBasePlain(it);
+    if(pbDdt) descCell += '<br><span style="color:#555;font-size:10px;">' + esc(pbDdt) + '</span>';
     righeHTML += '<tr>' +
       '<td style="padding:6px 8px;border:1px solid #999;font-size:11px;">' + esc(codice) + '</td>' +
-      '<td style="padding:6px 8px;border:1px solid #999;font-size:11px;">' + esc(it.desc || '') + (it.specs ? '<br><i style="color:#666;font-size:10px;">' + esc(it.specs) + '</i>' : '') + '</td>' +
+      '<td style="padding:6px 8px;border:1px solid #999;font-size:11px;">' + descCell + '</td>' +
       '<td style="padding:6px 8px;border:1px solid #999;font-size:11px;text-align:center;">' + esc(unit) + '</td>' +
       '<td style="padding:6px 8px;border:1px solid #999;font-size:11px;text-align:center;font-weight:700;">' + qty + '</td>' +
       '<td style="padding:6px 8px;border:1px solid #999;font-size:11px;text-align:right;">&euro; ' + pu.toFixed(2) + '</td>' +

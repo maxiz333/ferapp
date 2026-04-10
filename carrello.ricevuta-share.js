@@ -6,6 +6,8 @@ function condividiWhatsApp(items,nomeCliente,totale,nota){
     var sub=(_prezzoEffettivo(it)*parseFloat(it.qty||0)).toFixed(2);
     msg+=it.qty+' '+( it.unit||'pz')+' - '+(it.desc||'');
     if(it.codF)msg+=' ['+it.codF+']';
+    var pbWa=itemRigaNotaPrezzoBasePlain(it);
+    if(pbWa)msg+='\n  '+pbWa;
     msg+=' - -'+sub+'\n';
   });
   msg+='\n*TOTALE: - '+totale+'*';
@@ -28,6 +30,8 @@ function stampaRicevuta(items,nomeCliente,totale,nota){
     var sub=(pu*q).toFixed(2);
     h+='<div style="padding:4px 0;border-bottom:1px solid #2a2a2a;">';
     h+='<div style="font-size:13px;font-weight:700;color:var(--text);">'+esc(it.desc||'')+'</div>';
+    var pbRic=itemRigaNotaPrezzoBasePlain(it);
+    if(pbRic)h+='<div style="font-size:10px;color:#888;">'+esc(pbRic)+'</div>';
     if(it.scampolo&&it._scontoApplicato)h+='<div style="font-size:10px;color:var(--accent);">-- Scampolo -'+it._scontoApplicato+'%'+(it._prezzoOriginale?' (era -'+esc(it._prezzoOriginale)+')':'')+'</div>';
     if(it.fineRotolo&&it._scontoApplicato)h+='<div style="font-size:10px;color:#f6ad55;">- Rotolo -'+it._scontoApplicato+'%'+(it._prezzoOriginale?' (era -'+esc(it._prezzoOriginale)+')':'')+'</div>';
     if(it._scaglioneAttivo){

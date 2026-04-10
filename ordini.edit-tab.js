@@ -117,8 +117,23 @@ function renderEditOrdine(){
     }
     h+='<span style="font-size:10px;color:#555;">-</span>';
     h+='<input type="text" value="'+esc(it.prezzoUnit)+'" style="width:60px;padding:4px 6px;border:1px solid #333;border-radius:5px;background:#111;color:var(--accent);font-size:12px;font-weight:700;text-align:right;" onchange="_editOrdPrezzo('+idx+',this.value)">';
-    h+='<span style="font-size:13px;font-weight:900;color:'+(isFz?'#666':'var(--accent)')+';margin-left:auto;">'+(isFz?'—':'-'+sub)+'</span>';
+    h+='<span id="edit-ord-sub-'+idx+'" style="font-size:13px;font-weight:900;color:'+(isFz?'#666':'var(--accent)')+';margin-left:auto;">'+(isFz?'—':'-'+sub)+'</span>';
     h+='</div>';
+    if(!isFz && itemUsesPrezzoPerBaseUm(it.unit)){
+      var bdEd=itemBaseUmScontoDisplay(it);
+      h+='<div class="ct-pb-inline" style="margin:6px 0 4px;">';
+      h+='<span class="ct-pb-tag">Base</span>';
+      h+='<input type="text" class="ct-pb-inp" inputmode="decimal" value="'+esc(it._prezzoUnitaBase||'')+'" placeholder="—" ';
+      h+='oninput="_editOrdPrezzoUnitaBase('+idx+',this.value)" onclick="event.stopPropagation();this.select()" />';
+      if(bdEd && bdEd.hasSc){
+        h+='<span class="ct-pb-disc">';
+        h+='<span class="ct-pb-struck">€'+formatPrezzoUnitDisplay(bdEd.b0)+'</span>';
+        h+='<span class="ct-pb-final">€'+formatPrezzoUnitDisplay(bdEd.b1)+'</span>';
+        h+='<span class="ct-pb-sav">-€'+formatPrezzoUnitDisplay(bdEd.savPerBase)+'</span>';
+        h+='</span>';
+      }
+      h+='</div>';
+    }
     if(!isFz){
       var scLabel=isSc?'--':isFR?'-':'--';
       var scBrd=isSc?'var(--accent)':isFR?'#f6ad55':'#2a2a2a';
@@ -137,7 +152,7 @@ function renderEditOrdine(){
   });
   h+='<div style="display:flex;justify-content:space-between;margin-top:10px;padding:8px;background:#111;border-radius:8px;border:1px solid var(--accent)33;">';
   h+='<span style="font-size:14px;font-weight:700;color:var(--muted);">TOTALE</span>';
-  h+='<span style="font-size:18px;font-weight:900;color:var(--accent);">- '+tot.toFixed(2)+'</span></div>';
+  h+='<span id="edit-ord-totale" style="font-size:18px;font-weight:900;color:var(--accent);">- '+tot.toFixed(2)+'</span></div>';
   h+='<div style="display:flex;gap:8px;margin-top:12px;">';
   h+='<button onclick="chiudiEditOrdine()" style="flex:1;padding:12px;border-radius:10px;border:none;background:#805ad5;color:#fff;font-size:14px;font-weight:900;cursor:pointer;">Chiudi</button></div>';
   h+='<div style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center;">Le modifiche si salvano in automatico sul carrello.</div>';
@@ -159,10 +174,40 @@ function _editOrdPrezzo(idx,val){
   var it=_editOrdItems[idx];
   var oldP=String(it.prezzoUnit||'');
   _editOrdItems[idx].prezzoUnit=val;
+  if(itemUsesPrezzoPerBaseUm(_editOrdItems[idx].unit)) itemSyncPrezzoUnitaBaseDaPrezzoRiga(_editOrdItems[idx]);
   if(ord&&oldP!==String(val)){
     ordineAppendStorico(ord,'Prezzo '+((it.desc)||'?')+': €'+oldP+' → €'+val);
   }
   renderEditOrdine();_scheduleEditOrdineSync();
+}
+
+function _editOrdRefreshTotaleOnly(){
+  if(_editOrdIdx===null||_editOrdIdx<0||!_editOrdItems) return;
+  var totEl=document.getElementById('edit-ord-totale');
+  if(!totEl) return;
+  var tot=_editOrdItems.reduce(function(s,it){
+    if(ordItemCongelato(it)) return s;
+    return s+(ordItemLineUnitSelling(it)*parseFloat(it.qty||0));
+  },0);
+  totEl.textContent='- '+tot.toFixed(2);
+}
+
+function _editOrdPrezzoUnitaBase(idx,val){
+  if(_editOrdIdx===null||_editOrdIdx<0) return;
+  var it=_editOrdItems[idx];
+  if(!it||ordItemCongelato(it)) return;
+  it._prezzoUnitaBase=val;
+  if(parsePriceIT(val)>0){
+    itemApplyPrezzoUnitaBase(it);
+  }
+  var subEl=document.getElementById('edit-ord-sub-'+idx);
+  if(subEl&&!ordItemCongelato(it)){
+    var p=ordItemLineUnitSelling(it);
+    var q=parseFloat(it.qty||0);
+    subEl.textContent='-'+(p*q).toFixed(2);
+  }
+  _editOrdRefreshTotaleOnly();
+  _scheduleEditOrdineSync();
 }
 function _editOrdRemove(idx){
   var ord=ordini[_editOrdIdx];

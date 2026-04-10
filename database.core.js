@@ -20,11 +20,118 @@ var SCONTO_ROTOLO_DEFAULT_PCT = 10;
 var SCONTO_SCAMPOLO_DEFAULT_PCT = 30;
 var SCONTO_SCAGLIONI_DEFAULT_PCT = 5;
 
+/** UM con prezzo per unità base (kg, m, litro) e quantità nella UM di riga (es. g, cm, ml). */
+function itemUsesPrezzoPerBaseUm(unit){
+  var u = String(unit || '').toLowerCase();
+  return u === 'kg' || u === 'g' || u === 'gr' || u === 'm' || u === 'mt' || u === 'cm' || u === 'ml' || u === 'lt';
+}
+
+/** Fattore: prezzoUnitàRiga = prezzoUnitàBase × fattore (es. g → 0,001 per €/kg). */
+function itemUmToBasePriceFactor(unit){
+  var u = String(unit || '').toLowerCase();
+  if(u === 'kg' || u === 'm' || u === 'mt' || u === 'lt') return 1;
+  if(u === 'g' || u === 'gr' || u === 'ml') return 0.001;
+  if(u === 'cm') return 0.01;
+  return 1;
+}
+
+function itemPrezzoBaseUmSuffix(unit){
+  var u = String(unit || '').toLowerCase();
+  if(u === 'kg' || u === 'g' || u === 'gr') return '€/kg';
+  if(u === 'm' || u === 'mt' || u === 'cm') return '€/m';
+  if(u === 'lt' || u === 'ml') return '€/l';
+  return '€';
+}
+
+function itemUmQtyHint(unit){
+  var u = String(unit || '').toLowerCase();
+  if(u === 'kg') return 'kg';
+  if(u === 'g' || u === 'gr') return 'g';
+  if(u === 'm' || u === 'mt') return 'm';
+  if(u === 'cm') return 'cm';
+  if(u === 'lt') return 'l';
+  if(u === 'ml') return 'ml';
+  return '';
+}
+
+/** Testo per stampe (DDT, ricevuta, WA): es. "Prezzo base: 2,40 €/kg (qtà in g)". Vuoto se non c'è _prezzoUnitaBase valido. */
+function itemRigaNotaPrezzoBasePlain(it){
+  if(!it || !itemUsesPrezzoPerBaseUm(it.unit)) return '';
+  if(it._prezzoUnitaBase == null || String(it._prezzoUnitaBase).trim() === '') return '';
+  if(parsePriceIT(it._prezzoUnitaBase) <= 0) return '';
+  return 'Prezzo base: ' + String(it._prezzoUnitaBase).trim() + ' ' + itemPrezzoBaseUmSuffix(it.unit) + ' (qtà in ' + itemUmQtyHint(it.unit) + ')';
+}
+
+/**
+ * Sconto visualizzato sul prezzo per unità base (€/kg, €/m, €/l), stessa logica forbice della riga.
+ * null se non applicabile.
+ */
+function itemBaseUmScontoDisplay(it){
+  if(!it || !itemUsesPrezzoPerBaseUm(it.unit)) return null;
+  var b0 = parsePriceIT(it._prezzoUnitaBase);
+  if(b0 <= 0) return null;
+  var sc = it._scontoApplicato || 0;
+  var q = parseFloat(it.qty || 0);
+  var scApplica = false;
+  if(it._scaglionato && sc > 0){
+    scApplica = q >= (it._scaglioneQta || 10);
+  } else if((it.scampolo || it.fineRotolo) && sc > 0){
+    scApplica = true;
+  }
+  var b1 = scApplica ? b0 * (1 - sc / 100) : b0;
+  var hasSc = scApplica && b1 < b0 - 1e-9;
+  return {
+    b0: b0,
+    b1: b1,
+    hasSc: hasSc,
+    savPerBase: hasSc ? (b0 - b1) : 0,
+    suff: itemPrezzoBaseUmSuffix(it.unit),
+    qh: itemUmQtyHint(it.unit)
+  };
+}
+
+/** Formatta €/unità riga per la UI: evita "0,00" quando il prezzo è molto piccolo (es. €/g). */
+function formatPrezzoUnitDisplay(n){
+  var x = typeof n === 'number' ? n : parsePriceIT(n);
+  if(!isFinite(x) || x < 0) x = 0;
+  if(x === 0) return '0,00';
+  var s;
+  if(x >= 0.01) s = x.toFixed(2);
+  else if(x >= 0.0001) s = x.toFixed(4);
+  else if(x >= 0.00000001) s = x.toFixed(6);
+  else s = Number(x).toExponential(2);
+  return String(s).replace('.', ',');
+}
+
+/** Tre importi prezzo unitario in una riga (listino barrato, finale, risparmio). */
+function htmlPrezzoUnitScontoRiga(prezListino, prezFinale){
+  var sav = prezListino - prezFinale;
+  return '<span class="ct-prz-sconto-row">' +
+    '<span class="ct-old--orig">€' + formatPrezzoUnitDisplay(prezListino) + '</span>' +
+    '<span class="ct-sub--final">€' + formatPrezzoUnitDisplay(prezFinale) + '</span>' +
+    '<span class="ct-prz-sconto-sav">-€' + formatPrezzoUnitDisplay(sav) + '</span>' +
+    '</span>';
+}
+
+/** Tre importi totale riga (stesso layout orizzontale). */
+function htmlTotaleScontoRiga(importoListino, importoFinale){
+  var sav = importoListino - importoFinale;
+  return '<span class="ct-tot-sconto-row">' +
+    '<span class="ct-old--orig">€' + formatPrezzoUnitDisplay(importoListino) + '</span>' +
+    '<span class="ct-sub--final">€' + formatPrezzoUnitDisplay(importoFinale) + '</span>' +
+    '<span class="ct-prz-sconto-sav">-€' + formatPrezzoUnitDisplay(sav) + '</span>' +
+    '</span>';
+}
+
 /** Prezzo listino (numerico): mai il prezzo già scontato se esiste _prezzoOriginale o rows[rowIdx] */
 function listinoPrezzoNum(it){
   if(it._prezzoOriginale != null && String(it._prezzoOriginale).trim() !== ''){
     var po = parsePriceIT(it._prezzoOriginale);
     if(po > 0) return po;
+  }
+  if(it && itemUsesPrezzoPerBaseUm(it.unit) && it._prezzoUnitaBase != null && String(it._prezzoUnitaBase).trim() !== ''){
+    var pb = parsePriceIT(it._prezzoUnitaBase);
+    if(pb > 0) return pb * itemUmToBasePriceFactor(it.unit);
   }
   if(it.rowIdx != null && it.rowIdx !== '' && typeof rows !== 'undefined' && rows && rows[it.rowIdx] != null){
     var rn = parsePriceIT(rows[it.rowIdx].prezzo);
@@ -37,6 +144,13 @@ function listinoPrezzoNum(it){
 
 /** Stringa da salvare in _prezzoOriginale (formato listino) */
 function listinoPrezzoString(it){
+  if(it && itemUsesPrezzoPerBaseUm(it.unit) && it._prezzoUnitaBase != null && String(it._prezzoUnitaBase).trim() !== ''){
+    var pbs0 = parsePriceIT(it._prezzoUnitaBase);
+    if(pbs0 > 0){
+      var lineS0 = pbs0 * itemUmToBasePriceFactor(it.unit);
+      if(lineS0 > 0) return String(lineS0).replace('.', ',');
+    }
+  }
   if(it.rowIdx != null && it.rowIdx !== '' && typeof rows !== 'undefined' && rows && rows[it.rowIdx] != null){
     var rp = rows[it.rowIdx].prezzo;
     if(rp != null && String(rp).trim() !== '' && parsePriceIT(rp) > 0) return String(rp);

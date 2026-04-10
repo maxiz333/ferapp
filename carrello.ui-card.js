@@ -87,6 +87,7 @@ function ctTuttoRotolo(cartId, idx){
     it.fineRotolo       = true;
     it._scontoTipo      = 'rotolo';
     it._scontoApplicato = SCONTO_ROTOLO_DEFAULT_PCT;
+    if(typeof _cartRicalcolaPrezzoVendita === 'function') _cartRicalcolaPrezzoVendita(it);
   }
   saveCarrelli();
   renderCartTabs();

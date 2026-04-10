@@ -170,41 +170,55 @@ function renderOrdini(){
         if(it.daOrdinare) h+='<div class="ord-item-daord">🚚 DA ORDINARE</div>';
         h+='</div>';
 
-        // Quantità + unità nella stessa cella
-        h+='<div class="ord-gc-qty'+(_canEdit&&!isFz?' ord-editable':'')+'"'+(_canEdit&&!isFz?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'qty\')" title="Tap per modificare"':'')+'>'+q;
+        // Quantità + unità + (opz.) prezzo base compatto
+        h+='<div class="ord-gc-qty'+(_canEdit&&!isFz?' ord-editable':'')+'"'+(_canEdit&&!isFz?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'qty\')" title="Tap per modificare"':'')+' style="display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;">';
+        h+='<div style="display:flex;align-items:center;flex-wrap:wrap;gap:2px;">'+q;
         if(_canEdit&&!isFz){
           h+='<select class="ord-unit-select" onclick="event.stopPropagation()" onchange="ordSetUnit('+gi+','+ii+',this.value)">';
-          var units=['pz','mt','kg','lt','cf','ml','gr','mm','cm','m\xB2','m\xB3'];
+          var units=['pz','mt','m','kg','lt','cf','ml','gr','mm','cm','m\xB2','m\xB3'];
           units.forEach(function(u){ h+='<option value="'+u+'"'+(u===(it.unit||'pz')?' selected':'')+'>'+u+'</option>'; });
           h+='</select>';
         } else {
           h+='<span class="ord-unit">'+esc(it.unit||'pz')+'</span>';
         }
         h+='</div>';
-
-        // Prezzo unitario — con sconto sbarrato se presente (congelato: solo prezzo editabile)
-        h+='<div class="ord-gc-price'+(_canEdit?' ord-editable':'')+'"'+(_canEdit?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'price\')" title="Tap per modificare"':'')+'>';
-        if(isFz){
-          h+='<span style="color:#888;">€'+pu.toFixed(2)+'</span>';
-        } else if(hasSconto){
-          var savUnit = (prezOrigNum - pu).toFixed(2);
-          h+='<div class="ct-old--orig">€'+prezOrigNum.toFixed(2)+'</div>';
-          h+='<div class="ct-sub--final">€'+pu.toFixed(2)+'</div>';
-          h+='<div style="font-size:8px;color:#f6ad55;text-align:center;">-€'+savUnit+'</div>';
-        } else {
-          h+='€'+pu.toFixed(2);
+        if(itemUsesPrezzoPerBaseUm(it.unit) && !isFz && _canEdit){
+          var bdO=itemBaseUmScontoDisplay(it);
+          var suffO=itemPrezzoBaseUmSuffix(it.unit);
+          h+='<div class="ct-pb-inline" id="ord-pb-'+ord.id+'-'+ii+'" onclick="event.stopPropagation()">';
+          h+='<span class="ct-pb-tag" title="Prezzo listino '+esc(suffO)+'">Base</span>';
+          h+='<input type="text" class="ct-pb-inp" inputmode="decimal" ';
+          h+='value="'+esc(it._prezzoUnitaBase||'')+'" placeholder="—" ';
+          h+='oninput="ordInputPrezzoUnitaBase('+gi+','+ii+',this)" ';
+          h+='onclick="event.stopPropagation();this.select()" />';
+          h+='<span class="ct-pb-disc" id="ord-pb-disc-'+ord.id+'-'+ii+'">';
+          if(bdO && bdO.hasSc){
+            h+='<span class="ct-pb-struck">€'+formatPrezzoUnitDisplay(bdO.b0)+'</span>';
+            h+='<span class="ct-pb-final">€'+formatPrezzoUnitDisplay(bdO.b1)+'</span>';
+            h+='<span class="ct-pb-sav">-€'+formatPrezzoUnitDisplay(bdO.savPerBase)+'</span>';
+          }
+          h+='</span></div>';
         }
         h+='</div>';
 
+        // Prezzo unitario — listino/sconto convertito (tap = edit)
+        h+='<div class="ord-gc-price'+(_canEdit?' ord-editable':'')+'"'+(_canEdit?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'price\')" title="Tap per modificare"':'')+'>';
+        h+='<div id="ord-prz-strip-'+ord.id+'-'+ii+'">';
+        if(isFz){
+          h+='<span style="color:#888;">€'+formatPrezzoUnitDisplay(pu)+'</span>';
+        } else if(hasSconto){
+          h+=htmlPrezzoUnitScontoRiga(prezOrigNum, pu);
+        } else {
+          h+='<span class="ct-prz-single">€'+formatPrezzoUnitDisplay(pu)+'</span>';
+        }
+        h+='</div></div>';
+
         // Subtotale — con sconto sbarrato se presente
-        h+='<div class="ord-gc-sub">';
+        h+='<div class="ord-gc-sub" id="ord-sub-'+ord.id+'-'+ii+'">';
         if(isFz){
           h+='<span style="font-size:12px;color:#666;font-weight:700;">—</span>';
         } else if(hasSconto){
-          var savTot = ((prezOrigNum - pu) * q).toFixed(2);
-          h+='<div class="ct-old--orig">€'+(prezOrigNum*q).toFixed(2)+'</div>';
-          h+='<div class="ct-sub--final">€'+sub+'</div>';
-          h+='<div style="font-size:8px;color:#f6ad55;text-align:center;">-€'+savTot+'</div>';
+          h+=htmlTotaleScontoRiga(prezOrigNum * q, parseFloat(sub));
         } else {
           h+='€'+sub;
         }
@@ -266,7 +280,7 @@ function renderOrdini(){
       // ── TOTALE ORDINE — grande e visibile ──
       h+='<div class="ord-total-bar">';
       h+='<span class="ord-total-label">TOTALE</span>';
-      h+='<span class="ord-total-value">€ '+tot.toFixed(2)+'</span>';
+      h+='<span class="ord-total-value" id="ord-total-'+ord.id+'">€ '+tot.toFixed(2)+'</span>';
       h+='</div>';
 
       // ── AZIONI ──

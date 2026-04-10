@@ -58,6 +58,8 @@ function stampaRicevutaConSconti(ord){
 
     h += '<div style="padding:4px 0;border-bottom:1px solid #2a2a2a;">';
     h += '<div style="font-size:13px;font-weight:700;color:var(--text);">' + esc(it.desc || '') + '</div>';
+    var pbOrd = itemRigaNotaPrezzoBasePlain(it);
+    if(pbOrd) h += '<div style="font-size:10px;color:#888;">' + esc(pbOrd) + '</div>';
 
     if(hasSconto){
       var savUnit = (prezOrig - pu).toFixed(2);
@@ -138,6 +140,8 @@ function ordInviaWhatsApp(gi){
     }
 
     msg += '• ' + (it.desc || '') + '\n';
+    var pbMsg = itemRigaNotaPrezzoBasePlain(it);
+    if(pbMsg) msg += '  ' + pbMsg + '\n';
     msg += '  ' + q + ' ' + (it.unit || 'pz');
 
     if(hasSconto){

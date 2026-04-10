@@ -41,6 +41,13 @@ function ordInlineEdit(el, gi, ii, field){
         }
       } else if(field === 'price'){
         if(v) it.prezzoUnit = v;
+        if(v && itemUsesPrezzoPerBaseUm(it.unit)){
+          var puIn = parsePriceIT(v);
+          if(puIn > 0){
+            var fIn = itemUmToBasePriceFactor(it.unit);
+            if(fIn > 0) it._prezzoUnitaBase = itemFormatPrezzoLineStr(puIn / fIn);
+          }
+        }
       } else if(field === 'codF'){
         it.codF = v;
       }
