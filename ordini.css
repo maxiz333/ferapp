@@ -666,3 +666,19 @@ body.light-mode .ord-forn-vendor-title {
 body.light-mode .ord-forn-line {
   border-color: #e8e8e8;
 }
+
+/* Tab ordini — righe compatte su telefono */
+@media (max-width: 520px) {
+  #to .ord-grid-row {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+  }
+  #to .ord-grid-head {
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+  #to .ord-gh {
+    padding: 4px 2px;
+    font-size: 9px;
+  }
+}

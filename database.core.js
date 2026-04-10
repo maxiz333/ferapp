@@ -103,20 +103,20 @@ function formatPrezzoUnitDisplay(n){
   return String(s).replace('.', ',');
 }
 
-/** Tre importi prezzo unitario in una riga (listino barrato, finale, risparmio). */
+/** Prezzo unitario con sconto: listino barrato sopra, finale grande verde sotto, risparmio (compat: classi ct-old--orig / ct-sub--final). */
 function htmlPrezzoUnitScontoRiga(prezListino, prezFinale){
   var sav = prezListino - prezFinale;
-  return '<span class="ct-prz-sconto-row">' +
+  return '<span class="ct-prz-stack ct-prz-stack--unit">' +
     '<span class="ct-old--orig">€' + formatPrezzoUnitDisplay(prezListino) + '</span>' +
     '<span class="ct-sub--final">€' + formatPrezzoUnitDisplay(prezFinale) + '</span>' +
     '<span class="ct-prz-sconto-sav">-€' + formatPrezzoUnitDisplay(sav) + '</span>' +
     '</span>';
 }
 
-/** Tre importi totale riga (stesso layout orizzontale). */
+/** Totale riga con sconto: stesso impilamento verticale. */
 function htmlTotaleScontoRiga(importoListino, importoFinale){
   var sav = importoListino - importoFinale;
-  return '<span class="ct-tot-sconto-row">' +
+  return '<span class="ct-prz-stack ct-prz-stack--tot">' +
     '<span class="ct-old--orig">€' + formatPrezzoUnitDisplay(importoListino) + '</span>' +
     '<span class="ct-sub--final">€' + formatPrezzoUnitDisplay(importoFinale) + '</span>' +
     '<span class="ct-prz-sconto-sav">-€' + formatPrezzoUnitDisplay(sav) + '</span>' +

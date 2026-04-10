@@ -112,7 +112,11 @@ function cartSetUnit(cartId,idx,val){
     itemSyncPrezzoUnitaBaseDaPrezzoRiga(it);
   }
   if(it.scampolo || it.fineRotolo || it._scaglionato || (it.hasScaglioni && it.scaglioni && it.scaglioni.length)){
+    ensurePrezzoOriginaleDaListino(it, true);
     _cartRicalcolaPrezzoVendita(it);
+    if(parsePriceIT(it.prezzoUnit) <= 0 && _cartSeedPrezzoOriginaleFromRiga(it)){
+      _cartRicalcolaPrezzoVendita(it);
+    }
   }
   saveCarrelli();renderCartTabs();
 }
