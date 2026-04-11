@@ -215,14 +215,14 @@ function renderCartTabs(){
       h += '<div class="ord-gc-desc">';
       h += '<div class="ord-item-name">' + esc(it.desc || '—') + '</div>';
       var codes = '';
+      codes += '<div class="ord-item-codes-line">';
       if(codM7) codes += '<span class="ord-code-mag">' + esc(codM7) + '</span>';
-      // Cod.Forn editabile
-      codes += '<span class="ord-code-forn" style="display:inline-flex;align-items:center;gap:2px;">Forn: ';
+      codes += '<span class="ord-code-forn ord-code-forn--inp"><span class="ord-code-forn-lbl">f.</span>';
       codes += '<input class="ct-codf-inp" value="' + esc(codF) + '" placeholder="—" ' +
                'oninput="ctSetCodF(\'' + cart.id + '\',' + idx + ',this.value)" ' +
                'onclick="event.stopPropagation();this.select()" ' +
                'onkeydown="if(event.key===\'Enter\')this.blur()">';
-      codes += '</span>';
+      codes += '</span></div>';
       h += '<div class="ord-item-codes">' + codes + '</div>';
       h += '</div>';
 
@@ -269,10 +269,13 @@ function renderCartTabs(){
         h += htmlPrezzoUnitScontoRiga(p, pScontato);
       }
       h += '</div>';
-      h += '<input class="ct-punit" type="text" inputmode="decimal" value="' +
+      h += '<input class="ct-punit" type="text" inputmode="decimal" autocomplete="off" ' +
+           'enterkeyhint="done" value="' +
            esc(it.prezzoUnit||'0') + '" ' +
+           'title="Tocca per modificare €/unità" ' +
            'onchange="cartSetPrezzo(\'' + cart.id + '\',' + idx + ',this.value)" ' +
-           'onclick="this.select()" title="€/unità">';
+           'onblur="cartSetPrezzo(\'' + cart.id + '\',' + idx + ',this.value)" ' +
+           'onclick="this.select()" />';
       h += '</div>';
 
       // Colonna totale
@@ -281,7 +284,7 @@ function renderCartTabs(){
         h += htmlTotaleScontoRiga(p * q, parseFloat(sub));
       } else {
         var subColor = isTuttoRotolo ? '#fc8181' : (isFR ? '#f6ad55' : 'var(--accent)');
-        h += '<div style="font-size:13px;font-weight:900;color:' + subColor + '">€' + sub + '</div>';
+        h += '<div class="ord-gc-sub-val" style="color:' + subColor + '">€' + sub + '</div>';
       }
       h += '</div>';
 

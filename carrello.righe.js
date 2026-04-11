@@ -88,6 +88,7 @@ function cartSetPrezzo(cartId,idx,val){
   if(!cart||!cart.items[idx])return;
   var it=cart.items[idx];
   var oldP=String(it.prezzoUnit||'');
+  if(String(val||'')===oldP) return;
   it.prezzoUnit=val;
   cartStripStaleRotoloInteroNota(it);
   if(itemUsesPrezzoPerBaseUm(it.unit)) itemSyncPrezzoUnitaBaseDaPrezzoRiga(it);
@@ -359,6 +360,13 @@ function cartRefreshLineAndTotals(cartId, idx){
     } else {
       przStrip.innerHTML = '';
       przStrip.style.display = 'none';
+    }
+  }
+  var przCell = document.getElementById('prz-' + idx);
+  if(przCell){
+    var puInp = przCell.querySelector('input.ct-punit');
+    if(puInp && document.activeElement !== puInp){
+      puInp.value = String(it.prezzoUnit != null && it.prezzoUnit !== '' ? it.prezzoUnit : '0');
     }
   }
   var pbDisc = document.getElementById('cart-pb-disc-' + idx);

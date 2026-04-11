@@ -162,7 +162,28 @@
   line-height:1.2; word-break:break-word;
 }
 .ord-item-codes {
-  margin-top:3px; display:flex; gap:8px; flex-wrap:wrap;
+  margin-top:3px;
+}
+.ord-item-codes-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  min-width: 0;
+  width: 100%;
+}
+.ord-code-forn--inp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.ord-code-forn-lbl {
+  font-size: 10px;
+  font-weight: 800;
+  opacity: 0.88;
+  flex-shrink: 0;
 }
 .ord-code-mag {
   font-size:11px; font-weight:800; color:var(--accent);
@@ -674,6 +695,10 @@ body.light-mode .ord-forn-line {
     grid-template-columns: 40% 22% 19% 19%;
     column-gap: 3px;
     padding: 0 2px;
+  }
+  /* Carrello: più spazio tra PREZZO e TOT (evita accavallamenti con sconto) */
+  #tc .ord-grid {
+    column-gap: 7px;
   }
   .ord-gc-desc {
     padding: 1px 4px 2px 2px;

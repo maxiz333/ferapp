@@ -785,9 +785,10 @@ button[touch-action="manipulation"],
   padding-bottom: 10px;
 }
 #tc .ct-card .ord-gc-price {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.35;
   color: #c4c4c4;
+  gap: 6px;
 }
 #tc .ct-card .ord-gc-sub {
   font-size: 13px;
@@ -795,12 +796,160 @@ button[touch-action="manipulation"],
   font-weight: 900;
   color: var(--ct-yellow);
   min-height: 2.5em;
+  gap: 4px;
 }
 #tc .ct-card .ord-gc-sub .ct-prz-stack--tot {
   width: 100%;
 }
+/* Totale riga senza sconto: più leggibile */
+#tc .ct-card .ord-gc-sub-val {
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+}
+/* Codici: mag giallo e f. fornitore affiancati (niente seconda “pillola”) */
+#tc .ct-card .ord-item-codes-line {
+  flex-wrap: nowrap;
+  gap: 4px 6px;
+  align-items: center;
+}
+#tc .ct-card .ord-item-codes-line .ord-code-mag {
+  flex-shrink: 0;
+}
+#tc .ct-card .ord-item-codes-line .ord-code-forn.ord-code-forn--inp {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+/* Input codice fornitore: come testo inline, no riquadro (solo tratto sottile) */
+#tc .ct-codf-inp {
+  flex: 1 1 auto;
+  min-width: 2.25em;
+  max-width: 8em;
+  box-sizing: border-box;
+  padding: 0 2px;
+  border: none;
+  border-radius: 0;
+  border-bottom: 1px dashed rgba(252, 129, 129, 0.45);
+  background: transparent;
+  color: #fc8181 !important;
+  font-size: 11px;
+  font-weight: 800;
+  font-family: inherit;
+  outline: none;
+}
+#tc .ct-codf-inp:focus {
+  border-bottom-color: var(--ct-yellow, #f5c400);
+  color: #ffb4b4 !important;
+}
+/* Stack prezzi con sconto: niente sovrapposizioni (override line-height globali) */
+#tc .ct-card .ct-prz-stack {
+  gap: 5px;
+  padding: 2px 0 3px;
+  flex-shrink: 0;
+}
+#tc .ct-card .ct-prz-stack .ct-old--orig {
+  position: relative;
+  z-index: 0;
+  line-height: 1.25;
+  margin: 0;
+  padding: 0 1px;
+}
+#tc .ct-card .ct-prz-stack .ct-sub--final {
+  line-height: 1.2;
+  margin: 0;
+  padding: 0 1px;
+}
+#tc .ct-card .ct-prz-stack .ct-prz-sconto-sav {
+  line-height: 1.25;
+  margin: 0;
+  margin-top: 1px;
+}
+#tc .ct-card .ct-prz-stack .ct-sub--final {
+  font-size: 17px;
+}
+#tc .ct-card .ct-prz-stack--tot .ct-sub--final {
+  font-size: 18px;
+}
+/* Zona Base €/kg con sconto: seconda riga sotto tag+campo */
+#tc .ct-card .ct-pb-inline:has(.ct-pb-struck) {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  row-gap: 5px;
+}
+#tc .ct-card .ct-pb-inline:has(.ct-pb-struck) .ct-pb-disc {
+  flex: 1 1 100%;
+  width: 100%;
+  margin-left: 0;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 5px 10px;
+  padding-top: 1px;
+}
+/* €/UM: campo testo modificabile (niente riquadro; selezione e caret espliciti) */
+#tc .ct-card .ord-gc-price .ct-punit {
+  border: none;
+  border-bottom: none;
+  background: transparent;
+  box-shadow: none;
+  margin-top: 0;
+  padding: 2px 1px;
+  font-size: 13px;
+  min-height: 26px;
+  font-weight: 700;
+  color: #b0b0b0;
+  cursor: text;
+  pointer-events: auto;
+  -webkit-user-select: text;
+  user-select: text;
+  caret-color: var(--ct-yellow, #ffd700);
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: auto;
+}
+#tc .ct-card .ord-gc-price:not(:has(.ct-prz-stack)) .ct-punit {
+  font-size: 14px;
+  min-height: 28px;
+  color: #c8c8c8;
+}
+#tc .ct-card .ord-gc-price .ct-punit:focus {
+  border: none;
+  border-bottom: none;
+  outline: none;
+  color: var(--ct-muted, #aaa);
+}
+#tc .ct-card .ord-gc-price .ct-punit:focus-visible {
+  outline: 1px solid rgba(255, 215, 0, 0.45);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 #tc .ct-sticky-total {
   color: var(--ct-yellow);
+}
+
+/* Griglia riga: prezzo e totale centrati in altezza accanto a qtà/UM (desc resta in alto) */
+#tc .ct-card .ord-grid-row {
+  align-items: center;
+}
+#tc .ct-card .ord-gc-desc {
+  align-self: start;
+}
+/* Select UM più compatto; numero quantità più evidente */
+#tc .ct-um-select.ct-um--mini {
+  min-height: 22px;
+  min-width: 26px;
+  padding: 1px 3px;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 5px;
+}
+#tc .ct-qty--compact .ct-qty-val {
+  font-size: 16px;
+  font-weight: 900;
+  min-width: 30px;
 }
 
 /* Riga A: foto | info | prezzo — LEGACY, usata solo nello stato inviato */
@@ -1505,44 +1654,70 @@ body.light-mode .ct-pb-inp::placeholder {
     box-sizing: border-box;
   }
   #tc .ct-qty--compact .ct-qty-val {
-    min-width: 32px;
+    min-width: 36px;
     min-height: 44px;
-    font-size: 15px;
+    font-size: 19px;
     font-weight: 900;
     border-radius: 8px;
     box-sizing: border-box;
   }
-  #tc .ct-um--mini {
-    min-height: 36px;
+  /* UM più piccolo; cifra quantità più grande (override sopra) */
+  #tc .ct-um-select.ct-um--mini {
+    min-height: 26px;
+    min-width: 30px;
+    padding: 1px 3px;
     font-size: 9px;
-    padding: 0 4px;
-    min-width: 34px;
+    font-weight: 700;
   }
   #tc .ct-card .ord-gc-price {
-    font-size: 13px;
+    font-size: 14px;
   }
-  #tc .ct-punit {
+  #tc .ct-card .ord-gc-price .ct-punit {
+    font-size: 13px;
+    min-height: 28px;
+    padding: 3px 2px;
+    border: none;
+    border-bottom: none;
+  }
+  /* Senza fascia sconto: €/UM un filo più grande */
+  #tc .ct-card .ord-gc-price:not(:has(.ct-prz-stack)) .ct-punit {
+    font-size: 15px;
     min-height: 30px;
-    margin-top: 2px;
-    font-size: 11px;
     padding: 4px 2px;
+  }
+  #tc .ct-card .ord-gc-sub-val {
+    font-size: 20px;
   }
   #tc .ct-card .ord-gc-sub {
     font-size: 14px;
     min-height: 0;
   }
-  /* Prezzi scampolo + totale: molto più grandi sul telefono */
-  .ct-prz-stack .ct-old--orig {
+  /* Prezzi scampolo + totale: molto più grandi sul telefono (#tc carrello) */
+  #tc .ct-card .ct-prz-stack .ct-old--orig {
     font-size: 11px;
   }
-  .ct-prz-stack .ct-sub--final {
+  #tc .ct-card .ct-prz-stack .ct-sub--final {
+    font-size: 20px;
+  }
+  #tc .ct-card .ct-prz-stack--tot .ct-sub--final {
+    font-size: 22px;
+  }
+  #tc .ct-card .ct-prz-stack .ct-prz-sconto-sav,
+  #tc .ct-card .ct-prz-stack--tot .ct-prz-sconto-sav {
+    font-size: 11px;
+  }
+  /* Ordini (lista): stessi ingrandimenti stack su mobile */
+  #to .ord-items-wrap .ct-prz-stack .ct-old--orig {
+    font-size: 11px;
+  }
+  #to .ord-items-wrap .ct-prz-stack .ct-sub--final {
     font-size: 19px;
   }
-  .ct-prz-stack--tot .ct-sub--final {
+  #to .ord-items-wrap .ct-prz-stack--tot .ct-sub--final {
     font-size: 21px;
   }
-  .ct-prz-stack .ct-prz-sconto-sav,
-  .ct-prz-stack--tot .ct-prz-sconto-sav {
+  #to .ord-items-wrap .ct-prz-stack .ct-prz-sconto-sav,
+  #to .ord-items-wrap .ct-prz-stack--tot .ct-prz-sconto-sav {
     font-size: 11px;
   }
 }

@@ -163,8 +163,10 @@ function renderOrdini(){
         h+='<div class="ord-item-name" onclick="openSchedaFromOrdine('+gi+','+ii+')" style="cursor:pointer;">'+esc(it.desc||'\u2014')+'</div>';
         if(isFz) h+='<div class="ord-congelato-badge">Rimosso dal banco</div>';
         var codes='';
+        codes+='<div class="ord-item-codes-line">';
         if(it.codM) codes+='<span class="ord-code-mag">'+esc(it.codM)+'</span>';
-        codes+='<span class="ord-code-forn'+(_canEdit&&!isFz?' ord-editable':'')+'"'+(_canEdit&&!isFz?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'codF\')" title="Tap per modificare"':'')+'>'+esc(it.codF||'—')+'</span>';
+        codes+='<span class="ord-code-forn'+(_canEdit&&!isFz?' ord-editable':'')+'"'+(_canEdit&&!isFz?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'codF\')" title="Tap per modificare"':'')+'><span class="ord-code-forn-lbl">f.</span> '+esc(it.codF||'—')+'</span>';
+        codes+='</div>';
         h+='<div class="ord-item-codes">'+codes+'</div>';
         if(it.nota) h+='<div class="ord-item-nota">📝 '+esc(it.nota)+'</div>';
         if(it.daOrdinare) h+='<div class="ord-item-daord">🚚 DA ORDINARE</div>';
