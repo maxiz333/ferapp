@@ -797,19 +797,21 @@ button[touch-action="manipulation"],
     repeating-linear-gradient(45deg,var(--ct-yellow) 0,var(--ct-yellow) 4px,#111 4px,#111 10px) border-box !important;
 }
 
-/* Griglia: nome | qtà (−·num·+ orizz., pulsanti stretti verticali) | prezzo | tot */
+/* Griglia: nome (min >0 così non collassa) | qtà | prezzo | tot */
 #tc .ct-card .ord-grid {
   grid-template-columns:
-    minmax(0, 1.2fr)
-    minmax(72px, 0.22fr)
-    minmax(7.5rem, 1fr)
-    minmax(7.5rem, 1fr);
+    minmax(11rem, 1.2fr)
+    minmax(72px, auto)
+    minmax(6.5rem, 1fr)
+    minmax(6.5rem, 1fr);
   column-gap: 5px;
   padding: 0 4px;
   align-items: center;
   box-sizing: border-box;
 }
-#tc .ct-card .ord-gc-desc,
+#tc .ct-card .ord-gc-desc {
+  min-width: 0;
+}
 #tc .ct-card .ord-gc-qty {
   min-width: 0;
 }
@@ -818,14 +820,15 @@ button[touch-action="manipulation"],
 }
 #tc .ct-card .ord-gc-price,
 #tc .ct-card .ord-gc-sub {
-  min-width: 7.5rem;
+  min-width: 6.5rem;
   overflow: visible;
 }
+/* Nome: a capo solo tra parole (mai una lettera per riga — no overflow-wrap:anywhere) */
 #tc .ct-card .ord-item-name {
   display: block;
   overflow: visible;
-  word-break: break-word;
-  overflow-wrap: anywhere;
+  word-break: normal;
+  overflow-wrap: break-word;
   line-height: 1.35;
   min-height: 0;
   -webkit-line-clamp: unset;
@@ -1803,18 +1806,30 @@ body.light-mode .ct-pb-inp::placeholder {
     box-sizing: border-box;
     padding: 0 3px;
   }
-  /* Colonne prezzo: minimo leggermente ridotto su schermi stretti ma sempre ≥ importi tipo €784,00 */
+  /* Telefono: minimi che entrano in ~320px senza azzerare il nome (fr dopo i min) */
   #tc .ct-card .ord-grid {
     grid-template-columns:
-      minmax(0, 1.1fr)
-      minmax(78px, 0.24fr)
-      minmax(6.75rem, 1fr)
-      minmax(6.75rem, 1fr);
-    column-gap: 4px;
+      minmax(6.25rem, 1fr)
+      minmax(64px, auto)
+      minmax(4.5rem, 1fr)
+      minmax(4.5rem, 1fr);
+    column-gap: 3px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
   #tc .ct-card .ord-gc-price,
   #tc .ct-card .ord-gc-sub {
-    min-width: 6.75rem;
+    min-width: 4.5rem;
+  }
+  /* Sopra ordini.css (line-clamp / -webkit-box) e overflow-wrap su mobile */
+  #tc .ct-card .ord-item-name {
+    display: block;
+    overflow: visible;
+    -webkit-line-clamp: unset;
+    -webkit-box-orient: unset;
+    word-break: normal;
+    overflow-wrap: break-word;
+    min-height: 0;
   }
   /* UM più piccolo; cifra quantità più grande (override sopra) */
   #tc .ct-um-select.ct-um--mini {
