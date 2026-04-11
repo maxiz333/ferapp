@@ -750,9 +750,27 @@ button[touch-action="manipulation"],
   max-width: var(--ct-max); margin-left: auto; margin-right: auto;
   width: 100%; box-sizing: border-box;
 }
-.ct-sticky-val   { font-size: 22px; font-weight: 900; color: var(--ct-yellow); line-height: 1.2; }
-.ct-sconto-badge { background: rgba(255,215,0,.15); color: var(--ct-yellow); padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 700; }
-.ct-sticky-n     { font-size: 12px; color: var(--ct-muted); font-weight: 600; margin-left: auto; }
+.ct-sticky-client {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #ececec;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.ct-sticky-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.ct-sconto-badge { background: rgba(255,215,0,.15); color: var(--ct-yellow); padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+.ct-sticky-n     { font-size: 12px; color: var(--ct-muted); font-weight: 600; flex-shrink: 0; }
 .ct-btn-sconto {
   padding: 6px 10px; border-radius: 8px;
   border: 1px solid rgba(255,215,0,.35); background: transparent;
@@ -801,7 +819,7 @@ button[touch-action="manipulation"],
 #tc .ct-card .ord-gc-sub .ct-prz-stack--tot {
   width: 100%;
 }
-/* Totale riga senza sconto: più leggibile */
+/* Totale riga articolo (come prima: più grande del prezzo unità) */
 #tc .ct-card .ord-gc-sub-val {
   font-size: 18px;
   font-weight: 900;
@@ -868,11 +886,12 @@ button[touch-action="manipulation"],
   margin: 0;
   margin-top: 1px;
 }
-#tc .ct-card .ct-prz-stack .ct-sub--final {
-  font-size: 17px;
-}
 #tc .ct-card .ct-prz-stack--tot .ct-sub--final {
   font-size: 18px;
+}
+/* Prezzo unità con fascia sconto: ben visibile (non legato al tot riga) */
+#tc .ct-card .ct-prz-stack.ct-prz-stack--unit .ct-sub--final {
+  font-size: 19px;
 }
 /* Zona Base €/kg con sconto: seconda riga sotto tag+campo */
 #tc .ct-card .ct-pb-inline:has(.ct-pb-struck) {
@@ -889,18 +908,18 @@ button[touch-action="manipulation"],
   gap: 5px 10px;
   padding-top: 1px;
 }
-/* €/UM: campo testo modificabile (niente riquadro; selezione e caret espliciti) */
+/* €/UM: molto più grande, campo modificabile */
 #tc .ct-card .ord-gc-price .ct-punit {
   border: none;
   border-bottom: none;
   background: transparent;
   box-shadow: none;
   margin-top: 0;
-  padding: 2px 1px;
-  font-size: 13px;
-  min-height: 26px;
-  font-weight: 700;
-  color: #b0b0b0;
+  padding: 4px 2px;
+  font-size: 20px;
+  min-height: 42px;
+  font-weight: 800;
+  color: #d8d8d8;
   cursor: text;
   pointer-events: auto;
   -webkit-user-select: text;
@@ -909,11 +928,6 @@ button[touch-action="manipulation"],
   -webkit-appearance: none;
   appearance: none;
   touch-action: auto;
-}
-#tc .ct-card .ord-gc-price:not(:has(.ct-prz-stack)) .ct-punit {
-  font-size: 14px;
-  min-height: 28px;
-  color: #c8c8c8;
 }
 #tc .ct-card .ord-gc-price .ct-punit:focus {
   border: none;
@@ -1551,6 +1565,7 @@ button[touch-action="manipulation"],
 body.light-mode #ct-header-wrap { background: #fff; border-bottom-color: var(--accent); }
 body.light-mode .ct-card { background: #fff; border-color: #e0e0e0; }
 body.light-mode .ct-sticky-total { background: #f2f2f2; }
+body.light-mode .ct-sticky-client { color: #1a1a1a; }
 body.light-mode #cart-body { background: #f2f2f2; }
 body.light-mode #cart-pos-footer { background: linear-gradient(135deg,#fff9e6,#fffbe8); border-top-color: var(--accent); }
 body.light-mode .ct-footer-tot { color: var(--accent); }
@@ -1597,7 +1612,6 @@ body.light-mode .ct-pb-inp::placeholder {
     margin-bottom: 2px;
     gap: 6px;
   }
-  #tc .ct-sticky-val { font-size: 20px; }
   #tc .ct-sticky-n { font-size: 10px; }
   #tc .ct-btn-sconto { padding: 6px 10px; font-size: 11px; min-height: 40px; }
   #tc .ct-card {
@@ -1672,35 +1686,27 @@ body.light-mode .ct-pb-inp::placeholder {
   #tc .ct-card .ord-gc-price {
     font-size: 14px;
   }
-  #tc .ct-card .ord-gc-price .ct-punit {
-    font-size: 13px;
-    min-height: 28px;
-    padding: 3px 2px;
-    border: none;
-    border-bottom: none;
-  }
-  /* Senza fascia sconto: €/UM un filo più grande */
-  #tc .ct-card .ord-gc-price:not(:has(.ct-prz-stack)) .ct-punit {
-    font-size: 15px;
-    min-height: 30px;
-    padding: 4px 2px;
-  }
-  #tc .ct-card .ord-gc-sub-val {
-    font-size: 20px;
-  }
   #tc .ct-card .ord-gc-sub {
     font-size: 14px;
     min-height: 0;
   }
-  /* Prezzi scampolo + totale: molto più grandi sul telefono (#tc carrello) */
-  #tc .ct-card .ct-prz-stack .ct-old--orig {
-    font-size: 11px;
-  }
-  #tc .ct-card .ct-prz-stack .ct-sub--final {
+  #tc .ct-card .ord-gc-sub-val {
     font-size: 20px;
+  }
+  #tc .ct-card .ord-gc-price .ct-punit {
+    font-size: 24px;
+    min-height: 48px;
+    padding: 6px 3px;
   }
   #tc .ct-card .ct-prz-stack--tot .ct-sub--final {
     font-size: 22px;
+  }
+  #tc .ct-card .ct-prz-stack.ct-prz-stack--unit .ct-sub--final {
+    font-size: 21px;
+  }
+  /* Prezzi scampolo + totale (#tc carrello) */
+  #tc .ct-card .ct-prz-stack .ct-old--orig {
+    font-size: 11px;
   }
   #tc .ct-card .ct-prz-stack .ct-prz-sconto-sav,
   #tc .ct-card .ct-prz-stack--tot .ct-prz-sconto-sav {

@@ -140,16 +140,16 @@ function renderCartTabs(){
     h += '</div>';
   } else {
 
-    // ── TOTALE STICKY ─────────────────────────────────────────────────────
-    var tot     = (cart.items||[]).reduce(function(s,it){ return s + _prezzoEffettivo(it) * parseFloat(it.qty||0); }, 0);
+    // ── BARRA STICKY: cliente + sconto globale (niente totale € qui) ─────────
     var scontoGl = cart.scontoGlobale;
-    var totFin   = scontoGl ? tot * (1 - scontoGl/100) : tot;
     h += '<div class="ct-sticky-total">';
-    h += '<span class="ct-sticky-val">€ ' + totFin.toFixed(2) + '</span>';
+    h += '<span class="ct-sticky-client" onclick="ctEditClienteName(\'' + cart.id + '\')" title="Tap per modificare il cliente">' +
+         esc(cart.nome || 'Cliente') + '</span>';
+    h += '<div class="ct-sticky-right">';
     if(scontoGl) h += '<span class="ct-sconto-badge">-'+scontoGl+'%</span>';
     h += '<span class="ct-sticky-n">' + (cart.items||[]).length + ' art.</span>';
     h += '<button onclick="openScontoOverlay()" class="ct-btn-sconto">% Sconto</button>';
-    h += '</div>';
+    h += '</div></div>';
 
     // ── GRIGLIA ARTICOLI — stessa struttura tab ordini ─────────────
     h += '<div class="ord-items-wrap">';

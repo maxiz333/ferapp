@@ -386,15 +386,13 @@ function cartRefreshLineAndTotals(cartId, idx){
       subEl.innerHTML = htmlTotaleScontoRiga(p0 * q, parseFloat(sub));
     } else {
       var subColor = it._tuttoRotolo ? '#fc8181' : (it.fineRotolo ? '#f6ad55' : 'var(--accent)');
-      subEl.innerHTML = '<div style="font-size:13px;font-weight:900;color:' + subColor + '">€' + sub + '</div>';
+      subEl.innerHTML = '<div class="ord-gc-sub-val" style="color:' + subColor + '">€' + sub + '</div>';
     }
   }
   var tot = (cart.items || []).reduce(function(s, row){
     return s + _prezzoEffettivo(row) * parseFloat(row.qty || 0);
   }, 0);
   var totFin = cart.scontoGlobale ? tot * (1 - cart.scontoGlobale / 100) : tot;
-  var sticky = document.querySelector('.ct-sticky-val');
-  if(sticky) sticky.textContent = '€ ' + totFin.toFixed(2);
   var foot = document.querySelector('.ct-footer-tot');
   if(foot){
     foot.innerHTML = '<span class="ct-footer-sym">€</span>' + totFin.toFixed(2);
