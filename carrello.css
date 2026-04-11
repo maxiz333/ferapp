@@ -797,31 +797,79 @@ button[touch-action="manipulation"],
     repeating-linear-gradient(45deg,var(--ct-yellow) 0,var(--ct-yellow) 4px,#111 4px,#111 10px) border-box !important;
 }
 
+/* Griglia riga articolo: ~55% nome | ~45% (qtà + prezzo unit. + totale), senza overflow */
+#tc .ct-card .ord-grid {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.3fr) minmax(0, 0.3fr) minmax(0, 0.3fr);
+  column-gap: 6px;
+  padding: 0 4px;
+  align-items: center;
+  box-sizing: border-box;
+}
+#tc .ct-card .ord-gc-desc,
+#tc .ct-card .ord-gc-qty,
+#tc .ct-card .ord-gc-price,
+#tc .ct-card .ord-gc-sub {
+  min-width: 0;
+}
+#tc .ct-card .ord-item-name {
+  display: block;
+  overflow: visible;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+  min-height: 0;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: unset;
+}
+#tc .ct-card .ord-gc-sub {
+  align-items: flex-end;
+  justify-content: flex-start;
+  text-align: right;
+}
+#tc .ct-card .ord-gc-sub .ct-prz-stack,
+#tc .ct-card .ord-gc-sub .ct-prz-stack--tot {
+  align-items: flex-end;
+  text-align: right;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+#tc .ct-card .ord-gc-sub .ord-gc-sub-val {
+  width: 100%;
+  max-width: 100%;
+  text-align: right;
+  box-sizing: border-box;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 /* Tab carrello: spazio tra griglia prezzi e barra forbici / leggibilità */
 #tc .ct-card .ord-grid-row {
   padding-top: 6px;
   padding-bottom: 10px;
 }
 #tc .ct-card .ord-gc-price {
-  font-size: 13px;
-  line-height: 1.35;
+  align-items: center;
+  justify-content: flex-start;
+  font-size: 12px;
+  line-height: 1.3;
   color: #c4c4c4;
-  gap: 6px;
+  gap: 4px;
 }
 #tc .ct-card .ord-gc-sub {
-  font-size: 13px;
-  line-height: 1.35;
+  font-size: 12px;
+  line-height: 1.3;
   font-weight: 900;
   color: var(--ct-yellow);
-  min-height: 2.5em;
-  gap: 4px;
+  min-height: 0;
+  gap: 2px;
 }
 #tc .ct-card .ord-gc-sub .ct-prz-stack--tot {
   width: 100%;
 }
-/* Totale riga articolo (come prima: più grande del prezzo unità) */
+/* Totale riga articolo: giallo, compatto, allineato a destra nella colonna */
 #tc .ct-card .ord-gc-sub-val {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 900;
   line-height: 1.2;
   letter-spacing: 0.02em;
@@ -869,6 +917,19 @@ button[touch-action="manipulation"],
   padding: 2px 0 3px;
   flex-shrink: 0;
 }
+#tc .ct-card .ord-gc-price .ct-prz-stack {
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+#tc .ct-card .ct-prz-stack.ct-prz-stack--unit .ct-old--orig,
+#tc .ct-card .ct-prz-stack.ct-prz-stack--unit .ct-sub--final,
+#tc .ct-card .ct-prz-stack.ct-prz-stack--unit .ct-prz-sconto-sav {
+  text-align: center;
+  max-width: 100%;
+  word-break: break-word;
+}
 #tc .ct-card .ct-prz-stack .ct-old--orig {
   position: relative;
   z-index: 0;
@@ -887,11 +948,15 @@ button[touch-action="manipulation"],
   margin-top: 1px;
 }
 #tc .ct-card .ct-prz-stack--tot .ct-sub--final {
-  font-size: 18px;
+  font-size: 16px;
+  text-align: right;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
-/* Prezzo unità con fascia sconto: ben visibile (non legato al tot riga) */
+/* Prezzo unità con fascia sconto: compatto nella colonna */
 #tc .ct-card .ct-prz-stack.ct-prz-stack--unit .ct-sub--final {
-  font-size: 19px;
+  font-size: 14px;
 }
 /* Zona Base €/kg con sconto: seconda riga sotto tag+campo */
 #tc .ct-card .ct-pb-inline:has(.ct-pb-struck) {
@@ -908,17 +973,20 @@ button[touch-action="manipulation"],
   gap: 5px 10px;
   padding-top: 1px;
 }
-/* €/UM: molto più grande, campo modificabile */
+/* €/UM: compatto, bianco/grigio, non esce dalla card */
 #tc .ct-card .ord-gc-price .ct-punit {
   border: none;
   border-bottom: none;
   background: transparent;
   box-shadow: none;
   margin-top: 0;
-  padding: 4px 2px;
-  font-size: 20px;
-  min-height: 42px;
-  font-weight: 800;
+  padding: 2px 0;
+  font-size: 14px;
+  min-height: 0;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  font-weight: 700;
   color: #d8d8d8;
   cursor: text;
   pointer-events: auto;
@@ -928,6 +996,7 @@ button[touch-action="manipulation"],
   -webkit-appearance: none;
   appearance: none;
   touch-action: auto;
+  text-align: center;
 }
 #tc .ct-card .ord-gc-price .ct-punit:focus {
   border: none;
@@ -944,12 +1013,33 @@ button[touch-action="manipulation"],
   color: var(--ct-yellow);
 }
 
-/* Griglia riga: prezzo e totale centrati in altezza accanto a qtà/UM (desc resta in alto) */
-#tc .ct-card .ord-grid-row {
-  align-items: center;
-}
+/* Griglia riga: qtà/prezzi centrati in altezza; desc multi-riga in alto */
 #tc .ct-card .ord-gc-desc {
   align-self: start;
+}
+/* Stepper +/− compatto (28×28, touch target gestito dal contenitore riga) */
+#tc .ct-qty--compact .ct-qty-btn {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  max-height: 28px;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 0;
+  border-radius: 6px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+#tc .ct-qty--compact .ct-qty-val {
+  min-width: 28px;
+  min-height: 28px;
+  height: 28px;
+  font-size: 14px;
+  font-weight: 900;
+  padding: 0 4px;
+  border-radius: 6px;
+  box-sizing: border-box;
 }
 /* Select UM più compatto; numero quantità più evidente */
 #tc .ct-um-select.ct-um--mini {
@@ -959,11 +1049,6 @@ button[touch-action="manipulation"],
   font-size: 9px;
   font-weight: 700;
   border-radius: 5px;
-}
-#tc .ct-qty--compact .ct-qty-val {
-  font-size: 16px;
-  font-weight: 900;
-  min-width: 30px;
 }
 
 /* Riga A: foto | info | prezzo — LEGACY, usata solo nello stato inviato */
@@ -1660,19 +1745,24 @@ body.light-mode .ct-pb-inp::placeholder {
   }
   #tc .ct-pb-final { font-size: 11px; }
   #tc .ct-grid-qty { gap: 2px; align-items: stretch; }
+  /* Stepper: stesse dimensioni compatte del layout base (no ingrandimento mobile) */
   #tc .ct-qty--compact .ct-qty-btn {
-    min-width: 44px;
-    min-height: 44px;
-    font-size: 18px;
-    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    max-height: 28px;
+    font-size: 14px;
+    border-radius: 6px;
     box-sizing: border-box;
   }
   #tc .ct-qty--compact .ct-qty-val {
-    min-width: 36px;
-    min-height: 44px;
-    font-size: 19px;
+    min-width: 28px;
+    min-height: 28px;
+    height: 28px;
+    font-size: 14px;
     font-weight: 900;
-    border-radius: 8px;
+    border-radius: 6px;
     box-sizing: border-box;
   }
   /* UM più piccolo; cifra quantità più grande (override sopra) */
@@ -1684,25 +1774,24 @@ body.light-mode .ct-pb-inp::placeholder {
     font-weight: 700;
   }
   #tc .ct-card .ord-gc-price {
-    font-size: 14px;
+    font-size: 12px;
   }
   #tc .ct-card .ord-gc-sub {
-    font-size: 14px;
-    min-height: 0;
+    font-size: 12px;
   }
   #tc .ct-card .ord-gc-sub-val {
-    font-size: 20px;
+    font-size: 16px;
   }
   #tc .ct-card .ord-gc-price .ct-punit {
-    font-size: 24px;
-    min-height: 48px;
-    padding: 6px 3px;
+    font-size: 14px;
+    min-height: 0;
+    padding: 2px 0;
   }
   #tc .ct-card .ct-prz-stack--tot .ct-sub--final {
-    font-size: 22px;
+    font-size: 16px;
   }
   #tc .ct-card .ct-prz-stack.ct-prz-stack--unit .ct-sub--final {
-    font-size: 21px;
+    font-size: 14px;
   }
   /* Prezzi scampolo + totale (#tc carrello) */
   #tc .ct-card .ct-prz-stack .ct-old--orig {
