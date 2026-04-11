@@ -797,19 +797,29 @@ button[touch-action="manipulation"],
     repeating-linear-gradient(45deg,var(--ct-yellow) 0,var(--ct-yellow) 4px,#111 4px,#111 10px) border-box !important;
 }
 
-/* Griglia riga articolo: ~55% nome | ~45% (qtà + prezzo unit. + totale), senza overflow */
+/* Griglia: nome | qtà (−·num·+ orizz., pulsanti stretti verticali) | prezzo | tot */
 #tc .ct-card .ord-grid {
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.3fr) minmax(0, 0.3fr) minmax(0, 0.3fr);
-  column-gap: 6px;
+  grid-template-columns:
+    minmax(0, 1.2fr)
+    minmax(72px, 0.22fr)
+    minmax(7.5rem, 1fr)
+    minmax(7.5rem, 1fr);
+  column-gap: 5px;
   padding: 0 4px;
   align-items: center;
   box-sizing: border-box;
 }
 #tc .ct-card .ord-gc-desc,
-#tc .ct-card .ord-gc-qty,
+#tc .ct-card .ord-gc-qty {
+  min-width: 0;
+}
+#tc .ct-card .ord-gc-qty {
+  justify-self: center;
+}
 #tc .ct-card .ord-gc-price,
 #tc .ct-card .ord-gc-sub {
-  min-width: 0;
+  min-width: 7.5rem;
+  overflow: visible;
 }
 #tc .ct-card .ord-item-name {
   display: block;
@@ -839,8 +849,8 @@ button[touch-action="manipulation"],
   max-width: 100%;
   text-align: right;
   box-sizing: border-box;
-  word-break: break-word;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Tab carrello: spazio tra griglia prezzi e barra forbici / leggibilità */
@@ -928,7 +938,8 @@ button[touch-action="manipulation"],
 #tc .ct-card .ct-prz-stack.ct-prz-stack--unit .ct-prz-sconto-sav {
   text-align: center;
   max-width: 100%;
-  word-break: break-word;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 #tc .ct-card .ct-prz-stack .ct-old--orig {
   position: relative;
@@ -936,6 +947,8 @@ button[touch-action="manipulation"],
   line-height: 1.25;
   margin: 0;
   padding: 0 1px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 #tc .ct-card .ct-prz-stack .ct-sub--final {
   line-height: 1.2;
@@ -946,6 +959,8 @@ button[touch-action="manipulation"],
   line-height: 1.25;
   margin: 0;
   margin-top: 1px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 #tc .ct-card .ct-prz-stack--tot .ct-sub--final {
   font-size: 16px;
@@ -953,6 +968,8 @@ button[touch-action="manipulation"],
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 /* Prezzo unità con fascia sconto: compatto nella colonna */
 #tc .ct-card .ct-prz-stack.ct-prz-stack--unit .ct-sub--final {
@@ -973,18 +990,19 @@ button[touch-action="manipulation"],
   gap: 5px 10px;
   padding-top: 1px;
 }
-/* €/UM: compatto, bianco/grigio, non esce dalla card */
+/* €/UM: una riga, non troncato (es. €784,00) */
 #tc .ct-card .ord-gc-price .ct-punit {
   border: none;
   border-bottom: none;
   background: transparent;
   box-shadow: none;
   margin-top: 0;
-  padding: 2px 0;
+  padding: 2px 4px;
   font-size: 14px;
   min-height: 0;
-  max-width: 100%;
+  min-width: 0;
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
   font-weight: 700;
   color: #d8d8d8;
@@ -997,6 +1015,8 @@ button[touch-action="manipulation"],
   appearance: none;
   touch-action: auto;
   text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 #tc .ct-card .ord-gc-price .ct-punit:focus {
   border: none;
@@ -1017,29 +1037,39 @@ button[touch-action="manipulation"],
 #tc .ct-card .ord-gc-desc {
   align-self: start;
 }
-/* Stepper +/− compatto (28×28, touch target gestito dal contenitore riga) */
+/* Stepper come prima (− | qtà | + in riga); +/− = rettangoli verticali (pochi px in larghezza) */
+#tc .ct-qty--compact {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
 #tc .ct-qty--compact .ct-qty-btn {
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  min-height: 28px;
-  max-height: 28px;
-  font-size: 14px;
+  width: 22px;
+  height: 34px;
+  min-width: 22px;
+  min-height: 32px;
+  max-width: 24px;
+  font-size: 15px;
   font-weight: 700;
   padding: 0;
-  border-radius: 6px;
+  border-radius: 5px;
   flex-shrink: 0;
   line-height: 1;
+  box-sizing: border-box;
 }
 #tc .ct-qty--compact .ct-qty-val {
-  min-width: 28px;
-  min-height: 28px;
-  height: 28px;
-  font-size: 14px;
+  min-width: 26px;
+  max-width: 48px;
+  height: 34px;
+  min-height: 32px;
+  font-size: 13px;
   font-weight: 900;
-  padding: 0 4px;
-  border-radius: 6px;
+  padding: 0 3px;
+  border-radius: 5px;
   box-sizing: border-box;
+  white-space: nowrap;
 }
 /* Select UM più compatto; numero quantità più evidente */
 #tc .ct-um-select.ct-um--mini {
@@ -1064,7 +1094,10 @@ button[touch-action="manipulation"],
   display: flex; flex-direction: column; align-items: center; gap: 2px;
 }
 .ct-qty--compact {
-  display: flex; align-items: center; gap: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
 }
 .ct-qty--compact .ct-qty-btn {
   min-width: 24px; min-height: 24px; font-size: 14px;
@@ -1744,26 +1777,44 @@ body.light-mode .ct-pb-inp::placeholder {
     gap: 3px 6px;
   }
   #tc .ct-pb-final { font-size: 11px; }
-  #tc .ct-grid-qty { gap: 2px; align-items: stretch; }
-  /* Stepper: stesse dimensioni compatte del layout base (no ingrandimento mobile) */
+  #tc .ct-grid-qty { gap: 3px; align-items: center; }
+  /* Telefono: stessi rettangoli verticali un po’ più larghi per il tap */
+  #tc .ct-qty--compact {
+    gap: 3px;
+  }
   #tc .ct-qty--compact .ct-qty-btn {
-    width: 28px;
-    height: 28px;
-    min-width: 28px;
-    min-height: 28px;
-    max-height: 28px;
-    font-size: 14px;
+    width: 26px;
+    height: 38px;
+    min-width: 26px;
+    min-height: 36px;
+    max-width: 28px;
+    font-size: 16px;
     border-radius: 6px;
     box-sizing: border-box;
   }
   #tc .ct-qty--compact .ct-qty-val {
     min-width: 28px;
-    min-height: 28px;
-    height: 28px;
+    max-width: 52px;
+    height: 38px;
+    min-height: 36px;
     font-size: 14px;
     font-weight: 900;
     border-radius: 6px;
     box-sizing: border-box;
+    padding: 0 3px;
+  }
+  /* Colonne prezzo: minimo leggermente ridotto su schermi stretti ma sempre ≥ importi tipo €784,00 */
+  #tc .ct-card .ord-grid {
+    grid-template-columns:
+      minmax(0, 1.1fr)
+      minmax(78px, 0.24fr)
+      minmax(6.75rem, 1fr)
+      minmax(6.75rem, 1fr);
+    column-gap: 4px;
+  }
+  #tc .ct-card .ord-gc-price,
+  #tc .ct-card .ord-gc-sub {
+    min-width: 6.75rem;
   }
   /* UM più piccolo; cifra quantità più grande (override sopra) */
   #tc .ct-um-select.ct-um--mini {
