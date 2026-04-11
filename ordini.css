@@ -667,18 +667,57 @@ body.light-mode .ord-forn-line {
   border-color: #e8e8e8;
 }
 
-/* Tab ordini — righe compatte su telefono */
+/* Carrello + Ordini — mobile: più larghezza al nome, griglia densa, prezzi grandi */
 @media (max-width: 520px) {
-  #to .ord-grid-row {
-    padding-top: 4px !important;
-    padding-bottom: 4px !important;
+  #tc .ord-grid,
+  #to .ord-grid {
+    grid-template-columns: 40% 22% 19% 19%;
+    column-gap: 3px;
+    padding: 0 2px;
+  }
+  .ord-gc-desc {
+    padding: 1px 4px 2px 2px;
+    min-width: 0;
+  }
+  .ord-td-desc { min-width: 0; }
+  .ord-item-name {
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.38;
+    letter-spacing: 0.01em;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    /* altezza minima ~2 righe nitide */
+    min-height: calc(1.38em * 2);
+  }
+  .ord-item-codes {
+    margin-top: 2px;
+    gap: 4px 6px;
+  }
+  #to .ord-grid-row,
+  #tc .ord-grid-row {
+    padding-top: 2px !important;
+    padding-bottom: 3px !important;
   }
   #to .ord-grid-head {
-    padding-top: 2px;
-    padding-bottom: 2px;
+    padding-top: 1px;
+    padding-bottom: 1px;
   }
-  #to .ord-gh {
-    padding: 4px 2px;
-    font-size: 9px;
+  #to .ord-gh,
+  #tc .ord-gh {
+    padding: 3px 2px;
+    font-size: 8px;
+    letter-spacing: 0.4px;
+  }
+  #to .ord-items-wrap .ord-gc-sub {
+    font-size: 15px;
+    min-height: 0;
+  }
+  #to .ord-items-wrap .ord-gc-price {
+    font-size: 13px;
   }
 }

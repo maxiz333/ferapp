@@ -1156,20 +1156,21 @@ button[touch-action="manipulation"],
   color: var(--ct-text) !important;
 }
 
-/* Prezzo per unità base — sotto qtà; wrap così Base + importi restano visibili senza scroll orizzontale */
+/* Prezzo base €/kg: a sinistra "Base" + campo; a destra gli importi base in orizzontale */
 .ct-pb-inline {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: center;
-  gap: 4px 6px;
-  margin-top: 4px;
-  padding: 6px 2px 4px;
+  justify-content: space-between;
+  gap: 4px 8px;
+  margin-top: 3px;
+  padding: 4px 2px 4px;
   border-top: 1px solid rgba(255,255,255,.1);
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  min-height: 2em;
+  min-height: 0;
   box-sizing: border-box;
   overflow: visible;
 }
@@ -1205,42 +1206,43 @@ button[touch-action="manipulation"],
   -webkit-text-fill-color: #fff;
 }
 .ct-pb-disc {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
-  width: 100%;
+  justify-content: flex-end;
+  gap: 4px 8px;
   flex: 1 1 auto;
   min-width: 0;
-  margin-top: 2px;
-  font-size: 9px;
+  margin-top: 0;
+  margin-left: auto;
+  font-size: 10px;
   line-height: 1.15;
 }
 .ct-pb-struck {
   text-decoration: line-through;
   color: #9ca3af;
   font-weight: 600;
-  font-size: 9px;
+  font-size: 10px;
 }
 .ct-pb-final {
   color: #48bb78;
   font-weight: 900;
-  font-size: 11px;
+  font-size: 12px;
 }
 .ct-pb-sav {
   color: #f6ad55;
   font-weight: 700;
-  font-size: 8px;
+  font-size: 9px;
 }
 
-/* Prezzo scontato: colonna — originale piccolo/barrato sopra, finale grande verde sotto */
+/* Scampolo / totale riga: verticale (listino sopra, finale sotto) */
 .ct-prz-stack {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -1248,30 +1250,30 @@ button[touch-action="manipulation"],
 .ct-prz-stack .ct-old--orig {
   display: block;
   font-size: 10px;
-  line-height: 1.15;
+  line-height: 1.2;
   text-decoration: line-through;
   color: #9ca3af;
   font-weight: 600;
 }
 .ct-prz-stack .ct-sub--final {
   display: block;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.1;
   font-weight: 900;
   color: #48bb78;
 }
 .ct-prz-stack--tot .ct-sub--final {
-  font-size: 16px;
+  font-size: 17px;
 }
 .ct-prz-stack .ct-prz-sconto-sav {
   display: block;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 700;
   color: #f6ad55;
-  margin-top: 1px;
+  margin-top: 0;
 }
 .ct-prz-stack--tot .ct-prz-sconto-sav {
-  font-size: 9px;
+  font-size: 10px;
 }
 .ct-prz-single {
   font-size: 12px;
@@ -1426,83 +1428,123 @@ body.light-mode .ct-pb-inp::placeholder {
   -webkit-text-fill-color: #888;
 }
 
-/* ── MOBILE: carrello compatto (più prodotti visibili senza scroll) ─ */
+/* ── MOBILE: denso ma prezzi grandi, nome largo, touch ≥44px (pollice) ─ */
 @media (max-width: 520px) {
+  #cart-body {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    padding-top: 4px !important;
+  }
   #tc #cart-search-wrap { padding: 2px 6px; }
   #tc #cart-action-btns { padding: 2px 6px 0; }
   #tc .ct-btn-cerca {
-    min-height: 36px;
-    padding: 7px 12px;
+    min-height: 40px;
+    padding: 8px 12px;
     font-size: 12px;
     border-radius: 8px;
   }
   #tc .ct-sticky-total {
-    padding: 4px 8px 3px;
-    margin-bottom: 4px;
+    padding: 3px 8px 2px;
+    margin-bottom: 2px;
     gap: 6px;
   }
-  #tc .ct-sticky-val { font-size: 18px; }
+  #tc .ct-sticky-val { font-size: 20px; }
   #tc .ct-sticky-n { font-size: 10px; }
-  #tc .ct-btn-sconto { padding: 4px 8px; font-size: 10px; }
+  #tc .ct-btn-sconto { padding: 6px 10px; font-size: 11px; min-height: 40px; }
   #tc .ct-card {
-    margin-bottom: 4px;
-    border-radius: 8px;
+    margin-bottom: 3px;
+    border-radius: 6px;
   }
   #tc .ct-card .ord-grid-row {
-    padding-top: 3px !important;
-    padding-bottom: 4px !important;
+    padding-top: 2px !important;
+    padding-bottom: 3px !important;
   }
   #tc .ord-items-wrap .ord-grid-head {
-    padding-top: 2px;
-    padding-bottom: 2px;
+    padding-top: 1px;
+    padding-bottom: 1px;
   }
   #tc .ord-gh {
-    padding: 4px 2px;
-    font-size: 9px;
+    padding: 3px 2px;
+    font-size: 8px;
+    letter-spacing: 0.5px;
   }
   #tc .ct-iconbar {
-    padding: 4px 4px 5px;
+    padding: 3px 4px 4px;
     gap: 4px;
-    row-gap: 4px;
+    row-gap: 3px;
     margin-top: 0;
   }
+  /* Azioni: area minima 44×44 per tap */
   #tc .ct-icon-btn {
-    min-height: 32px;
-    min-width: 32px;
-    padding: 3px 6px;
+    min-height: 44px;
+    min-width: 44px;
+    padding: 6px 8px;
+    box-sizing: border-box;
   }
-  #tc .ct-forbici-row { gap: 3px; }
+  #tc .ct-forbici-row { gap: 4px; align-items: center; }
+  #tc .ct-sc-inline .ct-sc-inp {
+    min-height: 40px;
+    box-sizing: border-box;
+  }
   #tc .ct-pb-inline {
-    margin-top: 2px;
-    padding: 4px 0 2px;
-    gap: 3px;
-    min-height: 0;
+    margin-top: 1px;
+    padding: 3px 0 2px;
+    gap: 4px;
     border-top: none;
   }
-  #tc .ct-grid-qty { gap: 1px; }
+  #tc .ct-pb-disc {
+    gap: 3px 6px;
+  }
+  #tc .ct-pb-final { font-size: 11px; }
+  #tc .ct-grid-qty { gap: 2px; align-items: stretch; }
   #tc .ct-qty--compact .ct-qty-btn {
-    min-width: 22px;
-    min-height: 30px;
-    font-size: 13px;
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 18px;
+    border-radius: 8px;
+    box-sizing: border-box;
   }
   #tc .ct-qty--compact .ct-qty-val {
-    min-width: 24px;
-    min-height: 30px;
-    font-size: 12px;
+    min-width: 32px;
+    min-height: 44px;
+    font-size: 15px;
+    font-weight: 900;
+    border-radius: 8px;
+    box-sizing: border-box;
   }
   #tc .ct-um--mini {
-    min-height: 18px;
-    font-size: 8px;
-    padding: 0 2px;
+    min-height: 36px;
+    font-size: 9px;
+    padding: 0 4px;
+    min-width: 34px;
+  }
+  #tc .ct-card .ord-gc-price {
+    font-size: 13px;
   }
   #tc .ct-punit {
-    min-height: 24px;
-    margin-top: 1px;
-    font-size: 8px;
-    padding: 2px 1px;
+    min-height: 30px;
+    margin-top: 2px;
+    font-size: 11px;
+    padding: 4px 2px;
   }
-  #tc .ct-prz-stack .ct-sub--final { font-size: 14px; }
-  #tc .ct-prz-stack--tot .ct-sub--final { font-size: 15px; }
+  #tc .ct-card .ord-gc-sub {
+    font-size: 14px;
+    min-height: 0;
+  }
+  /* Prezzi scampolo + totale: molto più grandi sul telefono */
+  .ct-prz-stack .ct-old--orig {
+    font-size: 11px;
+  }
+  .ct-prz-stack .ct-sub--final {
+    font-size: 19px;
+  }
+  .ct-prz-stack--tot .ct-sub--final {
+    font-size: 21px;
+  }
+  .ct-prz-stack .ct-prz-sconto-sav,
+  .ct-prz-stack--tot .ct-prz-sconto-sav {
+    font-size: 11px;
+  }
 }
 
 /* ── RESPONSIVE: dimensioni ridotte su PC ────────────────────────── */
