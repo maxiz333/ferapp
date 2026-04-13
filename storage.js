@@ -24,6 +24,8 @@
     BACKUP_LAST: 'cp4_backup_last',
     CLIENTI: 'cp4_clienti',
     FORNI_COLORE: 'cp4_forniColore',
+    ORD_FORN_STORICO: 'cp4_ord_forn_storico',
+    ORD_FORN_STORICO_COLD: 'cp4_ord_forn_storico_cold',
     EDITOR: 'cp4_editor',
     GIORNOMI: 'cp4_giornomi',
     THEME: 'cp4_theme',

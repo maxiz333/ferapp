@@ -130,6 +130,20 @@ function openSchedaFromOrdine(gi, ii){
   }
 }
 
+/** Stessa scheda prodotto della tab Ordini — tap sul nome in carrello. */
+function openSchedaFromCarrello(cartId, itemIdx){
+  if(typeof carrelli === 'undefined' || !carrelli) return;
+  var cart = carrelli.find(function(c){ return c.id === cartId; });
+  if(!cart || !cart.items || !cart.items[itemIdx]) return;
+  var it = cart.items[itemIdx];
+  var idx = _findRowIdx(it);
+  if(idx >= 0){
+    openSchedaRapida(idx);
+  } else {
+    showToastGen('orange','Articolo non trovato nel database');
+  }
+}
+
 // ── Modifica nome cliente ordine ─────────────────────────────────
 function ordEditCliente(gi){
   var ord = ordini[gi];

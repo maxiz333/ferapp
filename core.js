@@ -32,7 +32,15 @@ var carrelliCestino=lsGet(CART_CK)||[];
 var activeCartId=carrelli.length?carrelli[carrelli.length-1].id:null;
 var ordFiltro='nuovo';
 var ORDK_ARCH=window.AppKeys.ORDINI_ARCHIVIO;
-var ordiniArchivio=lsGet(ORDK_ARCH)||[];
+/** Archivio ordini completati (lazy: non leggiamo localStorage all'avvio se non serve). */
+var ordiniArchivio;
+var ordFornStorico=lsGet(window.AppKeys.ORD_FORN_STORICO,[]);
+
+function getOrdiniArchivio(){
+  if(ordiniArchivio===undefined||ordiniArchivio===null)
+    ordiniArchivio=lsGet(ORDK_ARCH)||[];
+  return ordiniArchivio;
+}
 
 // Archivia ordini completati da 7+ giorni
 (function(){
@@ -48,7 +56,8 @@ var ordiniArchivio=lsGet(ORDK_ARCH)||[];
     return true;
   });
   if(daArch.length){
-    ordiniArchivio=daArch.concat(ordiniArchivio);
+    var prev=lsGet(ORDK_ARCH)||[];
+    ordiniArchivio=daArch.concat(prev);
     lsSet(ORDK,ordini);
     lsSet(ORDK_ARCH,ordiniArchivio);
   }

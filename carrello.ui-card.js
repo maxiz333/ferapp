@@ -103,28 +103,25 @@ function ctApriColori(cartId, idx){
   if(!cart || !cart.items[idx]) return;
   var it = cart.items[idx];
 
-  var colori = [
-    { label:'🔴 Rosso',   val:'#e53e3e' },
-    { label:'🟢 Verde',   val:'#38a169' },
-    { label:'🔵 Blu',     val:'#3182ce' },
-    { label:'🟡 Giallo',  val:'#e2c400' },
-    { label:'✕ Rimuovi', val:''         },
-  ];
+  var slots = typeof CT_FORN_CANON_HEX !== 'undefined' ? CT_FORN_CANON_HEX : ['#e53e3e', '#38a169', '#3182ce', '#e2c400'];
 
   var popup = document.createElement('div');
   popup.id = 'ct-color-popup';
   popup.className = 'ct-color-popup';
 
-  var html = '<div class="ct-color-title">Colore ordine fornitore</div>';
-  colori.forEach(function(c){
-    var isActive = it._ordColore === c.val && c.val !== '';
-    html += '<button class="ct-color-opt' + (isActive ? ' ct-color-opt--active' : '') + '"';
-    if(c.val) html += ' style="border-color:' + c.val + '"';
-    html += ' onclick="ctSetColore(\'' + cartId + '\',' + idx + ',\'' + c.val + '\')">';
-    html += c.label;
+  var html = '<div class="ct-color-title">Ordina da fornitore</div>';
+  slots.forEach(function(hex){
+    var nome = typeof ctEtichettaFornitore === 'function' ? ctEtichettaFornitore(hex) : hex;
+    var isActive = it._ordColore === hex && hex !== '';
+    html += '<button type="button" class="ct-color-opt' + (isActive ? ' ct-color-opt--active' : '') + '"';
+    html += ' style="border-color:' + hex + '"';
+    html += ' onclick="ctSetColore(\'' + cartId + '\',' + idx + ',\'' + hex + '\')">';
+    html += '<span class="ct-color-opt-inner"><span class="ct-color-dot" style="background:' + hex + '"></span>';
+    html += '<span>' + esc(nome) + '</span></span>';
     if(isActive) html += ' ✓';
     html += '</button>';
   });
+  html += '<button type="button" class="ct-color-opt ct-color-opt--clear" onclick="ctSetColore(\'' + cartId + '\',' + idx + ',\'\')">✕ Rimuovi da ordinare</button>';
   popup.innerHTML = html;
 
   // Posizionamento vicino alla card
@@ -151,9 +148,17 @@ function ctSetColore(cartId, idx, colore){
   var it = cart.items[idx];
   it._ordColore = colore || undefined;
   it.daOrdinare = !!colore;
+  if(colore){
+    var map = typeof ctGetForniColore === 'function' ? ctGetForniColore() : {};
+    if(map[colore]) it._ordFornitoreNome = map[colore];
+    else delete it._ordFornitoreNome;
+  } else {
+    delete it._ordFornitoreNome;
+  }
   var p = document.getElementById('ct-color-popup');
   var b = document.getElementById('ct-color-bd');
   if(p) p.remove(); if(b) b.remove();
+  if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(cart);
   saveCarrelli();
   renderCartTabs();
 }

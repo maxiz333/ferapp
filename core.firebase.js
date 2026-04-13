@@ -155,6 +155,8 @@ document.addEventListener('DOMContentLoaded', function(){
     _applySharedValue('shared/clienti', window.AppKeys.CLIENTI, 'clienti', {});
     _applySharedValue('shared/fatture', window.AppKeys.FATTURE, 'fatture', []);
     _applySharedValue('shared/ordini_fornitori', window.AppKeys.ORDFORNITORI, 'ordFornitori', []);
+    _applySharedValue('shared/forni_colore', window.AppKeys.FORNI_COLORE, 'forniColore', {});
+    _applySharedValue('shared/ord_forn_storico', window.AppKeys.ORD_FORN_STORICO, 'ordFornStorico', []);
 
     // ── Avvia caricamento catalogo IMMEDIATAMENTE all'apertura ──
     if(document.readyState === 'loading'){

@@ -440,7 +440,17 @@ function cartHideNota(idx){
 function cartToggleDaOrdinare(cartId,idx){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
-  cart.items[idx].daOrdinare=!cart.items[idx].daOrdinare;
+  var it=cart.items[idx];
+  it.daOrdinare=!it.daOrdinare;
+  if(it.daOrdinare){
+    if(!it._ordColore || it._ordColore==='#888888') it._ordColore='#e53e3e';
+    var map=typeof ctGetForniColore==='function'?ctGetForniColore():{};
+    if(map[it._ordColore]) it._ordFornitoreNome=map[it._ordColore];
+ } else {
+    delete it._ordColore;
+    delete it._ordFornitoreNome;
+  }
+  if(typeof _cartSyncLinkedOrdine==='function') _cartSyncLinkedOrdine(cart);
   saveCarrelli();renderCartTabs();
 }
 function cartSetNotaOrdine(cartId,val){

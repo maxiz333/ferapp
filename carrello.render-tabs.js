@@ -1,5 +1,10 @@
 // carrello.render-tabs.js — renderCartTabs
 
+// Confronto articoli: indici righe catalogo (rows[]) — NON sono righe carrello; totali carrello invariati.
+if(typeof window.tcCompareSlots === 'undefined') window.tcCompareSlots = [];
+if(typeof window.tcCompareAreaOpen === 'undefined') window.tcCompareAreaOpen = false;
+if(typeof window.tcCompareHighlightDiff === 'undefined') window.tcCompareHighlightDiff = false;
+
 // --- RENDER CARRELLO ---------------------------------------
 
 /** Ordine/bozza collegato al carrello (per indicatore visto ufficio). */
@@ -423,6 +428,8 @@ function renderCartTabs(){
        'oninput="cartSetNotaOrdine(\'' + cart.id + '\',this.value)">' + esc(cart.nota||'') + '</textarea>';
   h += '</div>';
 
+  h += tcHtmlCompareShell();
+
   // ── STICKY FOOTER ─────────────────────────────────────────────────────────
   var tot2    = (cart.items||[]).reduce(function(s,it){ return s + _prezzoEffettivo(it) * parseFloat(it.qty||0); }, 0);
   var tot2Fin = cart.scontoGlobale ? tot2*(1-cart.scontoGlobale/100) : tot2;
@@ -455,6 +462,442 @@ function renderCartTabs(){
   h += '</div>'; // fine cart-pos-footer
 
   body.innerHTML = h;
+  if((window.tcCompareSlots||[]).length){
+    setTimeout(function(){ if(typeof tcCompareHydratePhotos==='function') tcCompareHydratePhotos(); }, 0);
+  }
+}
+
+/** Testo lungo confronto: campi magazzino descrizione / note tecniche (come DB magazzino), poi specs. */
+function tcCompareMagLongDesc(r,m){
+  r=r||{};m=m||{};
+  var a=String(m.descrizione||m.Descrizione||'').trim();
+  var b=String(m.note_tecniche||m.noteTecniche||m.Note_Tecniche||'').trim();
+  var ra=String(r.descrizione||r.note_tecniche||'').trim();
+  var parts=[];
+  function pushUnique(t){
+    t=String(t||'').trim();
+    if(!t)return;
+    if(parts.indexOf(t)<0)parts.push(t);
+  }
+  pushUnique(a);pushUnique(b);pushUnique(ra);
+  if(parts.length)return parts.join('\n\n');
+  var sp=String(m.specs||'').trim();
+  if(sp)return sp;
+  return '\u2014';
+}
+
+/** Chiave canonica codM per confronti carrello/confronto (00123 = 123 se numerici). */
+function tcCompareNormCodMKey(cm){
+  var s=String(cm==null?'':cm).trim();
+  if(!s)return '';
+  if(/^\d+$/.test(s))return 'n:'+String(parseInt(s,10));
+  return 's:'+s.toLowerCase();
+}
+
+/** True se il codice magazzino della riga catalogo è già in una voce del carrello. */
+function tcCompareRowCodInCart(rowIdx, cart){
+  if(!cart||!(cart.items&&cart.items.length)||typeof rows==='undefined'||!rows[rowIdx])return false;
+  var r=rows[rowIdx];
+  var k=tcCompareNormCodMKey(r.codM);
+  if(!k)return false;
+  var items=cart.items;
+  for(var i=0;i<items.length;i++){
+    var it=items[i];
+    if(!it)continue;
+    if(tcCompareNormCodMKey(it.codM)===k)return true;
+  }
+  return false;
+}
+
+function tcCompareVariField(arr){
+  if(!arr||arr.length<2)return false;
+  var x=arr[0];
+  for(var i=1;i<arr.length;i++){
+    if(arr[i]!==x)return true;
+  }
+  return false;
+}
+
+/** Campi che differiscono tra le colonne (solo se highlight attivo e almeno 2 articoli). */
+function tcCompareDiffFlags(slots, highlightOn){
+  var out={name:false,codes:false,desc:false,price:false};
+  if(!highlightOn||!slots||slots.length<2||typeof rows==='undefined')return out;
+  var names=[], codKeys=[], forns=[], descs=[], prices=[];
+  for(var s=0;s<slots.length;s++){
+    var ri=slots[s];
+    var r=rows[ri]||{};
+    var m=(typeof magazzino!=='undefined'&&magazzino[ri])?magazzino[ri]:{};
+    names.push(String(r.desc||'').trim().toLowerCase());
+    codKeys.push(tcCompareNormCodMKey(r.codM));
+    forns.push(String(m.nomeFornitore||'').trim().toLowerCase());
+    descs.push(String(tcCompareMagLongDesc(r,m)).trim());
+    var pu=typeof parsePriceIT==='function'?parsePriceIT(r.prezzo||0):0;
+    if(!isFinite(pu))pu=0;
+    prices.push(Math.round(pu*100)/100);
+  }
+  out.name=tcCompareVariField(names);
+  out.codes=tcCompareVariField(codKeys)||tcCompareVariField(forns);
+  out.desc=tcCompareVariField(descs);
+  out.price=tcCompareVariField(prices);
+  return out;
+}
+
+function tcCompareOnHighlightDiffToggle(el){
+  window.tcCompareHighlightDiff=!!(el&&el.checked);
+  if(typeof renderCartTabs==='function')renderCartTabs();
+}
+
+/** Match codice magazzino (stessa logica codepad: esatto prima, poi parziale; max 5 per UI). */
+function tcCompareCodMatches(raw, limit){
+  var code=String(raw||'').trim().toLowerCase();
+  var lim=limit==null?5:limit;
+  if(!code||typeof rows==='undefined'||!rows.length)return [];
+  var codeNum=/^\d+$/.test(code)?parseInt(code,10):null;
+  var matches=[];
+  for(var i=0;i<rows.length;i++){
+    if(typeof removed!=='undefined'&&removed.has(String(i)))continue;
+    var r=rows[i];if(!r)continue;
+    var fv=String(r.codM||'').trim();
+    if(!fv)continue;
+    var fvLo=fv.toLowerCase();
+    var exact=fvLo===code||(codeNum!==null&&/^\d+$/.test(fv)&&parseInt(fv,10)===codeNum);
+    if(exact){matches.unshift({i:i,r:r,exact:true});continue;}
+    if(fvLo.indexOf(code)>=0){matches.push({i:i,r:r,exact:false});}
+  }
+  return matches.slice(0,lim);
+}
+
+/** Risolve indice riga da input utente (esatto o primo parziale come codepadSearch). */
+function tcCompareResolveRowIdx(raw){
+  var code=String(raw||'').trim();
+  if(!code)return -1;
+  if(typeof rows==='undefined'||!rows.length)return -1;
+  var codeLo=code.toLowerCase();
+  var codeNum=/^\d+$/.test(code)?parseInt(code,10):null;
+  for(var pass=0;pass<2;pass++){
+    for(var i=0;i<rows.length;i++){
+      if(typeof removed!=='undefined'&&removed.has(String(i)))continue;
+      var r=rows[i];if(!r)continue;
+      var fv=String(r.codM||'').trim();
+      if(!fv)continue;
+      var fvLo=fv.toLowerCase();
+      if(pass===0){
+        if(fvLo===codeLo)return i;
+        if(codeNum!==null&&/^\d+$/.test(fv)&&parseInt(fv,10)===codeNum)return i;
+      } else {
+        if(fvLo.indexOf(codeLo)>=0)return i;
+      }
+    }
+  }
+  return -1;
+}
+
+function tcHtmlCompareColumn(rowIdx, slotIx, diffFlags, cart, hiOn){
+  diffFlags=diffFlags||{};
+  var r=rows[rowIdx]||{};
+  var m=(typeof magazzino!=='undefined'&&magazzino[rowIdx])?magazzino[rowIdx]:{};
+  var codM7=r.codM?(String(r.codM).match(/^\d+$/)?String(r.codM).padStart(7,'0'):String(r.codM)):'\u2014';
+  var forn=(m.nomeFornitore&&String(m.nomeFornitore).trim())?String(m.nomeFornitore).trim():'\u2014';
+  var descText=tcCompareMagLongDesc(r,m);
+  var puNum=typeof parsePriceIT==='function'?parsePriceIT(r.prezzo||0):0;
+  var priceStr=typeof formatPrezzoUnitDisplay==='function'?formatPrezzoUnitDisplay(puNum):String(puNum);
+  var inCart=tcCompareRowCodInCart(rowIdx, cart);
+  var dN=(hiOn&&diffFlags.name)?' comp-col-field--diff':'';
+  var dC=(hiOn&&diffFlags.codes)?' comp-col-field--diff':'';
+  var dD=(hiOn&&diffFlags.desc)?' comp-col-field--diff':'';
+  var dP=(hiOn&&diffFlags.price)?' comp-col-field--diff':'';
+  var h='';
+  h+='<article class="comp-col'+(hiOn?' tc-compare--diff-on':'')+'">';
+  h+='<button type="button" class="comp-col-remove" aria-label="Rimuovi dal confronto" onclick="tcCompareRemoveSlot('+slotIx+')">\u2715</button>';
+  h+='<div class="comp-col-photo" id="tc-comp-ph-'+slotIx+'" data-comp-row="'+rowIdx+'"></div>';
+  h+='<h3 class="comp-col-name'+dN+'">'+esc(r.desc||'\u2014')+'</h3>';
+  h+='<div class="comp-col-codes'+dC+'"><span class="comp-code-m">M: '+esc(codM7)+'</span><span class="comp-code-sep">|</span><span class="comp-code-f">Fornitore: '+esc(forn)+'</span></div>';
+  h+='<p class="comp-col-desc'+dD+'">'+esc(descText).replace(/\n/g,'<br>')+'</p>';
+  h+='<div class="comp-col-price'+dP+'">\u20AC '+priceStr+'</div>';
+  if(inCart){
+    h+='<div class="comp-col-present" role="status">PRESENTE</div>';
+  } else {
+    h+='<button type="button" class="comp-col-cta" onclick="tcCompareAddToCart('+rowIdx+')">Aggiungi al Carrello</button>';
+  }
+  h+='</article>';
+  return h;
+}
+
+function tcHtmlCompareShell(){
+  var slots=window.tcCompareSlots=window.tcCompareSlots||[];
+  var open=!!window.tcCompareAreaOpen;
+  var hiOn=!!window.tcCompareHighlightDiff;
+  var cart=null;
+  if(typeof activeCartId!=='undefined'&&activeCartId&&typeof carrelli!=='undefined'){
+    cart=carrelli.find(function(c){ return c&&c.id===activeCartId; })||null;
+  }
+  var diffFlags=tcCompareDiffFlags(slots, hiOn);
+  var chk=hiOn?' checked':'';
+  var h='';
+  h+='<div id="tc-compare-shell" class="tc-compare-shell">';
+  h+='<button type="button" class="tc-compare-btn'+(open?' tc-compare-btn--on':'')+'" onclick="tcToggleCompareArea()">Confronta Articoli</button>';
+  h+='<section id="tc-compare-area" class="tc-compare-area" style="display:'+(open?'block':'none')+'" aria-hidden="'+(open?'false':'true')+'">';
+  h+='<div class="tc-compare-inner">';
+  h+='<header class="tc-compare-topbar">';
+  h+='<div class="tc-compare-topbar-main">';
+  h+='<button type="button" class="tc-compare-pick-cart" onclick="tcCompareOpenPickFromCart()">Scegli dal carrello</button>';
+  h+='<label class="tc-compare-diff-toggle"><input type="checkbox" id="tc-compare-diff-chk"'+chk+' onchange="tcCompareOnHighlightDiffToggle(this)"> Evidenzia Differenze</label>';
+  h+='</div>';
+  h+='<button type="button" class="tc-compare-close-global" onclick="tcToggleCompareArea(true)">Chiudi Confronto</button>';
+  h+='</header>';
+  h+='<div class="tc-compare-grid-scroll"><div class="tc-compare-grid">';
+  var s=0;
+  for(;s<slots.length;s++){
+    h+=tcHtmlCompareColumn(slots[s],s, diffFlags, cart, hiOn);
+  }
+  if(slots.length<5){
+    h+='<div class="comp-col comp-col--add">';
+    h+='<button type="button" class="comp-col-add-btn" onclick="tcCompareOpenCodModal()">';
+    h+='<span class="comp-col-add-plus" aria-hidden="true">+</span>';
+    h+='<span class="comp-col-add-label">Aggiungi Articolo da confrontare (Cerca Codice)</span>';
+    h+='</button></div>';
+  }
+  h+='</div></div></div></section></div>';
+  return h;
+}
+
+function tcCompareHydratePhotos(){
+  var nodes=document.querySelectorAll('.comp-col-photo[data-comp-row]');
+  for(var i=0;i<nodes.length;i++){
+    (function(el){
+      var rowIdx=parseInt(el.getAttribute('data-comp-row'),10);
+      if(isNaN(rowIdx))return;
+      function show(url){
+        if(!url||!el.parentNode)return;
+        el.innerHTML='';
+        var img=document.createElement('img');
+        img.src=url;
+        img.alt='';
+        el.appendChild(img);
+      }
+      if(typeof _idbCache!=='undefined'&&_idbCache[rowIdx]){
+        show(_idbCache[rowIdx]);
+        return;
+      }
+      if(typeof idbGetFoto!=='function')return;
+      idbGetFoto(rowIdx).then(show);
+    })(nodes[i]);
+  }
+}
+
+function tcCompareCodModalRefresh(){
+  var matchEl=document.getElementById('tc-compare-cod-sug');
+  var inp=document.getElementById('tc-compare-cod-inp');
+  if(!matchEl||!inp)return;
+  var v=String(inp.value||'').trim();
+  if(v.length<2){
+    matchEl.innerHTML='<div class="tc-compare-cod-hint">Digita almeno 2 caratteri (codice magazzino)...</div>';
+    return;
+  }
+  if(!rows||!rows.length){
+    matchEl.innerHTML='<div class="tc-compare-cod-hint" style="color:var(--accent);">Database in caricamento...</div>';
+    return;
+  }
+  var list=tcCompareCodMatches(v,5);
+  if(!list.length){
+    matchEl.innerHTML='<div class="tc-compare-cod-hint" style="color:#e53e3e;">Nessun codice trovato</div>';
+    return;
+  }
+  var h='';
+  list.forEach(function(m){
+    var bgCol=m.exact?'rgba(56,161,105,0.15)':'#1a1a1a';
+    var borderCol=m.exact?'#38a169':'#2a2a2a';
+    h+='<button type="button" class="tc-compare-cod-sug-row" data-row="'+m.i+'" style="background:'+bgCol+';border:1px solid '+borderCol+';">';
+    h+='<span class="tc-compare-cod-sug-t">'+esc(m.r.desc||'\u2014')+'</span>';
+    h+='<span class="tc-compare-cod-sug-c"><span class="tc-compare-cod-sug-m">'+esc(m.r.codM||'')+'</span>';
+    if(m.r.codF)h+=' <span class="tc-compare-cod-sug-f">'+esc(m.r.codF)+'</span>';
+    h+='</span></button>';
+  });
+  matchEl.innerHTML=h;
+  var btns=matchEl.querySelectorAll('.tc-compare-cod-sug-row[data-row]');
+  for(var j=0;j<btns.length;j++){
+    btns[j].onclick=function(){
+      var ix=parseInt(this.getAttribute('data-row'),10);
+      if(!isNaN(ix))tcComparePickRowFromModal(ix);
+    };
+  }
+}
+
+function tcComparePickRowFromModal(rowIdx){
+  var ok=tcCompareAddRowToCompare(rowIdx);
+  if(!ok)return;
+  var e=document.getElementById('tc-compare-cod-modal');
+  if(e)e.remove();
+  showToastGen('green','Aggiunto al confronto');
+}
+
+function tcCompareOpenCodModal(){
+  if((window.tcCompareSlots||[]).length>=5){
+    showToastGen('orange','Massimo 5 articoli nel confronto');
+    return;
+  }
+  var ex=document.getElementById('tc-compare-cod-modal');
+  if(ex)ex.remove();
+  var ov=document.createElement('div');
+  ov.id='tc-compare-cod-modal';
+  ov.className='tc-compare-cod-modal';
+  ov.innerHTML='<div class="tc-compare-cod-bd"></div>'+
+    '<div class="tc-compare-cod-panel" onclick="event.stopPropagation()">'+
+    '<div class="tc-compare-cod-title">Codice magazzino</div>'+
+    '<input type="text" inputmode="numeric" pattern="[0-9]*" id="tc-compare-cod-inp" class="tc-compare-cod-inp" autocomplete="off" placeholder="es. 0001234">'+
+    '<div id="tc-compare-cod-sug" class="tc-compare-cod-sug"></div>'+
+    '<div class="tc-compare-cod-btns">'+
+    '<button type="button" class="tc-compare-cod-cancel">Annulla</button>'+
+    '<button type="button" class="tc-compare-cod-ok">Cerca</button></div></div>';
+  document.body.appendChild(ov);
+  var close=function(){ var e=document.getElementById('tc-compare-cod-modal');if(e)e.remove(); };
+  ov.querySelector('.tc-compare-cod-bd').onclick=close;
+  ov.querySelector('.tc-compare-cod-cancel').onclick=close;
+  ov.querySelector('.tc-compare-cod-ok').onclick=function(){
+    var v=(document.getElementById('tc-compare-cod-inp')||{}).value||'';
+    var idx=tcCompareResolveRowIdx(v);
+    if(idx<0){
+      showToastGen('red','Articolo non trovato');
+      return;
+    }
+    tcComparePickRowFromModal(idx);
+  };
+  var inp=document.getElementById('tc-compare-cod-inp');
+  if(inp){
+    inp.focus();
+    tcCompareCodModalRefresh();
+    inp.oninput=function(){ tcCompareCodModalRefresh(); };
+    inp.onkeydown=function(e){
+      if(e.key==='Enter'){
+        var v=inp.value||'';
+        var idx=tcCompareResolveRowIdx(v);
+        if(idx>=0)tcComparePickRowFromModal(idx);
+        else showToastGen('red','Articolo non trovato');
+      }
+    };
+  }
+}
+
+/** Aggiunge rowIdx al confronto; ritorna true se ok. */
+function tcCompareAddRowToCompare(rowIdx){
+  if(rowIdx==null||rowIdx<0||!rows||!rows[rowIdx])return false;
+  var slots=window.tcCompareSlots=window.tcCompareSlots||[];
+  if(slots.indexOf(rowIdx)>=0){
+    showToastGen('yellow','Articolo gi\u00E0 nel confronto');
+    return false;
+  }
+  if(slots.length>=5){
+    showToastGen('orange','Massimo 5 articoli nel confronto');
+    return false;
+  }
+  slots.push(rowIdx);
+  window.tcCompareAreaOpen=true;
+  if(typeof renderCartTabs==='function')renderCartTabs();
+  return true;
+}
+
+function tcCompareOpenPickFromCart(){
+  if((window.tcCompareSlots||[]).length>=5){
+    showToastGen('orange','Massimo 5 articoli nel confronto');
+    return;
+  }
+  if(!activeCartId||typeof carrelli==='undefined'){
+    showToastGen('red','Nessun carrello attivo');
+    return;
+  }
+  var cart=carrelli.find(function(c){ return c.id===activeCartId; });
+  var items=(cart&&cart.items)||[];
+  if(!items.length){
+    showToastGen('yellow','Il carrello \u00E8 vuoto');
+    return;
+  }
+  var ex=document.getElementById('tc-compare-cart-modal');
+  if(ex)ex.remove();
+  var ov=document.createElement('div');
+  ov.id='tc-compare-cart-modal';
+  ov.className='tc-compare-cod-modal';
+  var h='<div class="tc-compare-cod-bd"></div>'+
+    '<div class="tc-compare-cod-panel tc-compare-cart-panel" onclick="event.stopPropagation()">'+
+    '<div class="tc-compare-cod-title">Scegli dal carrello</div>'+
+    '<div class="tc-compare-cart-list">';
+  var nCartRows=0;
+  for(var k=items.length-1;k>=0;k--){
+    var it=items[k];
+    if(!it||it.rowIdx===undefined||it.rowIdx===null||it.rowIdx==='')continue;
+    var ri=parseInt(it.rowIdx,10);
+    if(isNaN(ri)||!rows||!rows[ri])continue;
+    nCartRows++;
+    var cm=it.codM?String(it.codM):'';
+    h+='<button type="button" class="tc-compare-cart-row" data-row="'+ri+'">';
+    h+='<span class="tc-compare-cart-row-t">'+esc(it.desc||rows[ri].desc||'\u2014')+'</span>';
+    h+='<span class="tc-compare-cart-row-m">M: '+esc(cm||rows[ri].codM||'')+'</span>';
+    h+='</button>';
+  }
+  if(!nCartRows)h+='<div class="tc-compare-cod-hint">Nessun articolo collegato al catalogo nel carrello.</div>';
+  h+='</div><div class="tc-compare-cod-btns"><button type="button" class="tc-compare-cod-cancel">Chiudi</button></div></div>';
+  ov.innerHTML=h;
+  document.body.appendChild(ov);
+  var close=function(){ var e=document.getElementById('tc-compare-cart-modal');if(e)e.remove(); };
+  ov.querySelector('.tc-compare-cod-bd').onclick=close;
+  ov.querySelector('.tc-compare-cod-cancel').onclick=close;
+  var btns=ov.querySelectorAll('.tc-compare-cart-row[data-row]');
+  for(var j=0;j<btns.length;j++){
+    btns[j].onclick=function(){
+      var ix=parseInt(this.getAttribute('data-row'),10);
+      if(!isNaN(ix)&&tcCompareAddRowToCompare(ix)){
+        close();
+        showToastGen('green','Aggiunto al confronto');
+      }
+    };
+  }
+}
+
+function tcCompareRemoveSlot(slotIx){
+  var slots=window.tcCompareSlots=window.tcCompareSlots||[];
+  if(slotIx<0||slotIx>=slots.length)return;
+  slots.splice(slotIx,1);
+  if(typeof renderCartTabs==='function')renderCartTabs();
+}
+
+function tcCompareAddToCart(rowIdx){
+  if(typeof cartAddItem!=='function')return;
+  cartAddItem(rowIdx);
+}
+
+function tcToggleCompareArea(forceClose){
+  var area=document.getElementById('tc-compare-area');
+  if(!area){
+    if(forceClose){
+      window.tcCompareAreaOpen=false;
+      return;
+    }
+    window.tcCompareAreaOpen=!window.tcCompareAreaOpen;
+    if(typeof renderCartTabs==='function')renderCartTabs();
+    return;
+  }
+  if(forceClose){
+    window.tcCompareAreaOpen=false;
+    area.style.display='none';
+    area.setAttribute('aria-hidden','true');
+    var act=document.querySelector('.tc-compare-btn');
+    if(act)act.classList.remove('tc-compare-btn--on');
+    return;
+  }
+  var hidden=area.style.display==='none'||area.style.display==='';
+  if(hidden){
+    window.tcCompareAreaOpen=true;
+    area.style.display='block';
+    area.setAttribute('aria-hidden','false');
+    var b=document.querySelector('.tc-compare-btn');
+    if(b)b.classList.add('tc-compare-btn--on');
+    setTimeout(function(){ if(typeof tcCompareHydratePhotos==='function')tcCompareHydratePhotos(); },0);
+  } else {
+    window.tcCompareAreaOpen=false;
+    area.style.display='none';
+    area.setAttribute('aria-hidden','true');
+    var b2=document.querySelector('.tc-compare-btn');
+    if(b2)b2.classList.remove('tc-compare-btn--on');
+  }
 }
 
 if(typeof window !== 'undefined' && !window.__CART_ORDINI_SYNC_BOUND__){

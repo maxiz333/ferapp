@@ -19,6 +19,8 @@ function _fbSharedPathForKey(k){
   map[AK.CLIENTI] = 'shared/clienti';
   map[AK.FATTURE] = 'shared/fatture';
   map[AK.ORDFORNITORI] = 'shared/ordini_fornitori';
+  map[AK.FORNI_COLORE] = 'shared/forni_colore';
+  map[AK.ORD_FORN_STORICO] = 'shared/ord_forn_storico';
   return map[k] || null;
 }
 
@@ -68,7 +70,7 @@ function saveOrdini(){
 // ══ SALVATAGGIO SINGOLO ARTICOLO SU FIREBASE ═════════════════════
 // Salva l'articolo modificato CON i dati magazzino (qty, prezzoAcquisto, ecc.)
 var _MAG_FIELDS = ['qty','unit','soglia','prezzoAcquisto','marca','specs',
-                   'posizione','cat','subcat','nomeFornitore'];
+                   'posizione','cat','subcat','nomeFornitore','descrizione','note_tecniche'];
 
 function _fbSaveArticolo(idx){
   if(!_fbReady || !_fbDb || !rows[idx]) return;

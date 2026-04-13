@@ -451,6 +451,74 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
   font-size: 32px;
 }
 
+/* Filtri fornitore (4 slot + Tutti) — tab Ordini fornitore / Da ordinare */
+.ord-forn-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.ord-forn-filt-tutti {
+  padding: 6px 12px;
+  border-radius: 14px;
+  border: 2px solid #333;
+  background: transparent;
+  color: #888;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ord-forn-filt-tutti--on {
+  border-color: var(--accent, #f5c400);
+  background: rgba(245, 196, 0, 0.12);
+  color: var(--accent, #f5c400);
+}
+.ord-forn-filt-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  border: 2px solid #333;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ord-forn-filt-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.ord-forn-filt-n {
+  font-weight: 700;
+  opacity: 0.85;
+  font-size: 10px;
+}
+.ord-dao-empty-msg {
+  padding: 16px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: #777;
+}
+.ord-dao-forn-alt {
+  font-size: 10px;
+  color: #63b3ed;
+  margin-top: 2px;
+}
+.ord-dao-forn-inp--title {
+  font-size: 14px;
+  font-weight: 800;
+}
+
 /* Vista "Da ordinare" — gruppi per colore fornitore (tab ordini) */
 .ord-dao-group {
   background: var(--ct-card, #1a1b1d);
@@ -547,6 +615,21 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
   text-align: right;
   flex-shrink: 0;
 }
+.dao-btn-cestino {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #2a2a2a;
+  color: #aaa;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.dao-btn-cestino:active {
+  filter: brightness(0.9);
+}
 .ord-dao-qty {
   font-size: 11px;
   color: var(--ct-muted, #7a7d82);
@@ -566,6 +649,17 @@ body.light-mode .ord-dao-header {
 }
 body.light-mode .ord-dao-nome {
   color: var(--text);
+}
+body.light-mode .ord-forn-filt-tutti {
+  border-color: #ccc;
+}
+body.light-mode .ord-forn-filt-slot {
+  border-color: #ccc;
+}
+body.light-mode .dao-btn-cestino {
+  border-color: #ccc;
+  background: #f5f5f5;
+  color: #555;
 }
 
 /* Pannello "ordina a fornitori" (slide-up dal basso, aperto da carrello) */
@@ -861,4 +955,271 @@ body.light-mode .ord-forn-line {
     padding-top: 6px;
     padding-bottom: 10px;
   }
+}
+
+/* ═══ Storico ordini archiviati (tab Ordini — 📂 Storico) ═══ */
+.ord-storico-view {
+  padding: 4px 8px 16px;
+  box-sizing: border-box;
+}
+.ord-storico-toolbar {
+  margin-bottom: 12px;
+}
+.ord-storico-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: #1a1b1d;
+  color: var(--ct-text, #f0f0f0);
+  font-size: 14px;
+  margin-bottom: 10px;
+  font-family: inherit;
+}
+.ord-storico-forn-filt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.ord-storico-f-tutti,
+.ord-storico-f-slot {
+  padding: 6px 10px;
+  border-radius: 14px;
+  border: 2px solid #333;
+  background: transparent;
+  color: #888;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  touch-action: manipulation;
+}
+.ord-storico-f-tutti.ord-storico-f--on {
+  border-color: var(--accent, #f5c400);
+  background: rgba(245, 196, 0, 0.1);
+  color: var(--accent, #f5c400);
+}
+.ord-storico-f-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+.ord-storico-head {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #805ad5;
+  margin-bottom: 10px;
+}
+.ord-storico-empty {
+  text-align: center;
+  color: #555;
+  padding: 28px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.ord-storico-card {
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  border-top: 3px solid #805ad5;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ord-storico-card:active {
+  filter: brightness(1.06);
+}
+.ord-storico-card-hd {
+  background: #805ad522;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.ord-storico-card-cliente {
+  font-size: 14px;
+  font-weight: 800;
+  color: #d6bcfa;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+.ord-storico-card-when {
+  font-size: 11px;
+  color: #805ad5;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ord-storico-card-sum {
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ord-storico-card-n {
+  font-size: 11px;
+  color: #888;
+}
+.ord-storico-card-tot {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--accent, #68d391);
+}
+.ord-storico-card-hint {
+  font-size: 9px;
+  color: #555;
+  padding: 0 12px 8px;
+  text-align: center;
+}
+.ord-storico-more-wrap {
+  text-align: center;
+  padding: 12px 8px;
+}
+.ord-storico-more {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 1px solid #805ad544;
+  background: #805ad511;
+  color: #c4b5fd;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+}
+.ord-storico-clear-wrap {
+  text-align: center;
+  padding: 8px;
+}
+.ord-storico-clear {
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 1px solid #e53e3e44;
+  background: transparent;
+  color: #fc8181;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Modale dettaglio storico */
+.ord-storico-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9600;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  font-family: inherit;
+}
+@media (min-width: 520px) {
+  .ord-storico-modal {
+    align-items: center;
+  }
+}
+.ord-storico-modal-bd {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+}
+.ord-storico-modal-panel {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--ct-card, #1a1b1d);
+  border-radius: 16px 16px 0 0;
+  border: 1px solid #333;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5);
+  padding: 12px 12px 20px;
+  box-sizing: border-box;
+}
+@media (min-width: 520px) {
+  .ord-storico-modal-panel {
+    border-radius: 16px;
+  }
+}
+.ord-storico-modal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.ord-storico-modal-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--ct-text, #f0f0f0);
+  flex: 1;
+  min-width: 0;
+}
+.ord-storico-modal-x {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: #2a2a2a;
+  color: #aaa;
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.ord-storico-modal-meta {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 12px;
+}
+.ord-storico-detail-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #2a2a2a;
+  font-size: 13px;
+  font-weight: 700;
+  color: #888;
+}
+.ord-storico-detail-tot {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--accent, #68d391);
+}
+
+/* Dettaglio storico: stessi pesi colonna della tab ordini su mobile */
+@media (max-width: 768px) {
+  .ord-storico-detail-grid.ord-items-wrap .ord-grid {
+    grid-template-columns:
+      minmax(6.25rem, 1fr)
+      minmax(64px, auto)
+      minmax(4.5rem, 1fr)
+      minmax(4.5rem, 1fr);
+    column-gap: 3px;
+    padding: 0 2px;
+  }
+  .ord-storico-detail-grid .ord-gc-sub {
+    font-size: 15px;
+    font-weight: 900;
+    color: var(--accent);
+  }
+  .ord-storico-detail-grid .ord-item-name {
+    font-size: 14px;
+    font-weight: 800;
+  }
+}
+body.light-mode .ord-storico-search {
+  background: #fff;
+  border-color: #ddd;
+  color: #111;
 }
