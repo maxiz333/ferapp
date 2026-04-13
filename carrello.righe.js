@@ -131,15 +131,7 @@ function cartSetUnit(cartId,idx,val){
 
 // Helper: calcola prezzo effettivo (con sconto scampolo/rotolo se attivo) — base = listino
 function _prezzoEffettivo(it){
-  var p = listinoPrezzoNum(it);
-  var sc=it._scontoApplicato||0;
-  if((it.scampolo||it.fineRotolo) && sc>0) return p*(1-sc/100);
-  if(it._scaglionato && sc>0){
-    var q=parseFloat(it.qty||0);
-    var soglia=it._scaglioneQta||10;
-    if(q>=soglia) return p*(1-sc/100);
-  }
-  return p;
+  return ordItemLineUnitSelling(it);
 }
 
 /** Imposta _prezzoOriginale (listino) se manca, da magazzino/base o dall'ultimo prezzo riga. */

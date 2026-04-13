@@ -167,7 +167,8 @@ function renderCartTabs(){
       var idx = _ri;
       var it = _items[idx];
       var displayPos = _items.length - 1 - idx;
-      var p            = listinoPrezzoNum(it);
+      var pListino     = listinoPrezzoNum(it);
+      var pVendita     = ordItemLineUnitSelling(it);
       var q            = parseFloat(it.qty) || 0;
       var isSc         = it.scampolo    || false;
       var isFR         = it.fineRotolo  || false;
@@ -187,8 +188,7 @@ function renderCartTabs(){
       } else if(scOn && scAttivo > 0){
         scApplica = true;
       }
-      var pScontato    = scApplica ? p * (1 - scAttivo/100) : p;
-      var sub          = (pScontato * q).toFixed(2);
+      var sub          = (pVendita * q).toFixed(2);
 
       // Cod. Magazzino — 7 cifre se numerico
       var codM7 = it.codM
@@ -262,11 +262,11 @@ function renderCartTabs(){
       h += '</div>';
 
       // Colonna prezzo — listino/sconto convertito + input €/UM riga
-      var hasSconto = scApplica && pScontato < p - 0.005;
+      var hasSconto = pListino > pVendita + 0.005;
       h += '<div class="ord-gc-price" id="prz-' + idx + '">';
       h += '<div id="cart-prz-strip-' + idx + '"' + (hasSconto ? '' : ' style="display:none"') + '">';
       if(hasSconto){
-        h += htmlPrezzoUnitScontoRiga(p, pScontato);
+        h += htmlPrezzoUnitScontoRiga(pListino, pVendita);
       }
       h += '</div>';
       h += '<input class="ct-punit" type="text" inputmode="decimal" autocomplete="off" ' +
@@ -281,7 +281,7 @@ function renderCartTabs(){
       // Colonna totale
       h += '<div class="ord-gc-sub" id="cart-sub-' + idx + '">';
       if(hasSconto){
-        h += htmlTotaleScontoRiga(p * q, parseFloat(sub));
+        h += htmlTotaleScontoRiga(pListino * q, parseFloat(sub));
       } else {
         var subColor = isTuttoRotolo ? '#fc8181' : (isFR ? '#f6ad55' : 'var(--accent)');
         h += '<div class="ord-gc-sub-val" style="color:' + subColor + '">€' + sub + '</div>';
@@ -326,7 +326,7 @@ function renderCartTabs(){
         h += '<span style="font-size:9px;color:#63b3ed;">pz</span>';
       }
       if(scAtt > 0 && scApplica){
-        var risparmio = ((p - pScontato) * q).toFixed(2);
+        var risparmio = ((Math.max(0, pListino - pVendita)) * q).toFixed(2);
         h += '<span class="ct-sc-risp"' + (isScag ? ' style="color:#63b3ed"' : '') + '>-€' + risparmio + '</span>';
       }
       h += '</div>';
