@@ -17,6 +17,13 @@ function cartAddItem(rowIdx){
     scampolo:false,hasScaglioni:hasScag,scaglioni:hasScag?JSON.parse(JSON.stringify(m.scaglioni)):[],
     nota:'',_scaglioniAperti:false,daOrdinare:false};
   (cart.items=cart.items||[]).push(newItem);
+  // Sync immediata su bozza/ordine collegato per evitare lag o race di salvataggio.
+  if(typeof _aggiornaBozzaOrdine==='function' && cart.bozzaOrdId){
+    _aggiornaBozzaOrdine(cart);
+  }
+  if(typeof _aggiornaOrdineDaCarrelloModifica==='function' && cart.stato==='modifica' && cart.ordId){
+    _aggiornaOrdineDaCarrelloModifica(cart);
+  }
   _lastAddedItem={rowIdx:rowIdx,item:JSON.parse(JSON.stringify(newItem))};
   var oSt=ordinePerCarrelloStorico(cart);
   if(oSt){

@@ -339,7 +339,7 @@ function cartSetScaglioneQta(cartId, idx, val){
     _origSaveCarrelli();
     var needOrdListRefresh=false;
     (carrelli||[]).forEach(function(cart){
-      if(cart.bozzaOrdId && (cart.items||[]).length){
+      if(cart.bozzaOrdId){
         _aggiornaBozzaOrdine(cart);
         needOrdListRefresh=true;
       }
