@@ -693,7 +693,15 @@ button[touch-action="manipulation"],
 /* ── Box inviato ─────────────────────────────────────────────────── */
 .ct-inviato-box { background: #1a2a1a; border: 1px solid #38a16944; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
 .ct-inviato-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.ct-inviato-label { font-size: 14px; font-weight: 800; color: #68d391; }
+.ct-inviato-label {
+  font-size: 14px;
+  font-weight: 800;
+  color: #68d391;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
 .ct-inviato-nome  { font-size: 10px; color: #555; }
 .ct-price-big { font-size: 18px; font-weight: 900; color: var(--ct-yellow); }
 .ct-inviato-row { padding: 5px 0; border-bottom: 1px solid #1e2e1e; display: flex; justify-content: space-between; align-items: center; }
@@ -1867,19 +1875,22 @@ body.light-mode .ct-pb-inp::placeholder {
   #tc .ct-card .ct-prz-stack--tot .ct-prz-sconto-sav {
     font-size: 11px;
   }
-  /* Ordini (lista): stessi ingrandimenti stack su mobile */
-  #to .ord-items-wrap .ct-prz-stack .ct-old--orig {
-    font-size: 11px;
+}
+
+/* Tab carrello — solo mobile: codice magazzino lungo va a capo (come tab ordini) */
+@media (max-width: 768px) {
+  #tc .ct-card .ord-item-codes-line {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 4px 8px;
   }
-  #to .ord-items-wrap .ct-prz-stack .ct-sub--final {
-    font-size: 19px;
-  }
-  #to .ord-items-wrap .ct-prz-stack--tot .ct-sub--final {
-    font-size: 21px;
-  }
-  #to .ord-items-wrap .ct-prz-stack .ct-prz-sconto-sav,
-  #to .ord-items-wrap .ct-prz-stack--tot .ct-prz-sconto-sav {
-    font-size: 11px;
+  #tc .ct-card .ord-code-mag {
+    flex: 1 1 100%;
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 }
 

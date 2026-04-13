@@ -688,32 +688,13 @@ body.light-mode .ord-forn-line {
   border-color: #e8e8e8;
 }
 
-/* Ordini — mobile: griglia percentuale (il carrello #tc è definito in carrello.css) */
+/* Ordini — mobile stretto: padding riga / header (griglia #to su max-width 768 sotto) */
 @media (max-width: 520px) {
-  #to .ord-grid {
-    grid-template-columns: 40% 22% 19% 19%;
-    column-gap: 3px;
-    padding: 0 2px;
-  }
   .ord-gc-desc {
     padding: 1px 4px 2px 2px;
     min-width: 0;
   }
   .ord-td-desc { min-width: 0; }
-  .ord-item-name {
-    font-size: 14px;
-    font-weight: 800;
-    line-height: 1.38;
-    letter-spacing: 0.01em;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    /* altezza minima ~2 righe nitide */
-    min-height: calc(1.38em * 2);
-  }
   .ord-item-codes {
     margin-top: 2px;
     gap: 4px 6px;
@@ -739,5 +720,145 @@ body.light-mode .ord-forn-line {
   }
   #to .ord-items-wrap .ord-gc-price {
     font-size: 13px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tab Ordini (#to) — solo mobile: layout come carrello (#tc .ct-card)
+   Schermo ≥769px: invariato (griglia desktop ordini.css sopra)
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  #to .ord-items-wrap .ord-grid {
+    grid-template-columns:
+      minmax(6.25rem, 1fr)
+      minmax(64px, auto)
+      minmax(4.5rem, 1fr)
+      minmax(4.5rem, 1fr);
+    column-gap: 3px;
+    padding: 0 4px;
+    align-items: start;
+    box-sizing: border-box;
+  }
+  #to .ord-items-wrap .ord-gc-desc {
+    min-width: 0;
+    align-self: start;
+  }
+  #to .ord-items-wrap .ord-gc-qty {
+    min-width: 0;
+    justify-self: center;
+  }
+  #to .ord-items-wrap .ord-gc-price,
+  #to .ord-items-wrap .ord-gc-sub {
+    min-width: 4.5rem;
+    overflow: visible;
+  }
+  /* Nome prodotto: testo completo, come tab carrello */
+  #to .ord-items-wrap .ord-item-name {
+    display: block;
+    overflow: visible;
+    word-break: normal;
+    overflow-wrap: break-word;
+    line-height: 1.35;
+    min-height: 0;
+    -webkit-line-clamp: unset;
+    -webkit-box-orient: unset;
+    font-size: 14px;
+    font-weight: 800;
+  }
+  #to .ord-items-wrap .ord-gc-price {
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 12px;
+    line-height: 1.3;
+    color: #c4c4c4;
+    gap: 4px;
+  }
+  #to .ord-items-wrap .ord-gc-sub {
+    align-items: flex-end;
+    justify-content: flex-start;
+    font-size: 12px;
+    line-height: 1.3;
+    font-weight: 900;
+    color: var(--accent);
+    min-height: 0;
+    gap: 2px;
+  }
+  #to .ord-items-wrap .ord-gc-sub .ct-prz-stack,
+  #to .ord-items-wrap .ord-gc-sub .ct-prz-stack--tot {
+    align-items: flex-end;
+    text-align: right;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  #to .ord-items-wrap .ord-gc-price .ct-prz-stack {
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    gap: 5px;
+    padding: 2px 0 3px;
+    flex-shrink: 0;
+  }
+  #to .ord-items-wrap .ct-prz-stack.ct-prz-stack--unit .ct-old--orig,
+  #to .ord-items-wrap .ct-prz-stack.ct-prz-stack--unit .ct-sub--final,
+  #to .ord-items-wrap .ct-prz-stack.ct-prz-stack--unit .ct-prz-sconto-sav {
+    text-align: center;
+    max-width: 100%;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  #to .ord-items-wrap .ct-prz-stack .ct-old--orig {
+    position: relative;
+    z-index: 0;
+    line-height: 1.25;
+    margin: 0;
+    padding: 0 1px;
+    font-size: 11px;
+  }
+  #to .ord-items-wrap .ct-prz-stack .ct-sub--final {
+    line-height: 1.2;
+    margin: 0;
+    padding: 0 1px;
+  }
+  #to .ord-items-wrap .ct-prz-stack.ct-prz-stack--unit .ct-sub--final {
+    font-size: 14px;
+  }
+  #to .ord-items-wrap .ct-prz-stack .ct-prz-sconto-sav,
+  #to .ord-items-wrap .ct-prz-stack--tot .ct-prz-sconto-sav {
+    line-height: 1.25;
+    margin: 0;
+    margin-top: 1px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+  }
+  #to .ord-items-wrap .ct-prz-stack--tot .ct-sub--final {
+    font-size: 16px;
+    text-align: right;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  /* Zona Base €/kg: va a capo come nel carrello */
+  #to .ord-items-wrap .ct-pb-inline:has(.ct-pb-struck) {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    row-gap: 5px;
+  }
+  #to .ord-items-wrap .ct-pb-inline:has(.ct-pb-struck) .ct-pb-disc {
+    flex: 1 1 100%;
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 5px 10px;
+    padding-top: 1px;
+  }
+  #to .ord-items-wrap .ord-grid-row {
+    padding-top: 6px;
+    padding-bottom: 10px;
   }
 }

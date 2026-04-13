@@ -12,6 +12,9 @@ function _ctLinkedOrdForVisto(cart){
   if(cart.stato === 'modifica' && cart.ordId){
     return ordini.find(function(o){ return o && o.id === cart.ordId; }) || null;
   }
+  if(cart.stato === 'inviato' && cart.ordId){
+    return ordini.find(function(o){ return o && o.id === cart.ordId; }) || null;
+  }
   return null;
 }
 
@@ -108,7 +111,7 @@ function renderCartTabs(){
     h += '<div class="ct-inviato-box">';
     h += '<div class="ct-inviato-top">';
     h += '<span style="font-size:22px">✅</span>';
-    h += '<div style="flex:1"><div class="ct-inviato-label">Ordine inviato alla cassa</div>';
+    h += '<div style="flex:1"><div class="ct-inviato-label">Ordine inviato alla cassa' + _ctHtmlOrdineVistoBadge(cart) + '</div>';
     h += '<div class="ct-inviato-nome" onclick="ctEditClienteName(\''+cart.id+'\')" style="cursor:pointer;" title="Tap per modificare">' + esc(cart.nome) + '</div></div>';
     h += '<div class="ct-price-big">€ ' + totInv.toFixed(2) + '</div>';
     h += '</div>';
