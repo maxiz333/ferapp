@@ -44,8 +44,21 @@ function saveCarrelli(){
       console.log('[CART] saveCarrelli — Firebase aggiornato, totale condiviso:', carrelli.length);
     }catch(e){ console.error('[CART] saveCarrelli Firebase FALLITO:', e); }
   }
+  if(typeof renderOrdini==='function') renderOrdini();
+  if(typeof window!=='undefined' && typeof window.dispatchEvent==='function'){
+    window.dispatchEvent(new CustomEvent('sync-orders',{detail:{source:'saveCarrelli'}}));
+  }
 }
-function saveOrdini(){ _takeSnapshot(); lsSet(ORDK,ordini); updateOrdBadge(); _fbPush('ordini',ordini); }
+function saveOrdini(){
+  _takeSnapshot();
+  lsSet(ORDK,ordini);
+  updateOrdBadge();
+  _fbPush('ordini',ordini);
+  if(typeof renderOrdini==='function') renderOrdini();
+  if(typeof window!=='undefined' && typeof window.dispatchEvent==='function'){
+    window.dispatchEvent(new CustomEvent('sync-orders',{detail:{source:'saveOrdini'}}));
+  }
+}
 
 // ══ SALVATAGGIO SINGOLO ARTICOLO SU FIREBASE ═════════════════════
 // Salva l'articolo modificato CON i dati magazzino (qty, prezzoAcquisto, ecc.)

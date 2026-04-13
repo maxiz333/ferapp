@@ -340,3 +340,9 @@ if(typeof window!=='undefined' && !window.__ORD_SYNC_ORDERS_BOUND__){
     if(typeof renderOrdini==='function') renderOrdini();
   });
 }
+if(typeof window!=='undefined' && !window.__ORD_DB_CHANGED_BOUND__){
+  window.__ORD_DB_CHANGED_BOUND__ = true;
+  window.addEventListener('db-changed', function(){
+    if(typeof renderOrdini==='function') renderOrdini();
+  });
+}

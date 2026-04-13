@@ -9,7 +9,12 @@ var ctRows=[]; // array SOLO cartellini — separato da rows[] che è il databas
 var MAGEXT_K='magazzino_ext'; // nodo Firebase per i 14.000 articoli
 var _magExtLoaded=false; // flag: articoli gi- caricati da Firebase
 var lsGet=function(k,d){return window.AppStorage.get(k,d);};
-var lsSet=function(k,v){window.AppStorage.set(k,v);};
+var lsSet=function(k,v){
+  window.AppStorage.set(k,v);
+  if(typeof window!=='undefined' && typeof window.dispatchEvent==='function'){
+    window.dispatchEvent(new CustomEvent('db-changed',{detail:{key:k}}));
+  }
+};
 
 // [SECTION: UTILS] ---------------------------------------------------------
 /** Converte stringa prezzo italiana (es. "12,50") in float */
