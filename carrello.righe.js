@@ -14,6 +14,13 @@ function _cartSyncLinkedOrdine(cart){
   if(typeof _aggiornaOrdineDaCarrelloModifica==='function' && cart.stato==='modifica' && cart.ordId){
     _aggiornaOrdineDaCarrelloModifica(cart);
   }
+  // Refresh esplicito tab Ordini: evita che la UI resti con testi vecchi.
+  if(typeof renderOrdini==='function'){
+    renderOrdini();
+  }
+  if(typeof window!=='undefined' && typeof window.dispatchEvent==='function'){
+    window.dispatchEvent(new CustomEvent('sync-orders',{detail:{source:'carrello'}}));
+  }
 }
 function cartAddItem(rowIdx){
   if(!activeCartId)return;

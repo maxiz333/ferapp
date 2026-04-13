@@ -129,6 +129,10 @@ function eliminaCarrelloModifica(cartId){
     if(cart.bozzaOrdId){
       ordini = ordini.filter(function(o){ return o.id !== cart.bozzaOrdId; });
       saveOrdini();
+      if(typeof renderOrdini==='function') renderOrdini();
+      if(typeof window!=='undefined' && typeof window.dispatchEvent==='function'){
+        window.dispatchEvent(new CustomEvent('sync-orders',{detail:{source:'carrello-delete'}}));
+      }
     }
     // Rimuovi il carrello
     deleteCart(cartId);
@@ -151,6 +155,10 @@ function eliminaOrdineCarrello(cartId){
     if(c.bozzaOrdId){
       ordini = ordini.filter(function(o){ return o.id !== c.bozzaOrdId; });
       saveOrdini();
+      if(typeof renderOrdini==='function') renderOrdini();
+      if(typeof window!=='undefined' && typeof window.dispatchEvent==='function'){
+        window.dispatchEvent(new CustomEvent('sync-orders',{detail:{source:'carrello-delete'}}));
+      }
     }
     deleteCart(cartId, '✅ Ordine eliminato');
   });

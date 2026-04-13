@@ -333,3 +333,10 @@ function renderOrdini(){
 
   list.innerHTML=h;
 }
+
+if(typeof window!=='undefined' && !window.__ORD_SYNC_ORDERS_BOUND__){
+  window.__ORD_SYNC_ORDERS_BOUND__ = true;
+  window.addEventListener('sync-orders', function(){
+    if(typeof renderOrdini==='function') renderOrdini();
+  });
+}
