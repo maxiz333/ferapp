@@ -75,7 +75,6 @@ document.addEventListener('DOMContentLoaded', function(){
     ordini.forEach(function(o){if(o&&o.id){_idKnown[o.id]=true; if(o.stato==='bozza'){_bozzaKnown[o.id]=true; _bozzaSnap[o.id]=JSON.stringify(o);}}});
     var _first=true;
     _fbDb.ref('ordini').on('value',function(snap){
-      if(_fbSyncing)return;
       var d=snap.val();
       var fresh=d ? _fbFix(d) : [];
       // Aggiorna sempre _idKnown al primo sync (prima di confrontare)
@@ -119,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function(){
           }
         });
       }catch(e){console.error('FB ordini:',e);}
-      setTimeout(function(){_fbSyncing=false;},500);
+      _fbSyncing=false;
     });
     _fbDb.ref('carrelli').on('value',function(snap){
       // Flag SEPARATO: non interferisce con la sync degli ordini
