@@ -1,5 +1,10 @@
 // ══ PUSH FIREBASE + SALVA CARRELLI / ORDINI ═══════════════════════
-function _fbPush(ref,data){if(!_fbReady||_fbSyncing)return;try{_fbDb.ref(ref).set(data);}catch(e){}}
+function _fbPush(ref,data){
+  // Non bloccare le scritture durante una fase di sync UI locale:
+  // altrimenti alcune modifiche (es. bozza da carrello) non arrivano agli altri device.
+  if(!_fbReady) return;
+  try{ _fbDb.ref(ref).set(data); }catch(e){}
+}
 
 // Sync unificata localStorage -> Firebase per dataset condivisi globali
 var _fbSharedSyncing = {};
