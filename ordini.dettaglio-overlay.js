@@ -4,6 +4,7 @@ function openOrdDetail(gi){
   try{
     var ord=ordini[gi];
     if(!ord){console.error('Ordine non trovato indice:',gi);return;}
+    if(typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(ord);
     _ordDetailId=ord.id;
     _odRender(ord);
     var ov=document.getElementById('ord-detail-overlay');

@@ -90,6 +90,7 @@ function ordInlineEdit(el, gi, ii, field){
   el._lockPending = true;
   ordAcquireOrderLock(oid, { force: false }, function(ok){
     el._lockPending = false;
+    if(ok && typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(ord);
     if(!ok){
       // Race: un altro account ha preso lock nel frattempo.
       var inpNow = el.querySelector && el.querySelector('input.ord-inline-input');

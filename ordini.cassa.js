@@ -6,6 +6,7 @@ var _cassaOrdId=null;
 function openCassa(gi){
   var ord=ordini[gi];
   if(!ord)return;
+  if(typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(ord);
   _cassaOrdId=ord.id;
   document.getElementById('cassa-cliente').textContent=ord.nomeCliente||'Cliente';
   var infoTxt=(ord.numero?'Ordine #'+ord.numero+' - ':'')+ord.data+' '+ord.ora;

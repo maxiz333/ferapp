@@ -65,6 +65,7 @@ function modificaOrdineDaTab(gi){
     }
     _editOrdIdx = gi2;
     _editOrdItems = JSON.parse(JSON.stringify(ordini[gi2].items || []));
+    if(typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(ordini[gi2]);
     renderEditOrdine();
     document.getElementById('edit-ord-overlay').style.display='flex';
     if(typeof ordRefreshLockUI === 'function') ordRefreshLockUI();

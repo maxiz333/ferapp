@@ -5,6 +5,9 @@ function openRiepilogoOrdine(cartId){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
   if(!cart || !(cart.items||[]).length){ showToastGen('yellow','Carrello vuoto'); return; }
 
+  var _vistoId = cart.bozzaOrdId || (cart.stato === 'modifica' ? cart.ordId : null);
+  if(_vistoId && typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(_vistoId);
+
   // Inizializza checks se non esistono
   var key = cartId;
   if(!_riepilogoChecks[key]) _riepilogoChecks[key] = {};

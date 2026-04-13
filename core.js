@@ -116,6 +116,31 @@ function getNextOrdNum(){
   return num;
 }
 
+/** True su layout “ufficio” (stessa soglia della lista ordini desktop). */
+function ordineUfficioIsWide(){
+  try{
+    if(window.matchMedia) return window.matchMedia('(min-width: 769px)').matches;
+  }catch(e){}
+  return typeof window.innerWidth === 'number' && window.innerWidth >= 769;
+}
+
+/**
+ * Segna ordine/bozza come visto dall’ufficio e sincronizza subito (Firebase + altri device).
+ * Solo su schermo largo: il telefono in negozio non imposta mai visto.
+ * @param {object|string} ordOrId ordine o id
+ */
+function ordineSegnaVistoSeUfficio(ordOrId){
+  if(typeof ordini === 'undefined' || !ordini || !ordineUfficioIsWide()) return;
+  try{
+    var id = ordOrId && ordOrId.id ? ordOrId.id : ordOrId;
+    if(!id) return;
+    var ord = ordini.find(function(o){ return o && o.id === id; });
+    if(!ord || ord.visto === true) return;
+    ord.visto = true;
+    if(typeof saveOrdini === 'function') saveOrdini();
+  }catch(e){ console.warn('ordineSegnaVistoSeUfficio', e); }
+}
+
 // --- ULTIMO ARTICOLO AGGIUNTO (per ripeti) --------------------
 var _lastAddedItem=null;
 

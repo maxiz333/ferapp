@@ -154,6 +154,7 @@ function _apriBozzaModal(bozza){
   }
 
   bd.classList.add('open');
+  if(typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(bozza);
 
   // Suono — tono più basso e dolce rispetto all'ordine
   try {
@@ -283,6 +284,7 @@ function _apriOrdineModal(ord){
   }
 
   bd.classList.add('open');
+  if(typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(ord);
 
   // Suono (beep sottile) solo se supportato
   try {

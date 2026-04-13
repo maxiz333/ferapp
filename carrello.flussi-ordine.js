@@ -173,7 +173,8 @@ function avvisaUfficio(cartId){
     nota:cart.nota||'',
     totale:'0',
     stato:'bozza',
-    commesso:cart.commesso||''
+    commesso:cart.commesso||'',
+    visto:false
   };
   ordini.unshift(bozza);
   saveOrdini();
@@ -237,6 +238,7 @@ function inviaOrdine(cartId){
     data:new Date().toLocaleDateString('it-IT'),
     dataISO:new Date().toISOString().slice(0,10),
     createdAt:new Date().toISOString(),
+    visto:false,
     items:(function(){
       var cpy=JSON.parse(JSON.stringify(cart.items));
       cpy.forEach(function(it){

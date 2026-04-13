@@ -2,6 +2,25 @@
 
 // --- RENDER CARRELLO ---------------------------------------
 
+/** Ordine/bozza collegato al carrello (per indicatore visto ufficio). */
+function _ctLinkedOrdForVisto(cart){
+  if(!cart || typeof ordini === 'undefined' || !ordini) return null;
+  if(cart.bozzaOrdId){
+    var b = ordini.find(function(o){ return o && o.id === cart.bozzaOrdId; });
+    if(b) return b;
+  }
+  if(cart.stato === 'modifica' && cart.ordId){
+    return ordini.find(function(o){ return o && o.id === cart.ordId; }) || null;
+  }
+  return null;
+}
+
+function _ctHtmlOrdineVistoBadge(cart){
+  var o = _ctLinkedOrdForVisto(cart);
+  if(!o || !o.visto) return '';
+  return '<span class="ord-visto-ico" title="Visto in ufficio">\uD83D\uDC41\uFE0F</span>';
+}
+
 // =============================================================================
 //  renderCartTabs — RISCRITTURA DEFINITIVA v3
 //  Layout testata: 3 righe fisse centrate max 600px
@@ -117,7 +136,7 @@ function renderCartTabs(){
   if(cart.stato === 'modifica'){
     h += '<div class="ct-banner-mod">';
     h += '<span style="font-size:13px">✏️</span>';
-    h += '<span class="ct-banner-mod-title" onclick="ctEditClienteName(\''+cart.id+'\')" style="cursor:pointer;" title="Tap per modificare">' + esc(cart.nome) + ' — MODIFICA</span>';
+    h += '<span class="ct-banner-mod-title" onclick="ctEditClienteName(\''+cart.id+'\')" style="cursor:pointer;" title="Tap per modificare">' + esc(cart.nome) + ' — MODIFICA' + _ctHtmlOrdineVistoBadge(cart) + '</span>';
     h += '</div>';
   }
 
@@ -144,7 +163,7 @@ function renderCartTabs(){
     var scontoGl = cart.scontoGlobale;
     h += '<div class="ct-sticky-total">';
     h += '<span class="ct-sticky-client" onclick="ctEditClienteName(\'' + cart.id + '\')" title="Tap per modificare il cliente">' +
-         esc(cart.nome || 'Cliente') + '</span>';
+         esc(cart.nome || 'Cliente') + _ctHtmlOrdineVistoBadge(cart) + '</span>';
     h += '<div class="ct-sticky-right">';
     if(scontoGl) h += '<span class="ct-sconto-badge">-'+scontoGl+'%</span>';
     h += '<span class="ct-sticky-n">' + (cart.items||[]).length + ' art.</span>';
@@ -433,4 +452,17 @@ function renderCartTabs(){
   h += '</div>'; // fine cart-pos-footer
 
   body.innerHTML = h;
+}
+
+if(typeof window !== 'undefined' && !window.__CART_ORDINI_SYNC_BOUND__){
+  window.__CART_ORDINI_SYNC_BOUND__ = true;
+  function _ctRefreshIfCartTabActive(){
+    var tc = document.getElementById('tc');
+    if(tc && tc.classList.contains('active') && typeof renderCartTabs === 'function') renderCartTabs();
+  }
+  window.addEventListener('sync-orders', _ctRefreshIfCartTabActive);
+  window.addEventListener('db-changed', function(ev){
+    var k = ev && ev.detail && ev.detail.key;
+    if(typeof ORDK !== 'undefined' && k === ORDK) _ctRefreshIfCartTabActive();
+  });
 }

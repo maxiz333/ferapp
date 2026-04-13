@@ -16,6 +16,7 @@ function ordCardTapLock(ev, ordId){
   _ordTapLockPending[key] = true;
   ordAcquireOrderLock(ordId, { force: false }, function(ok){
     _ordTapLockPending[key] = false;
+    if(ok && typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(ordId);
     if(!ok){
       if(typeof ordRefreshLockUI === 'function') ordRefreshLockUI();
       else renderOrdini();
@@ -42,6 +43,7 @@ function ordForceLock(ordId, gi){
       showToastGen('red','❌ Impossibile aggiornare il lock su Firebase');
       return;
     }
+    if(typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(ordId);
 
     var o = ordini.find(function(x){ return x && x.id === ordId; });
     if(o){
