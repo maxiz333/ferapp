@@ -98,7 +98,7 @@ function updateOrdCounter(){
   if(curBozze !== _lastBozzeCount){
     _lastBozzeCount = curBozze;
     var toTab = document.getElementById('to');
-    if(toTab && toTab.classList.contains('active') && !document.querySelector('.ord-inline-input')){
+    if(toTab && toTab.classList.contains('active')){
       renderOrdini();
     }
   }

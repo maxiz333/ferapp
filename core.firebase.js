@@ -76,18 +76,19 @@ document.addEventListener('DOMContentLoaded', function(){
     var _first=true;
     _fbDb.ref('ordini').on('value',function(snap){
       if(_fbSyncing)return;
-      var d=snap.val();if(!d)return;
-      var fresh=_fbFix(d);
+      var d=snap.val();
+      var fresh=d ? _fbFix(d) : [];
       // Aggiorna sempre _idKnown al primo sync (prima di confrontare)
       if(_first){
         fresh.forEach(function(o){if(o&&o.id){_idKnown[o.id]=true; if(o.stato==='bozza'){_bozzaKnown[o.id]=true; _bozzaSnap[o.id]=JSON.stringify(o);}}});
         _first=false;
       }
-      if(JSON.stringify(fresh)===JSON.stringify(ordini))return;
+      if(JSON.stringify(fresh)===JSON.stringify(ordini)) return;
       _fbSyncing=true;
       try{
         ordini=fresh;lsSet(ORDK,ordini);updateOrdBadge();updateOrdCounter();
-        var t=document.getElementById('to');if(t&&t.classList.contains('active')&&!document.querySelector('.ord-inline-input'))renderOrdini();
+        var t=document.getElementById('to');
+        if(t&&t.classList.contains('active')) renderOrdini();
         // Solo ordini con stato 'nuovo' che NON erano già noti
         var nuovi=fresh.filter(function(o){return o.stato==='nuovo'&&!_idKnown[o.id];});
         if(nuovi.length){
