@@ -4,6 +4,7 @@
 //  Render lista ordini, filtri, dettaglio ordine, vista cassa
 function renderOrdini(){
   var list=document.getElementById('ord-list');if(!list)return;
+  var isDesktop=window.matchMedia('(min-width: 769px)').matches;
   updateOrdCounter();
   _updateBozzaBadge();
   var searchVal=(document.getElementById('ord-search')||{}).value||'';
@@ -235,7 +236,14 @@ function renderOrdini(){
         if(_canEdit&&!isFz){
           h+='<div class="ord-item-actions '+ actClass +'" style="display:flex;gap:4px;align-items:center;padding:2px 8px;">';
           // Forbici — ciclo: OFF→SCA→ROT→SCAG→OFF
-          var forbLbl2 = it._scaglionato?'SCAG':(it._tuttoRotolo?'ROT':(scOn2?(it.fineRotolo?'ROT':'SCA'):''));
+          var forbLbl2 = '';
+          if(it._scaglionato){
+            forbLbl2 = isDesktop ? 'SCAGLIONI' : 'SCAG';
+          } else if(it._tuttoRotolo || (scOn2 && it.fineRotolo)){
+            forbLbl2 = isDesktop ? 'ROTOLO' : 'ROT';
+          } else if(scOn2){
+            forbLbl2 = isDesktop ? 'SCAMPOLO' : 'SCA';
+          }
           var forbColor = it._scaglionato ? 'color:#63b3ed;border-color:#63b3ed44;background:#08082a;' : (scOn2||it._tuttoRotolo ? '' : '');
           h+='<button class="ord-mini-btn'+(scOn2||it._tuttoRotolo?' ord-mini-on':'')+'" style="'+forbColor+'" onclick="ordToggleScampolo('+gi+','+ii+')" title="Scampolo/Rotolo/Scaglionato">';
           h+='✂'+(forbLbl2?' '+forbLbl2:'')+'</button>';

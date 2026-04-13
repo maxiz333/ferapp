@@ -97,6 +97,13 @@ function cartSetPrezzo(cartId,idx,val){
     ordineAppendStorico(o,'Prezzo '+((it.desc)||'?')+': €'+oldP+' → €'+val);
     if(typeof saveOrdini==='function') saveOrdini();
   }
+  // Sync immediata bozza/ordine anche se il blur/onchange avviene vicino al cambio tab.
+  if(typeof _aggiornaBozzaOrdine==='function' && cart.bozzaOrdId){
+    _aggiornaBozzaOrdine(cart);
+  }
+  if(typeof _aggiornaOrdineDaCarrelloModifica==='function' && cart.stato==='modifica' && cart.ordId){
+    _aggiornaOrdineDaCarrelloModifica(cart);
+  }
   saveCarrelli();renderCartTabs();
 }
 function cartSetUnit(cartId,idx,val){
