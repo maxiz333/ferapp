@@ -467,6 +467,13 @@ function cartRemoveItem(cartId,idx){
       if(typeof saveOrdini==='function') saveOrdini();
     }
   }
+  // Sync immediata ordine/bozza collegata dopo rimozione riga.
+  if(typeof _aggiornaBozzaOrdine==='function' && cart.bozzaOrdId){
+    _aggiornaBozzaOrdine(cart);
+  }
+  if(typeof _aggiornaOrdineDaCarrelloModifica==='function' && cart.stato==='modifica' && cart.ordId){
+    _aggiornaOrdineDaCarrelloModifica(cart);
+  }
   if(typeof saveCarrelli==='function') saveCarrelli();
   else{ lsSet(CARTK,carrelli);updateCartBadge();_fbPush('carrelli',carrelli); }
   setTimeout(function(){_fbSyncing=false;},1000);
@@ -507,6 +514,12 @@ function cartRemoveItem(cartId,idx){
         oUndo.totale=ordTotaleSenzaCongelati(oUndo).toFixed(2);
         if(typeof saveOrdini==='function') saveOrdini();
       }
+    }
+    if(typeof _aggiornaBozzaOrdine==='function' && cart.bozzaOrdId){
+      _aggiornaBozzaOrdine(cart);
+    }
+    if(typeof _aggiornaOrdineDaCarrelloModifica==='function' && cart.stato==='modifica' && cart.ordId){
+      _aggiornaOrdineDaCarrelloModifica(cart);
     }
     saveCarrelli();renderCartTabs();t.remove();
   };

@@ -136,7 +136,13 @@ function renderOrdini(){
 
       // _canEdit — già calcolato sopra
 
-      ordineIndiciOrdineDisplay(ord).forEach(function(ii, stripe){
+      var indiciDisplay=(function(){
+        var all=ordineIndiciOrdineDisplay(ord);
+        var attivi=all.filter(function(ii){ return !ordItemCongelato((ord.items||[])[ii]); }).reverse();
+        var congelati=all.filter(function(ii){ return ordItemCongelato((ord.items||[])[ii]); });
+        return attivi.concat(congelati);
+      })();
+      indiciDisplay.forEach(function(ii, stripe){
         var it=ord.items[ii];
         var isFz=ordItemCongelato(it);
         var pu=parsePriceIT(it.prezzoUnit);
