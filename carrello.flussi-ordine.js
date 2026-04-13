@@ -192,6 +192,10 @@ function _aggiornaBozzaOrdine(cart){
   bozza.items=JSON.parse(JSON.stringify(cart.items||[])).concat(prevFrozen);
   bozza.nomeCliente=cart.nome||'—';
   bozza.nota=cart.nota||'';
+  bozza.totale=ordTotaleSenzaCongelati(bozza).toFixed(2);
+  bozza.modificato=true;
+  bozza.modificatoAt=new Date().toLocaleString('it-IT');
+  bozza.modificatoAtISO=new Date().toISOString();
   saveOrdini();
 }
 

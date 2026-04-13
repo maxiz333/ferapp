@@ -6,6 +6,15 @@ function _cartLabelModalita(it){
   if(it._scaglionato) return 'Scaglioni';
   return 'listino';
 }
+function _cartSyncLinkedOrdine(cart){
+  if(!cart) return;
+  if(typeof _aggiornaBozzaOrdine==='function' && cart.bozzaOrdId){
+    _aggiornaBozzaOrdine(cart);
+  }
+  if(typeof _aggiornaOrdineDaCarrelloModifica==='function' && cart.stato==='modifica' && cart.ordId){
+    _aggiornaOrdineDaCarrelloModifica(cart);
+  }
+}
 function cartAddItem(rowIdx){
   if(!activeCartId)return;
   var cart=carrelli.find(function(c){return c.id===activeCartId;});if(!cart)return;
@@ -18,12 +27,7 @@ function cartAddItem(rowIdx){
     nota:'',_scaglioniAperti:false,daOrdinare:false};
   (cart.items=cart.items||[]).push(newItem);
   // Sync immediata su bozza/ordine collegato per evitare lag o race di salvataggio.
-  if(typeof _aggiornaBozzaOrdine==='function' && cart.bozzaOrdId){
-    _aggiornaBozzaOrdine(cart);
-  }
-  if(typeof _aggiornaOrdineDaCarrelloModifica==='function' && cart.stato==='modifica' && cart.ordId){
-    _aggiornaOrdineDaCarrelloModifica(cart);
-  }
+  _cartSyncLinkedOrdine(cart);
   _lastAddedItem={rowIdx:rowIdx,item:JSON.parse(JSON.stringify(newItem))};
   var oSt=ordinePerCarrelloStorico(cart);
   if(oSt){
@@ -66,6 +70,7 @@ function cartDelta(cartId,idx,delta){
     ordineAppendStorico(o,'Quantità '+((it&&it.desc)||'?')+': '+oldQ+' → '+it.qty+' '+(it.unit||'pz'));
     if(typeof saveOrdini==='function') saveOrdini();
   }
+  _cartSyncLinkedOrdine(cart);
   saveCarrelli();renderCartTabs();
 }
 function cartSetQty(cartId,idx,val){
@@ -81,6 +86,7 @@ function cartSetQty(cartId,idx,val){
     ordineAppendStorico(o,'Quantità '+((it&&it.desc)||'?')+': '+oldQ+' → '+it.qty+' '+(it.unit||'pz'));
     if(typeof saveOrdini==='function') saveOrdini();
   }
+  _cartSyncLinkedOrdine(cart);
   saveCarrelli();renderCartTabs();
 }
 /** Rimuove la nota automatica "ROTOLO INTERO" se l'articolo non è più in modalità rotolo intero. */
@@ -104,13 +110,7 @@ function cartSetPrezzo(cartId,idx,val){
     ordineAppendStorico(o,'Prezzo '+((it.desc)||'?')+': €'+oldP+' → €'+val);
     if(typeof saveOrdini==='function') saveOrdini();
   }
-  // Sync immediata bozza/ordine anche se il blur/onchange avviene vicino al cambio tab.
-  if(typeof _aggiornaBozzaOrdine==='function' && cart.bozzaOrdId){
-    _aggiornaBozzaOrdine(cart);
-  }
-  if(typeof _aggiornaOrdineDaCarrelloModifica==='function' && cart.stato==='modifica' && cart.ordId){
-    _aggiornaOrdineDaCarrelloModifica(cart);
-  }
+  _cartSyncLinkedOrdine(cart);
   saveCarrelli();renderCartTabs();
 }
 function cartSetUnit(cartId,idx,val){
@@ -133,6 +133,7 @@ function cartSetUnit(cartId,idx,val){
       _cartRicalcolaPrezzoVendita(it);
     }
   }
+  _cartSyncLinkedOrdine(cart);
   saveCarrelli();renderCartTabs();
 }
 
@@ -246,6 +247,7 @@ function cartCycleScampolo(cartId,idx){
       if(typeof saveOrdini==='function') saveOrdini();
     }
   }
+  _cartSyncLinkedOrdine(cart);
   saveCarrelli();renderCartTabs();
 }
 function cartSetScontoScampolo(cartId,idx,val){
@@ -263,6 +265,7 @@ function cartSetScontoScampolo(cartId,idx,val){
     ordineAppendStorico(o,'Sconto '+((it.desc)||'?')+': '+(oldSc!=null?oldSc+'%':'—')+' → '+it._scontoApplicato+'% ('+_cartLabelModalita(it)+')');
     if(typeof saveOrdini==='function') saveOrdini();
   }
+  _cartSyncLinkedOrdine(cart);
   saveCarrelli();renderCartTabs();
 }
 function _applicaScontoScampolo(it){
@@ -468,12 +471,7 @@ function cartRemoveItem(cartId,idx){
     }
   }
   // Sync immediata ordine/bozza collegata dopo rimozione riga.
-  if(typeof _aggiornaBozzaOrdine==='function' && cart.bozzaOrdId){
-    _aggiornaBozzaOrdine(cart);
-  }
-  if(typeof _aggiornaOrdineDaCarrelloModifica==='function' && cart.stato==='modifica' && cart.ordId){
-    _aggiornaOrdineDaCarrelloModifica(cart);
-  }
+  _cartSyncLinkedOrdine(cart);
   if(typeof saveCarrelli==='function') saveCarrelli();
   else{ lsSet(CARTK,carrelli);updateCartBadge();_fbPush('carrelli',carrelli); }
   setTimeout(function(){_fbSyncing=false;},1000);
@@ -515,12 +513,7 @@ function cartRemoveItem(cartId,idx){
         if(typeof saveOrdini==='function') saveOrdini();
       }
     }
-    if(typeof _aggiornaBozzaOrdine==='function' && cart.bozzaOrdId){
-      _aggiornaBozzaOrdine(cart);
-    }
-    if(typeof _aggiornaOrdineDaCarrelloModifica==='function' && cart.stato==='modifica' && cart.ordId){
-      _aggiornaOrdineDaCarrelloModifica(cart);
-    }
+    _cartSyncLinkedOrdine(cart);
     saveCarrelli();renderCartTabs();t.remove();
   };
   t.appendChild(btn);document.body.appendChild(t);
