@@ -2510,3 +2510,110 @@ body.light-mode .ct-pb-inp::placeholder {
   font-weight: 700;
 }
 
+/* ════════════════════════════════════════════════════════════════
+   MAGAZZINO (#mag-list) — cronologia Ultimi aggiunti / modificati:
+   pulsanti X e cestino sempre sopra badge/foto e cliccabili
+   ════════════════════════════════════════════════════════════════ */
+
+#mag-list.mag-list--chrono {
+  position: relative;
+}
+
+#mag-list .mag-card {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Spazio riservato in alto a destra per la X (non copre titolo/descrizione a sinistra) */
+#mag-list .mag-card--chrono {
+  padding-right: 48px;
+  padding-top: 2px;
+  box-sizing: border-box;
+}
+
+#mag-list .mag-card-chrono-actions {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  left: auto;
+  z-index: 60;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#mag-list .mag-card-footer-actions {
+  position: relative;
+  z-index: 55;
+  pointer-events: auto;
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  align-items: stretch;
+}
+
+#mag-list .mag-del-btn {
+  -webkit-tap-highlight-color: rgba(229, 62, 62, 0.3);
+  touch-action: manipulation;
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+  z-index: 56;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease,
+    border-color 0.15s ease, filter 0.12s ease;
+}
+
+#mag-list .mag-del-btn--corner {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  border-radius: 999px;
+  border: 1px solid rgba(229, 62, 62, 0.55);
+  background: #1a1a1a;
+  color: #e53e3e;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+#mag-list .mag-del-btn--footer {
+  width: 44px;
+  min-width: 44px;
+  flex-shrink: 0;
+  padding: 8px;
+  border-radius: 7px;
+  border: 1px solid rgba(229, 62, 62, 0.45);
+  background: rgba(26, 26, 26, 0.98);
+  color: #e53e3e;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+}
+
+#mag-list .mag-del-btn--corner:hover,
+#mag-list .mag-del-btn--footer:hover {
+  background: #2a1f1f;
+  border-color: #fc8181;
+  box-shadow: 0 2px 14px rgba(229, 62, 62, 0.35);
+  filter: brightness(1.08);
+}
+
+#mag-list .mag-del-btn--corner:active,
+#mag-list .mag-del-btn--footer:active {
+  transform: scale(0.96);
+  filter: brightness(0.92);
+}
+
+/* Badge informativi non intercettano tap sopra la card */
+#mag-list .mag-card--chrono > div:not(.mag-card-chrono-actions):not(.mag-card-footer-actions) {
+  position: relative;
+  z-index: 0;
+}
+

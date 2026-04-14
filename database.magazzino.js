@@ -1,11 +1,345 @@
-// database.magazzino.js - estratto da database.js
+﻿// database.magazzino.js - estratto da database.js
 
 // [SECTION: MAGAZZINO] -----------------------------------------------------
 //  Inventario, scorte, soglie, movimenti qty, categorie, magazzino
 var invSottoScorta=false;
 var invGiornalino=false;
+var _magDupCodes = {};
+var magChronoMode = 'none'; // none | added | modified
 function _syncMagIdxFirebase(i){
   if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(i);
+}
+
+function rebuildMagDuplicateCodes(){
+  var byCode = {};
+  var out = {};
+  for(var i=0;i<rows.length;i++){
+    var r = rows[i];
+    if(!r || removed.has(String(i))) continue;
+    var key = (typeof normalizeCodiceMagazzino === 'function') ? normalizeCodiceMagazzino(r.codM) : String(r.codM||'').trim();
+    if(!key) continue;
+    if(!byCode[key]) byCode[key] = [];
+    byCode[key].push(i);
+  }
+  Object.keys(byCode).forEach(function(k){
+    if(byCode[k].length > 1) out[k] = byCode[k];
+  });
+  _magDupCodes = out;
+  return out;
+}
+
+function magScanDuplicati(){
+  try{
+    var dups = rebuildMagDuplicateCodes();
+    var keys = Object.keys(dups);
+    if(!keys.length){
+      renderMagazzino();
+      showToastGen('green','✅ Nessun codice duplicato trovato');
+      return;
+    }
+    magOpenDuplicatiView(dups);
+  }catch(e){
+    console.error('magScanDuplicati', e);
+    showToastGen('red','Errore durante la scansione duplicati');
+  }
+}
+
+function _applyMagChronoMode(mode){
+  magChronoMode = mode || 'none';
+  var btn = document.getElementById('mag-recenti-btn');
+  if(btn){
+    if(magChronoMode === 'added'){
+      btn.style.background = '#38a169';
+      btn.style.color = '#fff';
+      btn.style.borderColor = '#38a169';
+      btn.title = 'Cronologia: Ultimi aggiunti (3 giorni)';
+    } else if(magChronoMode === 'modified'){
+      btn.style.background = '#3182ce';
+      btn.style.color = '#fff';
+      btn.style.borderColor = '#3182ce';
+      btn.title = 'Cronologia: Ultimi modificati (3 giorni)';
+    } else {
+      btn.style.background = '#1e1e1e';
+      btn.style.color = 'var(--muted)';
+      btn.style.borderColor = 'var(--border)';
+      btn.title = 'Cronologia magazzino';
+    }
+  }
+  renderMagazzino();
+}
+
+function toggleMagRecentiDueSettimane(){
+  var ov = document.getElementById('mag-chrono-ov');
+  if(ov){ ov.remove(); return; }
+  ov = document.createElement('div');
+  ov.id = 'mag-chrono-ov';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10015;display:flex;align-items:flex-start;justify-content:center;padding-top:90px;';
+  ov.innerHTML =
+    '<div style="width:min(360px,92vw);background:#141414;border:1px solid #2a2a2a;border-radius:12px;padding:10px;">' +
+    '<div style="font-size:12px;color:#888;margin:2px 4px 10px;">Filtro cronologico (ultimi 3 giorni)</div>' +
+    '<button onclick="_applyMagChronoMode(\'added\');document.getElementById(\'mag-chrono-ov\').remove();" style="width:100%;text-align:left;margin-bottom:6px;padding:10px;border-radius:8px;border:1px solid #2a2a2a;background:#1e1e1e;color:#68d391;cursor:pointer;font-weight:700;">Ultimi aggiunti</button>' +
+    '<button onclick="_applyMagChronoMode(\'modified\');document.getElementById(\'mag-chrono-ov\').remove();" style="width:100%;text-align:left;margin-bottom:6px;padding:10px;border-radius:8px;border:1px solid #2a2a2a;background:#1e1e1e;color:#63b3ed;cursor:pointer;font-weight:700;">Ultimi modificati</button>' +
+    '<button onclick="_applyMagChronoMode(\'none\');document.getElementById(\'mag-chrono-ov\').remove();" style="width:100%;text-align:left;padding:10px;border-radius:8px;border:1px solid #333;background:#111;color:#aaa;cursor:pointer;">Reset / Tutti (vista completa)</button>' +
+    '</div>';
+  ov.addEventListener('click', function(e){ if(e.target === ov) ov.remove(); });
+  document.body.appendChild(ov);
+}
+
+function _magDupOverlayClose(){
+  var ov = document.getElementById('mag-dup-ov');
+  if(ov) ov.remove();
+}
+
+function magOpenDuplicatiView(precomputed){
+  var dups, keys;
+  try{
+    dups = precomputed || rebuildMagDuplicateCodes();
+    keys = Object.keys(dups);
+  }catch(e){
+    console.error('magOpenDuplicatiView rebuild', e);
+    showToastGen('red','Errore nel calcolo dei duplicati');
+    return;
+  }
+  if(!keys.length){ _magDupOverlayClose(); return; }
+  var ov = document.getElementById('mag-dup-ov');
+  if(!ov){
+    ov = document.createElement('div');
+    ov.id = 'mag-dup-ov';
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:10020;padding:16px;overflow:auto;';
+    document.body.appendChild(ov);
+  }
+  var html = '';
+  html += '<div style="max-width:900px;margin:20px auto;background:#121212;border:1px solid #2a2a2a;border-radius:12px;padding:14px;">';
+  html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;">';
+  html += '<div style="font-size:15px;font-weight:900;color:#f6ad55;">🔎 Duplicati codice magazzino</div>';
+  html += '<button onclick="_magDupOverlayClose()" style="border:1px solid #333;background:#1e1e1e;color:#aaa;border-radius:8px;padding:6px 10px;cursor:pointer;">Chiudi</button>';
+  html += '</div>';
+  html += '<div style="font-size:12px;color:#777;margin-bottom:10px;">Scegli quale riga tenere ed elimina i cloni con la X rossa.</div>';
+  keys.forEach(function(k){
+    var idxs = (dups[k] || []).slice().sort(function(a,b){
+      var tb = (typeof getRowUpdatedAt === 'function') ? Number(getRowUpdatedAt(rows[b], b)) : 0;
+      var ta = (typeof getRowUpdatedAt === 'function') ? Number(getRowUpdatedAt(rows[a], a)) : 0;
+      if(!isFinite(tb)) tb = 0;
+      if(!isFinite(ta)) ta = 0;
+      return tb - ta;
+    });
+    if(!idxs.length) return;
+    html += '<div style="margin-bottom:12px;border:1px solid #2a2a2a;border-radius:10px;overflow:hidden;">';
+    html += '<div style="background:#1a1a1a;padding:8px 10px;font-size:12px;color:#f6ad55;font-weight:800;">Codice: ' + esc(rows[idxs[0]] && rows[idxs[0]].codM ? rows[idxs[0]].codM : k) + '</div>';
+    idxs.forEach(function(i, pos){
+      var r = rows[i] || {};
+      var m = magazzino[i] || {};
+      var isKeepSuggested = pos === 0;
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;border-top:1px solid #222;">';
+      html += '<div style="min-width:0;flex:1;">';
+      html += '<div style="font-size:12px;font-weight:700;color:#e8e8e8;">' + esc(r.desc || '—') + (isKeepSuggested ? ' <span style="color:#68d391;font-size:10px;">(più recente)</span>' : '') + '</div>';
+      html += '<div style="font-size:10px;color:#888;">F: ' + esc(String(r.codF || '—')) + ' · € ' + esc(String(r.prezzo || '0')) + ' · Qtà: ' + esc(String(m.qty == null ? '—' : m.qty)) + '</div>';
+      html += '</div>';
+      html += '<button onclick=\'magDeleteArticolo(' + i + ',' + JSON.stringify(r.codM == null ? '' : String(r.codM)) + ')\' title="Elimina questa riga" style="border:1px solid #e53e3e44;background:transparent;color:#e53e3e;border-radius:8px;padding:4px 10px;font-size:16px;font-weight:900;cursor:pointer;">X</button>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  try{
+    ov.innerHTML = html;
+  }catch(e){
+    console.error('magOpenDuplicatiView render', e);
+    showToastGen('red','Errore nel rendering duplicati');
+  }
+}
+
+function _magDupOverlayRefreshIfOpen(){
+  var ov = document.getElementById('mag-dup-ov');
+  if(!ov) return;
+  setTimeout(function(){
+    try{
+      var dups = rebuildMagDuplicateCodes();
+      if(!Object.keys(dups).length){ _magDupOverlayClose(); return; }
+      magOpenDuplicatiView(dups);
+    }catch(e){
+      console.error('_magDupOverlayRefreshIfOpen', e);
+    }
+  }, 0);
+}
+
+function _purgeRowIdxFromCarrelliOrdini(deletedIdx){
+  if(typeof carrelli !== 'undefined' && carrelli && carrelli.length){
+    carrelli.forEach(function(cart){
+      var items = cart.items || [];
+      for(var k = items.length - 1; k >= 0; k--){
+        var it = items[k];
+        if(it.rowIdx === undefined || it.rowIdx === null) continue;
+        var ri = parseInt(it.rowIdx, 10);
+        if(isNaN(ri)) continue;
+        if(ri === deletedIdx){ items.splice(k, 1); continue; }
+        if(ri > deletedIdx) it.rowIdx = ri - 1;
+      }
+    });
+    if(typeof saveCarrelli === 'function') saveCarrelli();
+  }
+  if(typeof ordini !== 'undefined' && ordini && ordini.length){
+    ordini.forEach(function(o){
+      var items = o.items || [];
+      for(var k = items.length - 1; k >= 0; k--){
+        var it = items[k];
+        if(it.rowIdx === undefined || it.rowIdx === null) continue;
+        var ri = parseInt(it.rowIdx, 10);
+        if(isNaN(ri)) continue;
+        if(ri === deletedIdx){ items.splice(k, 1); continue; }
+        if(ri > deletedIdx) it.rowIdx = ri - 1;
+      }
+    });
+    if(typeof saveOrdini === 'function') saveOrdini();
+  }
+}
+
+function _movimentiAfterRowDelete(deletedIdx){
+  if(typeof movimenti === 'undefined' || !movimenti) return;
+  movimenti = movimenti.filter(function(mv){ return mv.rowIdx !== deletedIdx; });
+  movimenti.forEach(function(mv){
+    if(mv.rowIdx > deletedIdx) mv.rowIdx--;
+  });
+  lsSet(MOVK, movimenti);
+}
+
+function _fbMagExtAfterRowSplice(spliceIdx, oldLen){
+  if(!_fbReady || !_fbDb) return;
+  try{
+    for(var j = spliceIdx; j < rows.length; j++){
+      if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(j);
+    }
+    _fbDb.ref(MAGEXT_K + '/' + (oldLen - 1)).set(null);
+  }catch(e){}
+}
+
+/** Indice riga da eliminare: con codice magazzino unico si risolve sempre dal codice; con duplicati serve l’indice cliccato. */
+function _magResolveDeleteIndex(clickedIdx, expectedCodM){
+  var exp = (expectedCodM != null && String(expectedCodM).trim() !== '');
+  if(!exp){
+    if(clickedIdx == null || clickedIdx < 0 || clickedIdx >= rows.length || !rows[clickedIdx]) return -1;
+    return clickedIdx;
+  }
+  if(typeof codiciMagazzinoUguali !== 'function') return -1;
+  var matches = [];
+  for(var j = 0; j < rows.length; j++){
+    if(!rows[j]) continue;
+    if(codiciMagazzinoUguali(rows[j].codM, expectedCodM)) matches.push(j);
+  }
+  if(matches.length === 0) return -2;
+  if(matches.length === 1) return matches[0];
+  if(clickedIdx != null && clickedIdx >= 0 && matches.indexOf(clickedIdx) >= 0) return clickedIdx;
+  return -3;
+}
+
+function _executeMagDeleteArticolo(clickedIdx, expectedCodM){
+  var idx = _magResolveDeleteIndex(clickedIdx, expectedCodM);
+  if(idx < 0 || !rows[idx]) return;
+  var r1 = rows[idx];
+  if(expectedCodM != null && String(expectedCodM).trim() !== '' && typeof codiciMagazzinoUguali === 'function'){
+    if(!codiciMagazzinoUguali(r1.codM, expectedCodM)) return;
+  }
+  var oldLen = rows.length;
+  if(typeof idbShiftPhotosAfterRowDelete === 'function') idbShiftPhotosAfterRowDelete(idx, oldLen);
+  rows.splice(idx, 1);
+  var oldMag = magazzino;
+  magazzino = {};
+  for(var j = 0; j < rows.length; j++){
+    var src = j < idx ? j : j + 1;
+    var block = oldMag[src];
+    if(block === undefined) block = oldMag[String(src)];
+    if(block != null) magazzino[j] = block;
+  }
+  var newRemoved = new Set();
+  removed.forEach(function(s){
+    var n = parseInt(s, 10);
+    if(isNaN(n)) return;
+    if(n === idx) return;
+    if(n < idx) newRemoved.add(String(n));
+    else newRemoved.add(String(n - 1));
+  });
+  removed = newRemoved;
+  _purgeRowIdxFromCarrelliOrdini(idx);
+  _movimentiAfterRowDelete(idx);
+  if(typeof _epIdx !== 'undefined'){
+    if(_epIdx === idx){
+      _epSnapshot = null;
+      _epIdx = null;
+      _epIsNew = false;
+      _epFromCart = false;
+      var epEl = document.getElementById('ep');
+      if(epEl) epEl.classList.remove('open');
+    } else if(_epIdx > idx){
+      _epIdx--;
+    }
+  }
+  if(typeof _lastModifiedIdx !== 'undefined' && _lastModifiedIdx !== null){
+    if(_lastModifiedIdx === idx) _lastModifiedIdx = null;
+    else if(_lastModifiedIdx > idx) _lastModifiedIdx--;
+  }
+  if(typeof _invIdxBuilt !== 'undefined') _invIdxBuilt = false;
+  lsSet(SK, rows);
+  lsSet(MAGK, magazzino);
+  lsSet(RK, Array.from(removed));
+  _fbMagExtAfterRowSplice(idx, oldLen);
+  rebuildMagDuplicateCodes();
+  updateStats();
+  updateStockBadge();
+  if(typeof renderInventario === 'function') renderInventario();
+  if(typeof renderMagazzino === 'function') renderMagazzino();
+  if(typeof renderInventarioPromoG === 'function') renderInventarioPromoG();
+  if(typeof renderCartTabs === 'function') renderCartTabs();
+  if(typeof renderOrdini === 'function') renderOrdini();
+  if(typeof renderMovimenti === 'function') renderMovimenti();
+  _magDupOverlayRefreshIfOpen();
+  showToastGen('red','Articolo eliminato definitivamente');
+}
+
+function magDeleteArticolo(clickedIdx, expectedCodM){
+  var idxPre = _magResolveDeleteIndex(clickedIdx, expectedCodM);
+  if(idxPre === -2){
+    showToastGen('red','Codice magazzino non trovato nel database.');
+    return;
+  }
+  if(idxPre === -3){
+    showToastGen('red','Codice duplicato: usa la X sulla riga corretta.');
+    return;
+  }
+  if(idxPre < 0 || !rows[idxPre]){
+    showToastGen('red','Articolo non trovato.');
+    return;
+  }
+  var msg = 'Eliminare DEFINITIVAMENTE questo articolo dal database?';
+  var run = function(){ _executeMagDeleteArticolo(clickedIdx, expectedCodM); };
+  var ov = typeof document !== 'undefined' ? document.getElementById('confirm-overlay') : null;
+  if(typeof showConfirm === 'function' && ov){
+    showConfirm(msg, run);
+    return;
+  }
+  if(typeof window !== 'undefined' && window.confirm && window.confirm(msg)){
+    run();
+  }
+}
+
+function magAddArticoloManuale(){
+  var idx = rows.length;
+  var now = Date.now();
+  rows.push({
+    data: new Date().toLocaleDateString('it-IT'),
+    desc: '',
+    codF: '',
+    codM: '',
+    prezzoOld: '',
+    prezzo: '',
+    size: 'small',
+    priceHistory: [],
+    createdAt: now,
+    _updatedAt: now
+  });
+  magazzino[idx] = { qty:'', unit:'pz', soglia:'', _updatedAt: now };
+  lsSet(SK, rows);
+  lsSet(MAGK, magazzino);
+  openEditProdotto(idx, true);
 }
 
 function filterSottoScorta(){
@@ -147,6 +481,12 @@ function deltaQta(i,delta){
   var nv=Math.max(0,cur+delta);
   var prevQty=cur;
   magazzino[i].qty=nv;
+  magazzino[i]._updatedAt = Date.now();
+  if(rows[i]) rows[i]._updatedAt = Date.now();
+  if(rows[i] && nv !== prevQty && typeof touchRowProductChangeAt === 'function'){
+    touchRowProductChangeAt(rows[i]);
+    lsSet(SK, rows);
+  }
   lsSet(MAGK,magazzino);
   updateStockBadge();
   checkScorta(i, nv, prevQty);
@@ -163,9 +503,9 @@ function deltaQta(i,delta){
       inp.style.borderColor=isLow?'#e53e3e':'var(--border)';
     }
   });
-  // re-render solo la tab attiva
   var t0=document.getElementById('t0');
-  if(t0&&t0.classList.contains('active')) renderInventario();
+  if(t0&&t0.classList.contains('active') && typeof invRefreshT0 === 'function') invRefreshT0();
+  else if(t0&&t0.classList.contains('active') && typeof renderInventario === 'function') renderInventario();
   _syncMagIdxFirebase(i);
 }
 
@@ -378,7 +718,8 @@ function renderMagazzino(){
         'style="width:100%;margin-top:6px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:#111;color:#aaa;font-size:11px;font-style:italic;" '+
         'onchange="saveMagRow('+i+',\'specs\',this.value)">';
       html+='<button onclick="openEditProdotto('+i+')" style="margin-top:8px;width:100%;padding:7px;border-radius:7px;border:1px solid var(--accent)44;background:transparent;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;">-- Modifica articolo</button>';
-          });
+      html+='</div>';
+    });
     html+='</div>';
   });
 
@@ -492,6 +833,16 @@ function saveMagRow(i,field,val){
     var prevQty = magazzino[i].qty!==undefined&&magazzino[i].qty!=='' ? Number(magazzino[i].qty) : null;
     var newQty  = val!=='' ? parseFloat(val) : null;
     magazzino[i].qty = newQty;
+    magazzino[i]._updatedAt = Date.now();
+    if(rows[i]) rows[i]._updatedAt = Date.now();
+    var qtyCh = false;
+    if(prevQty === null && newQty === null) qtyCh = false;
+    else if(prevQty === null || newQty === null) qtyCh = true;
+    else qtyCh = Math.abs(prevQty - newQty) > 1e-9;
+    if(qtyCh && rows[i] && typeof touchRowProductChangeAt === 'function'){
+      touchRowProductChangeAt(rows[i]);
+      lsSet(SK, rows);
+    }
     lsSet(MAGK,magazzino);
     updateStockBadge();
     if(newQty!==null && prevQty!==null && newQty!==prevQty){
@@ -506,6 +857,8 @@ function saveMagRow(i,field,val){
     _updateMagQtyRow(i, newQty);
   } else {
     magazzino[i][field]=val;
+    magazzino[i]._updatedAt = Date.now();
+    if(rows[i]) rows[i]._updatedAt = Date.now();
     lsSet(MAGK,magazzino);
     if(field==='cat'){
       // ri-render dopo cambio categoria (gi- chiamato nel template)
@@ -551,9 +904,19 @@ function saveQta(i,val){
   if(!magazzino[i]) magazzino[i]={};
   var prevQty=magazzino[i].qty!==undefined&&magazzino[i].qty!==''?Number(magazzino[i].qty):null;
   magazzino[i].qty=val;
+  magazzino[i]._updatedAt = Date.now();
+  if(rows[i]) rows[i]._updatedAt = Date.now();
+  var numVal=val!==''?Number(val):null;
+  var qtyChSq = false;
+  if(prevQty === null && numVal === null) qtyChSq = false;
+  else if(prevQty === null || numVal === null) qtyChSq = true;
+  else qtyChSq = Math.abs(prevQty - numVal) > 1e-9;
+  if(qtyChSq && rows[i] && typeof touchRowProductChangeAt === 'function'){
+    touchRowProductChangeAt(rows[i]);
+    lsSet(SK, rows);
+  }
   lsSet(MAGK,magazzino);
   updateStockBadge();
-  var numVal=val!==''?Number(val):null;
   checkScorta(i, numVal, prevQty);
   if(numVal !== null){
     var prevForMov = prevQty !== null ? prevQty : 0;

@@ -15,6 +15,7 @@ function _doCartSearch(){
     return;
   }
   var matches=[];
+  var bestByCode = {};
   var qLow=q.toLowerCase();
   var qWords=qLow.split(/\s+/).filter(function(w){return w.length>0;});
   rows.forEach(function(r,i){
@@ -32,8 +33,18 @@ function _doCartSearch(){
     }
     if(!ok) return;
     var score=fuzzyScore(q,text);
-    if(score>=50)matches.push({r:r,i:i,m:m,score:score});
+    if(score>=50){
+      var key = '';
+      if(typeof normalizeCodiceMagazzino === 'function') key = normalizeCodiceMagazzino(r.codM);
+      if(!key) key = 'idx:' + i;
+      var cand = {r:r,i:i,m:m,score:score,_updatedAt:getRowUpdatedAt(r,i)};
+      var prev = bestByCode[key];
+      if(!prev || cand._updatedAt > prev._updatedAt || (cand._updatedAt === prev._updatedAt && cand.score > prev.score)){
+        bestByCode[key] = cand;
+      }
+    }
   });
+  matches = Object.keys(bestByCode).map(function(k){ return bestByCode[k]; });
   // Ordina per score decrescente (migliori in cima)
   matches.sort(function(a,b){return b.score-a.score;});
   if(!matches.length){res.innerHTML='<div style="padding:10px;color:var(--muted);font-size:12px;">Nessun risultato per "'+esc(q)+'"</div>';return;}
@@ -41,6 +52,8 @@ function _doCartSearch(){
   matches.slice(0,15).forEach(function(x){
     var r=x.r,i=x.i,m=x.m;
     var qty=m.qty!==undefined&&m.qty!==''?m.qty:'';
+    var qtyNum = qty === '' ? null : Number(qty);
+    var outOfStock = qtyNum !== null && qtyNum <= 0;
     var promoG = !!(r && r.isPromo === true && String(r.promoTipo || '') === 'G');
     h+='<div style="padding:10px 12px;border-bottom:1px solid #2a2a2a;display:flex;justify-content:space-between;align-items:center;gap:10px;">';
     h+='<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:700;color:var(--text);">'+esc(r.desc)+'</div>';
@@ -49,7 +62,7 @@ function _doCartSearch(){
     if(r.codM)h+='<span style="color:var(--accent);font-weight:600;">'+esc(r.codM)+'</span>';
     if(m.marca)h+=' <span style="color:var(--muted);">- '+esc(m.marca)+'</span>';
     h+='</div>';
-    if(qty!=='')h+='<div style="font-size:10px;color:#555;margin-top:1px;">Stock: '+qty+' '+(m.unit||'pz')+'</div>';
+    if(qty!=='')h+='<div style="font-size:10px;'+(outOfStock?'color:#e53e3e;font-weight:700;':'color:#555;')+'margin-top:1px;">'+(outOfStock?'⚠ ':'')+'Stock: '+qty+' '+(m.unit||'pz')+'</div>';
     if(m.posizione)h+='<div style="font-size:10px;color:#63b3ed;margin-top:1px;">- '+esc(m.posizione)+'</div>';
     h+='</div>';
     h+='<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">';

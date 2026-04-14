@@ -36,6 +36,7 @@ function _doMagSearch(){
 
   // Database non pronto
   if(!rows || !rows.length){
+    list.classList.remove('mag-list--chrono');
     list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--accent);font-size:14px;">⏳ Database in caricamento...</div>';
     if(statsEl) statsEl.innerHTML = '';
     return;
@@ -49,10 +50,13 @@ function _doMagSearch(){
   var hasSearch  = rawSearch.trim().length >= 3;
   var hasFilter  = !!catFilter;
   var hasSottoSc = (typeof magSottoScorta !== 'undefined') && magSottoScorta;
+  var chronoMode = (typeof magChronoMode !== 'undefined') ? magChronoMode : 'none';
+  var hasChrono  = chronoMode === 'added' || chronoMode === 'modified';
   var mode       = (typeof magMode !== 'undefined') ? magMode : 'prod';
 
   // Nessun criterio → placeholder
-  if(!hasSearch && !hasFilter && !hasSottoSc){
+  if(!hasSearch && !hasFilter && !hasSottoSc && !hasChrono){
+    list.classList.remove('mag-list--chrono');
     list.innerHTML =
       '<div style="text-align:center;padding:50px 20px;color:var(--muted);font-size:13px;">' +
       '🔍 Digita almeno <b style="color:var(--accent)">3 caratteri</b> per cercare tra ' +
@@ -70,6 +74,8 @@ function _doMagSearch(){
 
   var MAX = 50;
   var results = [], tot = 0, sottoScorta = 0;
+  var recentiLimitMs = Date.now() - (3 * 24 * 60 * 60 * 1000);
+  if(typeof rebuildMagDuplicateCodes === 'function') rebuildMagDuplicateCodes();
 
   for(var i = 0; i < rows.length; i++){
     var r = rows[i];
@@ -101,16 +107,51 @@ function _doMagSearch(){
     var qty    = (m.qty !== undefined && m.qty !== '') ? Number(m.qty) : null;
     var isLow  = qty !== null && qty <= soglia;
     if(hasSottoSc && !isLow) continue;
+    if(hasChrono){
+      var cAt = (typeof getRowCreatedAt === 'function') ? getRowCreatedAt(r) : 0;
+      if(chronoMode === 'added'){
+        if(cAt < recentiLimitMs) continue;
+      } else if(chronoMode === 'modified'){
+        var modAt = (typeof getRowModifiedChronoAt === 'function') ? getRowModifiedChronoAt(r, i) : 0;
+        if(modAt < recentiLimitMs) continue;
+      }
+    }
 
     tot++;
     if(isLow) sottoScorta++;
-    if(results.length < MAX) results.push({r:r, i:i, m:m, isLow:isLow, soglia:soglia, qty:qty});
+    if(hasChrono){
+      results.push({r:r, i:i, m:m, isLow:isLow, soglia:soglia, qty:qty});
+    } else if(results.length < MAX){
+      results.push({r:r, i:i, m:m, isLow:isLow, soglia:soglia, qty:qty});
+    }
+  }
+
+  if(hasChrono && results.length){
+    if(chronoMode === 'added' && typeof getRowCreatedAt === 'function'){
+      results.sort(function(a, b){
+        return getRowCreatedAt(b.r) - getRowCreatedAt(a.r);
+      });
+    } else if(chronoMode === 'modified' && typeof getRowModifiedChronoAt === 'function'){
+      results.sort(function(a, b){
+        var mb = Number(getRowModifiedChronoAt(b.r, b.i));
+        var ma = Number(getRowModifiedChronoAt(a.r, a.i));
+        if(!isFinite(mb)) mb = 0;
+        if(!isFinite(ma)) ma = 0;
+        return mb - ma;
+      });
+    }
+    if(results.length > MAX) results = results.slice(0, MAX);
   }
 
   // Stats
   if(statsEl) statsEl.innerHTML =
     '<div class="sc"><span class="n">' + (tot > MAX ? MAX + '+' : tot) + '</span>Trovati</div>' +
-    (sottoScorta ? '<div class="sc r"><span class="n" style="color:#e53e3e">' + sottoScorta + '</span>Sotto scorta</div>' : '');
+    (sottoScorta ? '<div class="sc r"><span class="n" style="color:#e53e3e">' + sottoScorta + '</span>Sotto scorta</div>' : '') +
+    (chronoMode === 'added' ? '<div class="sc"><span class="n" style="color:#68d391">3g</span>Ultimi aggiunti</div>' : '') +
+    (chronoMode === 'modified' ? '<div class="sc"><span class="n" style="color:#63b3ed">3g</span>Ultimi modificati</div>' : '') +
+    (Object.keys(_magDupCodes||{}).length ? '<div class="sc r"><span class="n" style="color:#f6ad55">' + Object.keys(_magDupCodes).length + '</span>Codici doppi</div>' : '');
+
+  list.classList.toggle('mag-list--chrono', hasChrono);
 
   if(!results.length){
     list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);">Nessun risultato per <b style="color:var(--accent)">"' + esc(rawSearch) + '"</b></div>';
@@ -121,6 +162,7 @@ function _doMagSearch(){
   var html = '';
   results.forEach(function(o){
     var r = o.r, i = o.i, m = o.m, isLow = o.isLow;
+    var codMJson = JSON.stringify(r.codM == null ? '' : String(r.codM));
     var qty    = o.qty !== null ? o.qty : '';
     var unit   = m.unit   || 'pz';
     var specs  = m.specs  || '';
@@ -144,18 +186,28 @@ function _doMagSearch(){
 
     var hasFoto = Object.prototype.hasOwnProperty.call(_idbCache, i) && !!_idbCache[i];
     var codM7 = r.codM ? (String(r.codM).match(/^\d+$/) ? String(r.codM).padStart(7,'0') : String(r.codM)) : '—';
+    var dupKey = (typeof normalizeCodiceMagazzino === 'function') ? normalizeCodiceMagazzino(r.codM) : String(r.codM||'').trim();
+    var isDupCode = !!(dupKey && _magDupCodes && _magDupCodes[dupKey] && _magDupCodes[dupKey].length > 1);
 
-    html += '<div style="background:#1e1e1e;border:1px solid ' + borderCol + ';border-radius:10px;padding:10px 12px;margin-bottom:10px;' + (isLow ? 'box-shadow:0 0 0 1px #e53e3e33;' : '') + '">';
+    html += '<div class="mag-card' + (hasChrono ? ' mag-card--chrono' : '') + '" style="position:relative;background:#1e1e1e;border:1px solid ' + borderCol + ';border-radius:10px;padding:10px 12px;margin-bottom:10px;' + (isLow ? 'box-shadow:0 0 0 1px #e53e3e33;' : '') + '">';
+    if(hasChrono){
+      html += '<div class="mag-card-chrono-actions" role="group" aria-label="Elimina articolo">';
+      html += '<button type="button" class="mag-del-btn mag-del-btn--corner" onclick=\'magDeleteArticolo(' + i + ',' + codMJson + ')\' title="Elimina articolo">X</button>';
+      html += '</div>';
+    }
 
     // Badge sotto scorta
     if(isLow){
       html += '<div style="background:#e53e3e;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-bottom:6px;display:inline-block;">⚠ SCORTA BASSA — ' + qty + ' ' + unit + ' (min: ' + o.soglia + ')</div>';
     }
+    if(isDupCode){
+      html += '<div style="background:#dd6b20;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin:0 0 6px 6px;display:inline-block;">⚠ CODICE DUPLICATO</div>';
+    }
 
-    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;' + (hasChrono ? 'min-height:40px;' : '') + '">';
 
     // Colonna sinistra: info
-    html += '<div style="flex:1;min-width:0;">';
+    html += '<div style="flex:1;min-width:0;padding-right:4px;">';
     html += '<div style="font-size:13px;font-weight:700;color:var(--text);">' + esc(r.desc || '—') + '</div>';
     html += '<div style="font-size:10px;color:var(--muted);margin-top:3px;">';
     if(sub)   html += '<span style="color:var(--accent);">' + esc(sub) + '</span> · ';
@@ -167,8 +219,8 @@ function _doMagSearch(){
     if(specs) html += '<div style="font-size:11px;color:#aaa;margin-top:4px;font-style:italic;">📐 ' + esc(specs) + '</div>';
     html += '</div>';
 
-    // Colonna destra: foto + prezzo + qty
-    html += '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;">';
+    // Colonna destra: foto + prezzo + qty (margin-top se cronologia: angolo per la X)
+    html += '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;' + (hasChrono ? 'margin-top:34px;' : '') + '">';
     if(hasFoto){
       html += '<img src="' + _idbCache[i] + '" onclick="magZoomFoto(' + i + ')" style="width:52px;height:52px;object-fit:cover;border-radius:8px;border:2px solid var(--accent);cursor:pointer;">';
       html += '<button onclick="magRimoviFoto(' + i + ')" style="font-size:9px;color:#e53e3e;background:transparent;border:none;cursor:pointer;padding:0;">rimuovi</button>';
@@ -212,7 +264,10 @@ function _doMagSearch(){
     html += '<input type="text" placeholder="📐 Specifiche tecniche (es: M6×30, IP44, 1000W...)" value="' + esc(specs) + '" ' +
             'style="width:100%;margin-top:6px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:#111;color:#aaa;font-size:11px;font-style:italic;" ' +
             'onchange="saveMagRow(' + i + ',\'specs\',this.value)">';
-    html += '<button onclick="openEditProdotto(' + i + ')" style="margin-top:8px;width:100%;padding:8px;border-radius:7px;border:1px solid var(--accent)44;background:transparent;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;">✏️ Modifica articolo</button>';
+    html += '<div class="mag-card-footer-actions">';
+    html += '<button type="button" onclick="openEditProdotto(' + i + ')" style="flex:1;padding:8px;border-radius:7px;border:1px solid var(--accent)44;background:transparent;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;">✏️ Modifica articolo</button>';
+    html += '<button type="button" class="mag-del-btn mag-del-btn--footer" onclick=\'magDeleteArticolo(' + i + ',' + codMJson + ')\' title="Elimina articolo">🗑</button>';
+    html += '</div>';
     html += '</div>'; // fine card
   });
 

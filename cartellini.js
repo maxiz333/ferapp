@@ -373,6 +373,7 @@ function ct_findDbIdxByCartellino(ct){
   if(!codM && !codF) return -1;
   for(var i = 0; i < rows.length; i++){
     if(!rows[i]) continue;
+    if(codM && typeof codiciMagazzinoUguali === 'function' && codiciMagazzinoUguali(rows[i].codM, codM)) return i;
     if(codM && String(rows[i].codM || '').trim() === codM) return i;
     if(codF && String(rows[i].codF || '').trim() === codF) return i;
   }
@@ -422,6 +423,7 @@ function ct_closePromoOnDelete(ct, deferCommit){
   // Secondo salvataggio: reset promo terminata.
   if(commitNow){
     try{
+      if(typeof touchRowProductChangeAt === 'function') touchRowProductChangeAt(r);
       lsSet(SK, rows);
     }catch(e2){
       // rollback prudente
@@ -736,7 +738,7 @@ function ct_syncDB(){
     return;
   }
   var oggi = new Date().toLocaleDateString('it-IT');
-  var stats = { prezzi:0, codF:0, nuovi:0, promo:0 };
+  var stats = { prezzi:0, codF:0, nuovi:0, promo:0, qty:0 };
   var daFareRows = (ctRows || []).filter(function(ct){ return ct && !ct.fatto; });
 
   daFareRows.forEach(function(ct){
@@ -749,6 +751,7 @@ function ct_syncDB(){
     if(dbIdx >= 0){
       var r = rows[dbIdx];
       var changed = false;
+      var productTouched = false;
       var hasPromoColor = !!ct.giornalino;
 
       // Flag promo giornalino [G]: SOLO se cartellino con colore attivo.
@@ -756,6 +759,7 @@ function ct_syncDB(){
         r.isPromo = true;
         r.promoTipo = 'G';
         changed = true;
+        productTouched = true;
         stats.promo++;
       }
 
@@ -764,6 +768,19 @@ function ct_syncDB(){
         r.codF = ct.codF;
         changed = true;
         stats.codF++;
+      }
+
+      // Quantità da cartellino -> magazzino (se valorizzata)
+      if(ct.qty !== undefined && ct.qty !== null && String(ct.qty).trim() !== ''){
+        if(!magazzino[dbIdx]) magazzino[dbIdx] = {};
+        var q = parseFloat(ct.qty);
+        if(!isNaN(q) && String(magazzino[dbIdx].qty) !== String(q)){
+          magazzino[dbIdx].qty = q;
+          magazzino[dbIdx]._updatedAt = Date.now();
+          changed = true;
+          productTouched = true;
+          stats.qty++;
+        }
       }
 
       // Prezzo con storico
@@ -778,21 +795,62 @@ function ct_syncDB(){
         r.data = oggi;
         r.size = (typeof autoSize === 'function') ? autoSize(prezzo) : r.size;
         changed = true;
+        productTouched = true;
         stats.prezzi++;
       }
 
       if(changed){
+        r._updatedAt = Date.now();
+        if(productTouched && typeof touchRowProductChangeAt === 'function') touchRowProductChangeAt(r);
         if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(dbIdx);
       }
+    } else if(ct.codM){
+      if(typeof findDuplicateCodMagazzino === 'function'){
+        var dupSync = findDuplicateCodMagazzino(ct.codM, -1);
+        if(dupSync){
+          if(typeof showCodiceMagazzinoDuplicateError === 'function') showCodiceMagazzinoDuplicateError(ct.codM, dupSync.desc);
+          else showToastGen('red', "Errore: Il codice " + String(ct.codM).trim() + " è già in uso per l'articolo " + (dupSync.desc || '—'));
+          return;
+        }
+      }
+      // Nuovo articolo solo se il codice magazzino non esiste già (match intelligente).
+      var newRow = {
+        data: oggi,
+        desc: ct.desc || '',
+        codF: ct.codF || '',
+        codM: ct.codM || '',
+        prezzoOld: '',
+        prezzo: prezzo || '',
+        size: (typeof autoSize === 'function') ? autoSize(prezzo || '0') : 'small',
+        note: ct.note || '',
+        priceHistory: [],
+        isPromo: !!ct.giornalino,
+        promoTipo: ct.giornalino ? 'G' : '',
+        createdAt: Date.now(),
+        _updatedAt: Date.now()
+      };
+      rows.push(newRow);
+      var newIdx = rows.length - 1;
+      if(!magazzino[newIdx]) magazzino[newIdx] = {};
+      magazzino[newIdx]._updatedAt = Date.now();
+      if(ct.qty !== undefined && ct.qty !== null && String(ct.qty).trim() !== ''){
+        var nq = parseFloat(ct.qty);
+        if(!isNaN(nq)){ magazzino[newIdx].qty = nq; stats.qty++; }
+      }
+      stats.nuovi++;
+      if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(newIdx);
     }
   });
 
-  if(stats.prezzi || stats.codF || stats.promo){
+  if(stats.prezzi || stats.codF || stats.promo || stats.nuovi || stats.qty){
     lsSet(SK, rows);
+    lsSet(MAGK, magazzino);
     var parts = [];
     if(stats.prezzi) parts.push(stats.prezzi + ' prezzi');
     if(stats.codF) parts.push(stats.codF + ' cod.forn.');
     if(stats.promo) parts.push(stats.promo + ' promo [G]');
+    if(stats.qty) parts.push(stats.qty + ' quantità');
+    if(stats.nuovi) parts.push(stats.nuovi + ' nuovi');
     showToastGen('green', '✅ Database aggiornato: ' + parts.join(' · '));
   } else {
     showToastGen('yellow', 'Nessuna modifica — i dati erano già aggiornati');

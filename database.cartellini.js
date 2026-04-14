@@ -118,21 +118,39 @@ var isRem=removed.has(String(i));
 
 function readRow(i){
   if(!rows[i]) return;
+  var prev = rows[i];
+  var newCodM = (document.getElementById('m'+i)||{}).value||'';
+  if(typeof findDuplicateCodMagazzino === 'function'){
+    var dupRow = findDuplicateCodMagazzino(newCodM, i);
+    if(dupRow){
+      if(typeof showCodiceMagazzinoDuplicateError === 'function') showCodiceMagazzinoDuplicateError(newCodM, dupRow.desc);
+      else showToastGen('red', "Errore: Il codice " + String(newCodM).trim() + " è già in uso per l'articolo " + (dupRow.desc || '—'));
+      var mel = document.getElementById('m'+i);
+      if(mel) mel.value = prev.codM || '';
+      return;
+    }
+  }
+  var now = Date.now();
   rows[i]={
     data: (document.getElementById('d'+i)||{}).value||'',
     desc: (document.getElementById('e'+i)||{}).value||'',
     codF: (document.getElementById('f'+i)||{}).value||'',
-    codM: (document.getElementById('m'+i)||{}).value||'',
+    codM: newCodM,
     prezzoOld:(document.getElementById('po'+i)||{}).value||'',
     prezzo:(document.getElementById('p'+i)||{}).value||'',
     size:(document.getElementById('s'+i)||{}).value||'small',
-    note:rows[i].note||'',
-    priceHistory:rows[i].priceHistory||[],
-    giornalino:(document.getElementById('gi'+i)||{value:rows[i].giornalino||''}).value,
+    note:prev.note||'',
+    priceHistory:prev.priceHistory||[],
+    giornalino:(document.getElementById('gi'+i)||{value:prev.giornalino||''}).value,
+    createdAt: prev.createdAt,
+    isPromo: prev.isPromo,
+    promoTipo: prev.promoTipo,
+    lastProductChangeAt: prev.lastProductChangeAt,
+    _updatedAt: now
   };
 }
 
-function upd(i){readRow(i);save();updateStats();updRowColor(i);}
+function upd(i){readRow(i);save();updateStats();updRowColor(i);if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(i);}
 function updRowColor(i){
   var tr=document.querySelector('#tb tr[data-idx="'+i+'"]');
   if(!tr) return;
@@ -160,6 +178,7 @@ function updPrice(i){
   var s=document.getElementById('s'+i);
   if(s){s.value=autoSize(rows[i].prezzo);rows[i].size=s.value;}
   save();updateStats();
+  if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(i);
 }
 
 function clearAll(){
@@ -425,6 +444,7 @@ function quickEditPrice(idx){
   document.getElementById('qep-ok').onclick=function(){
     var newP=inp.value.trim();
     if(!newP){d.remove();return;}
+    var prevPrezzo = rows[idx].prezzo;
     // salva storico
     if(!rows[idx].priceHistory) rows[idx].priceHistory=[];
     if(rows[idx].prezzo && rows[idx].prezzo!==newP){
@@ -432,12 +452,19 @@ function quickEditPrice(idx){
     }
     rows[idx].prezzo=newP;
     rows[idx].size=autoSize(newP);
+    var nowQ = Date.now();
+    rows[idx]._updatedAt = nowQ;
+    if(!magazzino[idx]) magazzino[idx] = {};
+    magazzino[idx]._updatedAt = nowQ;
+    if(String(prevPrezzo||'') !== String(newP||'') && typeof touchRowProductChangeAt === 'function') touchRowProductChangeAt(rows[idx]);
     // aggiorna input nella tabella se visibile
     var inp2=document.getElementById('p'+idx);
     if(inp2) inp2.value=newP;
     var sel=document.getElementById('s'+idx);
     if(sel) sel.value=rows[idx].size;
+    if(rows.length <= 5000) lsSet(MAGK, magazzino);
     save(); genTags(); updateStats();
+    if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(idx);
     d.remove();
   };
 }

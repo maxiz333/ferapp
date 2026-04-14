@@ -521,6 +521,8 @@ function goTab(id){
   goTabDirect(id);
 }
 function goTabDirect(id){
+  var _fromT11 = (id === 't11');
+  if(_fromT11) id = 't0';
   if(_PRIMARY_TABS.indexOf(id)>=0) _lastPrimaryTab=id;
   if((id==='t0'||id==='t1') && typeof loadMagazzinoFB==='function') loadMagazzinoFB();
   _updateBackBtn(id);
@@ -534,7 +536,7 @@ function goTabDirect(id){
     // Dal popup Fatture - evidenzia Fatture nella tab bar
     var fatBtn = document.getElementById('tbb-tfat');
     if(fatBtn) fatBtn.classList.add('active');
-  } else if(['t4','t6','t10','t11','t12','tmov'].indexOf(id) >= 0){
+  } else if(['t4','t6','t10','t12','tmov'].indexOf(id) >= 0){
     // Tab secondaria - evidenzia -- Altro nella tab bar
     var altroBtn = document.getElementById('tbb-taltro');
     if(altroBtn) altroBtn.classList.add('active');
@@ -554,9 +556,12 @@ function goTabDirect(id){
   if(id==='t7') renderPromo();
   if(id==='t9'){renderEditorPreview();renderGiornaliniRename();}
   if(id==='t10') renderNoteTab();
-  if(id==='t0') renderInventario();
+  if(id==='t0'){
+    if(_fromT11 && typeof invSetSubTab === 'function') invSetSubTab('magazzino');
+    else if(typeof invRefreshT0 === 'function') invRefreshT0();
+    else if(typeof renderInventario === 'function') renderInventario();
+  }
   if(id==='t1'){ renderTable(); genTags(); }
-  if(id==='t11') renderMagazzino();
   if(id==='tc') renderCartTabs();
   if(id==='to'){renderOrdini();}
   if(id==='tmov'){renderMovimenti();}

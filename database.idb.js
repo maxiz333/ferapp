@@ -88,3 +88,33 @@ function idbPreloadAll(){
     });
   }).catch(function(){ return Promise.resolve(); });
 }
+
+/** Dopo rows.splice(deleteIdx,1): riallinea foto IndexedDB agli indici riga. */
+function idbShiftPhotosAfterRowDelete(deleteIdx, oldRowCount){
+  if(oldRowCount <= 0 || deleteIdx < 0 || deleteIdx >= oldRowCount) return;
+  var oldCache = {};
+  Object.keys(_idbCache).forEach(function(k){
+    oldCache[k] = _idbCache[k];
+  });
+  function pickVal(src){
+    var v = oldCache[String(src)];
+    return v !== undefined ? v : oldCache[src];
+  }
+  var newCount = oldRowCount - 1;
+  _idbCache = {};
+  for(var j = 0; j < newCount; j++){
+    var src = j < deleteIdx ? j : j + 1;
+    var blob = pickVal(src);
+    if(blob !== undefined) _idbCache[j] = blob;
+  }
+  _idbOpen().then(function(db){
+    var tx = db.transaction('foto','readwrite');
+    var store = tx.objectStore('foto');
+    for(var k = deleteIdx; k < oldRowCount; k++){
+      store.delete(String(k));
+    }
+    Object.keys(_idbCache).forEach(function(key){
+      store.put(_idbCache[key], String(key));
+    });
+  });
+}

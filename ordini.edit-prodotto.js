@@ -109,6 +109,16 @@ function saveEditProdotto(){
 
   // gf() - definita globalmente in [SECTION: UTILS]
 
+  var newCodM = gf('ep-codm');
+  if(typeof findDuplicateCodMagazzino === 'function'){
+    var dupCod = findDuplicateCodMagazzino(newCodM, i);
+    if(dupCod){
+      if(typeof showCodiceMagazzinoDuplicateError === 'function') showCodiceMagazzinoDuplicateError(newCodM, dupCod.desc);
+      else showToastGen('red', "Errore: Il codice " + String(newCodM).trim() + " è già in uso per l'articolo " + (dupCod.desc || '—'));
+      return;
+    }
+  }
+
   // Aggiorna row
   var newPrezzo = gf('ep-prezzo');
   if(newPrezzo && newPrezzo !== rows[i].prezzo){
@@ -118,10 +128,11 @@ function saveEditProdotto(){
 
   rows[i].desc      = gf('ep-desc');
   rows[i].codF      = gf('ep-codf');
-  rows[i].codM      = gf('ep-codm');
+  rows[i].codM      = newCodM;
   rows[i].prezzo    = newPrezzo;
   rows[i].prezzoOld = gf('ep-prezzoold');
   rows[i].size      = autoSize(newPrezzo);
+  rows[i]._updatedAt = Date.now();
 
   // Aggiorna magazzino
   magazzino[i].specs          = gf('ep-specs');
@@ -141,6 +152,25 @@ function saveEditProdotto(){
   var subEl = document.getElementById('ep-subcat');
   magazzino[i].subcat        = subEl ? subEl.value : '';
   magazzino[i].nomeFornitore = gf('ep-fornitore');
+  magazzino[i]._updatedAt    = Date.now();
+
+  var snapR = _epSnapshot ? _epSnapshot.row : null;
+  var snapM = _epSnapshot ? _epSnapshot.mag : null;
+  var normQtyEp = function(v){
+    if(v === '' || v === undefined || v === null) return null;
+    var n = parseFloat(v);
+    return isNaN(n) ? null : n;
+  };
+  var productChanged = false;
+  if(snapR){
+    if(String(snapR.prezzo || '') !== String(newPrezzo || '')) productChanged = true;
+    if(!productChanged && snapM){
+      var oq = normQtyEp(snapM.qty);
+      var nq = normQtyEp(newQtyEdit);
+      if(oq !== nq) productChanged = true;
+    }
+  }
+  if(productChanged && typeof touchRowProductChangeAt === 'function') touchRowProductChangeAt(rows[i]);
 
   // Controlla scorta e registra movimento
   var qtyEditNum = newQtyEdit!=='' ? Number(newQtyEdit) : null;
@@ -166,9 +196,11 @@ function saveEditProdotto(){
   var activeTab = document.querySelector('.tab-content.active');
   if(activeTab){
     var tid = activeTab.id;
-    if(tid==='t0') renderInventario();
+    if(tid==='t0'){
+      if(typeof invRefreshT0 === 'function') invRefreshT0();
+      else if(typeof renderInventario === 'function') renderInventario();
+    }
     else if(tid==='t1') renderTable();
-    else if(tid==='t11') renderMagazzino();
     else if(tid==='tc') renderCartTabs();
     else if(tid==='tmov') renderMovimenti();
   }

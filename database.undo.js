@@ -57,10 +57,10 @@ function _restoreSnapshot(snap){
   // Aggiorna la UI della tab attiva
   var active = document.querySelector('.tab-content.active');
   var aid = active ? active.id : '';
-  if(aid==='t0') renderInventario();
+  if(aid==='t0' && typeof invRefreshT0 === 'function') invRefreshT0();
+  else if(aid==='t0') renderInventario();
   if(aid==='tc') renderCartTabs();
   if(aid==='to') renderOrdini();
-  if(aid==='t11') renderMagazzino();
   if(aid==='t1'){ renderTable(); genTags(); }
   updateStats(); updateCartBadge(); updateOrdBadge();
   _updateUndoButtons();

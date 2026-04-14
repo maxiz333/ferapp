@@ -35,8 +35,11 @@ document.addEventListener('DOMContentLoaded', function(){
         window.AppStorage.set(key, d);
         if(globalVarName === 'categorie'){
           if(typeof renderCatTree === 'function') renderCatTree();
-          if(typeof renderMagazzino === 'function') renderMagazzino();
-          if(typeof renderInventario === 'function') renderInventario();
+          if(typeof invRefreshT0 === 'function') invRefreshT0();
+          else{
+            if(typeof renderMagazzino === 'function') renderMagazzino();
+            if(typeof renderInventario === 'function') renderInventario();
+          }
         } else if(globalVarName === 'carrelliCestino' || globalVarName === 'ordiniCestino'){
           if(typeof renderCestino === 'function') renderCestino();
         } else if(globalVarName === 'movimenti'){

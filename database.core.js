@@ -20,6 +20,102 @@ var lsSet=function(k,v){
 /** Converte stringa prezzo italiana (es. "12,50") in float */
 function parsePriceIT(s){ return window.AppUtils.parsePriceIT(s); }
 
+/** Normalizza codice magazzino in modo "intelligente" (es. 00123 == 123). */
+function normalizeCodiceMagazzino(v){
+  var s = String(v == null ? '' : v).trim();
+  if(!s) return '';
+  if(/^\d+$/.test(s)){
+    var n = String(parseInt(s, 10));
+    return n === 'NaN' ? '' : n;
+  }
+  return s.toLowerCase().replace(/\s+/g, '');
+}
+
+/** Confronto codici magazzino con tolleranza zeri iniziali. */
+function codiciMagazzinoUguali(a, b){
+  var na = normalizeCodiceMagazzino(a);
+  var nb = normalizeCodiceMagazzino(b);
+  return !!na && !!nb && na === nb;
+}
+
+/**
+ * Altra riga (non excludeIdx) con lo stesso codice magazzino normalizzato.
+ * Ritorna { idx, desc } o null se codice vuoto o unico.
+ */
+function findDuplicateCodMagazzino(codM, excludeIdx){
+  if(codM == null || String(codM).trim() === '') return null;
+  if(typeof rows === 'undefined' || !rows || typeof removed === 'undefined') return null;
+  if(typeof codiciMagazzinoUguali !== 'function') return null;
+  var ex = excludeIdx == null ? -1 : parseInt(excludeIdx, 10);
+  if(isNaN(ex)) ex = -1;
+  for(var i = 0; i < rows.length; i++){
+    if(i === ex) continue;
+    if(!rows[i] || removed.has(String(i))) continue;
+    if(codiciMagazzinoUguali(rows[i].codM, codM)){
+      return { idx: i, desc: rows[i].desc || '—' };
+    }
+  }
+  return null;
+}
+
+function showCodiceMagazzinoDuplicateError(codM, dupDesc){
+  var cm = String(codM == null ? '' : codM).trim();
+  var d = dupDesc == null ? '—' : String(dupDesc);
+  var msg = "Errore: Il codice " + cm + " è già in uso per l'articolo " + d;
+  if(typeof showToastGen === 'function') showToastGen('red', msg);
+  else if(typeof window !== 'undefined' && window.alert) window.alert(msg);
+}
+
+/** Timestamp articolo (nuovi/modificati in alto); fallback stabile per dati legacy. */
+function getRowUpdatedAt(r, idx){
+  if(typeof magazzino !== 'undefined' && magazzino && magazzino[idx] && magazzino[idx]._updatedAt != null){
+    var mn = Number(magazzino[idx]._updatedAt);
+    if(isFinite(mn) && mn > 0) return mn;
+  }
+  if(r && r._updatedAt != null){
+    var n = Number(r._updatedAt);
+    if(isFinite(n) && n > 0) return n;
+  }
+  if(r && r.data){
+    var d = new Date(r.data);
+    if(!isNaN(d.getTime())) return d.getTime();
+  }
+  return Number(idx || 0);
+}
+
+/** Timestamp creazione articolo (solo nuovi inserimenti). */
+function getRowCreatedAt(r){
+  if(r && r.createdAt != null){
+    var c = Number(r.createdAt);
+    if(isFinite(c) && c > 0) return c;
+  }
+  return 0;
+}
+
+/** Ultimo aggiornamento “prodotto” (prezzo, qtà magazzino, promo [G]) — per filtro Ultimi Modificati. */
+function getRowProductChangeAt(r){
+  if(!r || r.lastProductChangeAt == null) return 0;
+  var n = Number(r.lastProductChangeAt);
+  return isFinite(n) && n > 0 ? n : 0;
+}
+
+/** Aggiorna il timestamp usato da “Ultimi modificati” (prezzo, qtà magazzino, promo [G]). */
+function touchRowProductChangeAt(r){
+  if(r) r.lastProductChangeAt = Date.now();
+}
+
+/** Filtro “Ultimi modificati” (3 giorni): max tra _updatedAt riga e magazzino (allineato a touch espliciti su prezzo/scheda/carrello). */
+function getRowModifiedChronoAt(r, idx){
+  var ur = (r && r._updatedAt != null) ? Number(r._updatedAt) : 0;
+  if(!isFinite(ur)) ur = 0;
+  var um = 0;
+  if(typeof magazzino !== 'undefined' && magazzino && magazzino[idx] && magazzino[idx]._updatedAt != null){
+    um = Number(magazzino[idx]._updatedAt);
+    if(!isFinite(um)) um = 0;
+  }
+  return Math.max(ur, um);
+}
+
 // Sconti forbice: rotolo = % fissa sul listino (non azzerare)
 var SCONTO_ROTOLO_DEFAULT_PCT = 10;
 var SCONTO_SCAMPOLO_DEFAULT_PCT = 30;
@@ -305,7 +401,7 @@ var DEF=[]; // Cartellini partono sempre vuoti — si aggiungono via CSV o ricer
 function getSoglia(i){
   var m=magazzino[i]||{};
   if(m.soglia!==undefined && m.soglia!=='' && m.soglia!==null) return Number(m.soglia);
-  return 1; // default
+  return 0; // default: allerta solo a zero
 }
 
 function getQty(i){
@@ -431,8 +527,8 @@ function init(){
   categorie=lsGet(CATK,null)||CAT_DEFAULT.map(function(c){return Object.assign({},c,{sub:c.sub.slice()});});
   magazzino=lsGet(MAGK,{});
   // Precarica tutte le foto da IndexedDB in cache (poi ri-renderizza)
-  idbPreloadAll().then(function(){ renderTable(); renderMagazzino(); renderCartTabs(); renderOrdini(); });
-  renderTable(); genTags(); updateStats(); updateBadge(); updateStockBadge(); renderInventario(); updateCartBadge(); updateOrdBadge(); updateMovBadge();
+  idbPreloadAll().then(function(){ renderTable(); if(typeof invRefreshT0 === 'function') invRefreshT0(); else{ renderMagazzino(); renderInventario(); } renderCartTabs(); renderOrdini(); });
+  renderTable(); genTags(); updateStats(); updateBadge(); updateStockBadge(); if(typeof invRefreshT0 === 'function') invRefreshT0(); else renderInventario(); updateCartBadge(); updateOrdBadge(); updateMovBadge();
   _undoReady = true; // da qui in poi _takeSnapshot - attiva
   setTimeout(checkAutoBackup, 2500);
   loadFatture();

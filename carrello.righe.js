@@ -112,6 +112,24 @@ function cartSetPrezzo(cartId,idx,val){
   it.prezzoUnit=val;
   cartStripStaleRotoloInteroNota(it);
   if(itemUsesPrezzoPerBaseUm(it.unit)) itemSyncPrezzoUnitaBaseDaPrezzoRiga(it);
+  if(it.rowIdx != null && it.rowIdx !== '' && typeof rows !== 'undefined' && rows){
+    var ri = parseInt(it.rowIdx, 10);
+    if(!isNaN(ri) && rows[ri]){
+      var nowP = Date.now();
+      rows[ri]._updatedAt = nowP;
+      if(typeof magazzino !== 'undefined'){
+        if(!magazzino[ri]) magazzino[ri] = {};
+        magazzino[ri]._updatedAt = nowP;
+      }
+      if(typeof lsSet === 'function'){
+        if(typeof SK !== 'undefined') lsSet(SK, rows);
+        else if(window.AppKeys && window.AppKeys.CURRENT) lsSet(window.AppKeys.CURRENT, rows);
+        if(typeof MAGK !== 'undefined') lsSet(MAGK, magazzino);
+        else if(window.AppKeys && window.AppKeys.MAGAZZINO) lsSet(window.AppKeys.MAGAZZINO, magazzino);
+      }
+      if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(ri);
+    }
+  }
   var o=ordinePerCarrelloStorico(cart);
   if(o&&oldP!==String(val)){
     ordineAppendStorico(o,'Prezzo '+((it.desc)||'?')+': €'+oldP+' → €'+val);

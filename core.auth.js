@@ -7,12 +7,12 @@ var _roles = {
   prop1: { nome:'Proprietario 1', ruolo:'proprietario', pin:'', colore:'#f5c400', tabs:'*' },
   prop2: { nome:'Proprietario 2', ruolo:'proprietario', pin:'', colore:'#f5c400', tabs:'*' },
   comm1: { nome:'Commesso 1', ruolo:'commesso', pin:'', colore:'#63b3ed',
-    tabs:['tc','to','t0','t11','t10','t1','t7','t9','t-ordfor'],
+    tabs:['tc','to','t0','t10','t1','t7','t9','t-ordfor'],
     altro:['atb-t11','atb-t10','atb-t12'],
     bottom:['tbb-tc','tbb-to','tbb-t0','tbb-t1','tbb-taltro']
   },
   comm2: { nome:'Commesso 2', ruolo:'commesso', pin:'', colore:'#68d391',
-    tabs:['tc','to','t0','t11','t10','t1','t7','t9','t-ordfor'],
+    tabs:['tc','to','t0','t10','t1','t7','t9','t-ordfor'],
     altro:['atb-t11','atb-t10','atb-t12'],
     bottom:['tbb-tc','tbb-to','tbb-t0','tbb-t1','tbb-taltro']
   }
