@@ -114,7 +114,7 @@ function renderInventario(){
     html+='<div style="font-size:10px;color:var(--muted);margin-top:2px;">'+ '<button onclick="event.stopPropagation();openMovProdotto('+i+')" style="background:none;border:none;color:#3182ce;font-size:10px;cursor:pointer;padding:0;" title="Storico movimenti">-</button> ' +esc(unit)+(isLow?' <span style="color:#e53e3e;font-weight:700;">-- min:'+soglia+'</span>':'')+'</div>';
     html+='</td>';
     // 6. Prezzo vendita
-    html+='<td style="padding:8px 6px;text-align:right;font-size:13px;font-weight:900;color:var(--accent);"><span style="display:inline-flex;align-items:center;gap:6px;">- '+esc(r.prezzo)+(((r.isPromo===true && String(r.promoTipo||'')==='G') && typeof htmlPromoGBadge==='function') ? htmlPromoGBadge() : '')+'</span></td>';
+    html+='<td style="padding:8px 6px;text-align:right;font-size:13px;font-weight:900;color:var(--accent);">- '+esc(r.prezzo)+'</td>';
     // 7. Prezzo acquisto - discreto, non visibile a occhi estranei
     html+='<td style="padding:8px 6px;text-align:right;" onclick="event.stopPropagation();">';
     html+='<input type="text" value="'+esc(prezzoAcq)+'" placeholder="-" onclick="event.stopPropagation()" '+
@@ -340,7 +340,7 @@ function renderMagazzino(){
         html+='<button onclick="document.getElementById(\'mag-foto-inp-'+i+'\').click()" style="width:52px;height:52px;border-radius:8px;border:1px dashed #444;background:#111;color:#555;font-size:10px;cursor:pointer;line-height:1.3;">-<br>foto</button>';
         html+='<input type="file" id="mag-foto-inp-'+i+'" accept="image/*" capture="environment" style="display:none;" onchange="magSalvaFoto('+i+',this)">';
       }
-      html+='<div style="font-size:15px;font-weight:900;color:var(--accent);display:flex;align-items:center;gap:6px;">- '+r.prezzo+(((r.isPromo===true && String(r.promoTipo||'')==='G') && typeof htmlPromoGBadge==='function') ? htmlPromoGBadge() : '')+'</div>';
+      html+='<div style="font-size:15px;font-weight:900;color:var(--accent);">- '+r.prezzo+'</div>';
       html+='<div style="display:flex;gap:3px;align-items:center;">';
       html+='<input type="number" min="0" value="'+esc(qty)+'" placeholder="Qt-" '+
         'style="width:58px;padding:4px 6px;border:1px solid var(--border);border-radius:5px;background:#111;color:var(--text);font-size:13px;font-weight:700;text-align:center;" '+

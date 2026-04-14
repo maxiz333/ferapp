@@ -678,7 +678,6 @@ function tcHtmlCompareColumn(rowIdx, slotIx, diffFlags, cart, hiOn, techDiffMap,
   var descText=tcCompareMagLongDesc(r,m);
   var puNum=typeof parsePriceIT==='function'?parsePriceIT(r.prezzo||0):0;
   var priceStr=typeof formatPrezzoUnitDisplay==='function'?formatPrezzoUnitDisplay(puNum):String(puNum);
-  var promoG = !!(r && r.isPromo===true && String(r.promoTipo||'')==='G');
   var inCart=tcCompareRowCodInCart(rowIdx, cart);
   var dN='';
   var dC='';
@@ -692,7 +691,7 @@ function tcHtmlCompareColumn(rowIdx, slotIx, diffFlags, cart, hiOn, techDiffMap,
   h+='<h3 class="comp-col-name'+dN+'">'+esc(r.desc||'\u2014')+'</h3>';
   h+='<div class="comp-col-codes'+dC+'"><span class="comp-code-m">M: '+esc(codM7)+'</span><span class="comp-code-sep">|</span><span class="comp-code-f">Fornitore: '+esc(forn)+'</span></div>';
   h+='<div class="comp-col-desc'+dD+'">'+tcCompareDescHtml(descText)+'</div>';
-  h+='<div class="comp-col-price'+dP+(isBestPrice?' comp-col-price--best':'')+'">\u20AC '+priceStr+(promoG&&typeof htmlPromoGBadge==='function'?' '+htmlPromoGBadge():'')+(isBestPrice?'<span class="comp-col-price-tag">Miglior Prezzo</span>':'')+'</div>';
+  h+='<div class="comp-col-price'+dP+(isBestPrice?' comp-col-price--best':'')+'">\u20AC '+priceStr+(isBestPrice?'<span class="comp-col-price-tag">Miglior Prezzo</span>':'')+'</div>';
   if(inCart){
     h+='<div class="comp-col-present" role="status">PRESENTE</div>';
   } else {

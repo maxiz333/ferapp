@@ -22,28 +22,9 @@ function openEditProdotto(i, isNew){
   // Popola tendina storico prezzi
   var ph = r.priceHistory || [];
   var phWrap = document.getElementById('ep-price-history');
-  function _epFmtHistDate(raw){
-    if(!raw) return '';
-    var d = new Date(raw);
-    if(!isNaN(d.getTime())){
-      return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'2-digit'});
-    }
-    var s = String(raw).trim();
-    if(/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(s)) return s;
-    return '';
-  }
   for(var pi = 0; pi < 4; pi++){
     var phEl = document.getElementById('ep-ph-' + (pi + 2));
-    if(phEl){
-      if(!ph[pi]){
-        phEl.textContent = '—';
-      } else {
-        var isG = String(ph[pi].tipo || '') === 'G';
-        var dFmt = _epFmtHistDate(ph[pi].data);
-        var txt = '€ ' + (ph[pi].prezzo || '') + (dFmt ? ' — ' + dFmt : '');
-        phEl.innerHTML = txt + (isG && typeof htmlPromoGBadge === 'function' ? ' ' + htmlPromoGBadge() : '');
-      }
-    }
+    if(phEl) phEl.textContent = ph[pi] ? ('€ ' + ph[pi].prezzo + (ph[pi].data ? ' — ' + ph[pi].data : '')) : '—';
   }
   if(phWrap) phWrap.style.display = 'none'; // chiusa di default
   sf('ep-acq',    m.prezzoAcquisto || '');

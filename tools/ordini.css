@@ -1,0 +1,1225 @@
+/* ══ ORDINI — griglia, card, azioni, spacer ══════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════
+   TAB ORDINI — redesign v2
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Contatore filtrato ── */
+.ord-fcount {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:28px; height:28px; padding:0 8px;
+  border-radius:50%; background:var(--accent); color:#111;
+  font-size:14px; font-weight:900;
+  line-height:1;
+}
+
+/* ── Separatore data ── */
+.ord-date-sep {
+  display:flex; align-items:center; gap:10px;
+  padding:22px 0 12px; user-select:none;
+}
+.ord-date-line { flex:1; height:2px; background:#2a2a2a; }
+.ord-date-label {
+  font-size:12px; font-weight:900; color:#888;
+  letter-spacing:2px; text-transform:uppercase; white-space:nowrap;
+}
+
+/* ── Card ordine — blocco solido ── */
+.ord-card {
+  background:#161616;
+  border-radius:16px;
+  overflow:hidden;
+  border:2px solid #2a2a2a;
+  /* border-top override inline per colore stato */
+}
+/* Lista tab ordini: non tagliare riga Base €/kg e totali riga */
+#to .ord-items-wrap .ord-card {
+  overflow: visible;
+}
+
+/* ── Banda stato in alto ── */
+.ord-card-stato {
+  padding:6px 16px;
+  font-size:12px; font-weight:800;
+  letter-spacing:1.5px; text-align:center;
+}
+/* Completato: banda sottile con check */
+.ord-card--done .ord-card-stato {
+  padding:3px 16px;
+  font-size:10px;
+  letter-spacing:1px;
+}
+
+/* ── Cliente ── */
+.ord-card-cliente {
+  padding:14px 16px 8px;
+}
+.ord-cliente-nome {
+  font-size:20px; font-weight:900; color:var(--text);
+  line-height:1.2;
+  word-break:break-word;
+}
+.ord-cliente-meta {
+  font-size:12px; color:#666; margin-top:4px;
+}
+
+/* ── Nota ordine ── */
+.ord-nota {
+  margin:0 14px 10px; padding:8px 12px;
+  background:#2a1800; border-left:3px solid #f6ad55;
+  border-radius:6px; font-size:12px; color:#f6ad55; font-weight:600;
+}
+
+/* ── Griglia articoli wrap ── */
+.ord-items-wrap {
+  padding: 0;
+  overflow-x: visible;
+}
+.ord-grid {
+  display:grid;
+  grid-template-columns: 30% 20% 25% 25%;
+  padding:0 4px;
+  align-items:start;
+}
+.ord-grid-head {
+  border-bottom:2px solid #333;
+  padding-top:6px; padding-bottom:6px;
+}
+.ord-gh {
+  font-size:10px; font-weight:800; color:#666;
+  text-transform:uppercase; letter-spacing:1px;
+  padding:6px 4px;
+}
+.ord-gh-c { text-align:center; }
+
+.ord-grid-row { padding-top:8px; padding-bottom:8px; border-bottom:1px solid #222; }
+.ord-grid-even { background:#161616; }
+.ord-grid-odd  { background:#1c1c1c; }
+
+/* Righe congelate (rimosse dal banco, solo ref. ufficio) */
+.ord-grid-row--congelato {
+  opacity: 0.82;
+  background: #1a1a20 !important;
+}
+.ord-grid-row--congelato .ord-gc-qty,
+.ord-grid-row--congelato .ord-gc-sub { color: #666; }
+.ord-congelato-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.35px;
+  text-transform: uppercase;
+  color: #9ca3af;
+  background: #2d3038;
+  border: 1px solid #3d4450;
+}
+
+/* Celle grid */
+.ord-gc-desc { padding:2px 8px 2px 4px; min-width:0; }
+.ord-gc-qty {
+  text-align:center; font-size:15px; font-weight:900;
+  color:var(--accent); padding:2px 4px;
+  min-width:0;
+  overflow:visible;
+}
+.ord-gc-qty .ord-unit { display:block; font-size:10px; font-weight:600; color:#888; }
+.ord-gc-price {
+  text-align:center; font-size:12px; color:#999; padding:2px 1px;
+  display:flex; flex-direction:column; justify-content:flex-start; align-items:center;
+  overflow:visible; min-width:0;
+}
+.ord-gc-sub   {
+  text-align:center; font-size:12px; font-weight:900; color:var(--text); padding:2px 1px;
+  display:flex; flex-direction:column; justify-content:flex-start; align-items:center;
+  overflow:visible; min-width:0;
+}
+#to .ord-items-wrap .ord-gc-sub {
+  font-size: 13px;
+  min-height: 2.5em;
+  color: #eee;
+}
+#to .ord-items-wrap .ord-gc-price {
+  color: #b8b8b8;
+}
+
+/* Celle editabili — doppio click */
+.ord-editable { cursor: pointer; border-radius: 4px; transition: background .15s; }
+.ord-editable:hover { background: rgba(255,215,0,.08); }
+.ord-inline-input {
+  width: 100%; box-sizing: border-box;
+  padding: 3px 5px; border: 1px solid var(--accent);
+  border-radius: 5px; background: #111; color: var(--accent);
+  font-size: 13px; font-weight: 700; text-align: center;
+  outline: none;
+}
+
+/* Prodotto — nome e codici */
+.ord-td-desc { min-width:120px; }
+.ord-item-name {
+  font-size:13px; font-weight:800; color:#eee;
+  line-height:1.2; word-break:break-word;
+}
+.ord-item-codes {
+  margin-top:3px;
+}
+.ord-item-codes-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  min-width: 0;
+  width: 100%;
+}
+.ord-code-forn--inp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.ord-code-forn-lbl {
+  font-size: 10px;
+  font-weight: 800;
+  opacity: 0.88;
+  flex-shrink: 0;
+}
+.ord-code-mag {
+  font-size:11px; font-weight:800; color:var(--accent);
+  background:#2a2500; padding:1px 6px; border-radius:4px;
+}
+.ord-code-forn {
+  font-size:11px; font-weight:800; color:#fc8181;
+  background:#2a1515; padding:1px 6px; border-radius:4px;
+}
+.ord-item-nota {
+  font-size:12px; color:var(--accent); margin-top:3px; font-weight:600;
+}
+.ord-item-daord {
+  font-size:10px; color:#fc8181; font-weight:900; margin-top:3px;
+  letter-spacing:.5px;
+}
+
+/* Quantità */
+.ord-td-qty {
+  font-size:15px; font-weight:900; color:var(--accent);
+  white-space:nowrap;
+}
+.ord-unit { font-size:10px; font-weight:600; color:#888; }
+
+/* Prezzo e subtotale */
+.ord-td-price { font-size:13px; color:#999; }
+.ord-td-sub   { font-size:14px; font-weight:900; color:var(--text); }
+
+/* ── Barra totale ── */
+.ord-total-bar {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:12px 16px;
+  background:#111; border-top:2px solid #2a2a2a;
+}
+.ord-total-label {
+  font-size:13px; font-weight:900; color:#666;
+  letter-spacing:2px;
+}
+.ord-total-value {
+  font-size:26px; font-weight:900; color:var(--accent);
+}
+
+/* ── Azioni ── */
+.ord-actions {
+  display:flex; gap:6px; padding:8px 12px 4px;
+  flex-wrap:wrap;
+}
+.ord-actions-sec {
+  padding:4px 12px 10px;
+}
+.ord-abtn {
+  min-height:42px; padding:0 12px;
+  border-radius:10px; border:none;
+  font-size:0.8rem; font-weight:800;
+  cursor:pointer; touch-action:manipulation;
+  font-family:inherit;
+  display:flex; align-items:center; justify-content:center; gap:4px;
+  white-space:nowrap;
+}
+.ord-abtn--done  { flex:1; background:#38a169; color:#fff; font-size:0.85rem; }
+.ord-abtn--reopen{ flex:1; background:transparent; border:2px solid #f5c40055; color:#f5c400; font-size:0.85rem; }
+.ord-abtn--cassa { flex:1; background:transparent; border:2px solid var(--accent); color:var(--accent); font-size:0.85rem; }
+.ord-abtn--edit  { flex:1; background:transparent; border:1px solid #805ad544; color:#b794f4; }
+.ord-abtn--print { flex:1; background:transparent; border:1px solid #33333366; color:#888; }
+.ord-abtn--wip   { flex:1; background:transparent; border:1px solid #3182ce44; color:#63b3ed; }
+.ord-abtn--ready { flex:1; background:transparent; border:1px solid #dd6b2044; color:#f6ad55; }
+.ord-abtn--del   { background:transparent; border:1px solid #e53e3e33; color:#e53e3e88; padding:0 10px; }
+
+/* ── Spacer tra ordini — divisione netta ── */
+.ord-spacer {
+  padding:26px 0;
+  display:flex; align-items:center; justify-content:center;
+}
+.ord-spacer-line {
+  width:80%; height:3px;
+  background:repeating-linear-gradient(
+    90deg, #2a2a2a 0, #2a2a2a 8px, transparent 8px, transparent 16px
+  );
+  border-radius:2px;
+}
+
+/* ── Light mode overrides ── */
+body.light-mode .ord-card { background:#fff; border-color:#ddd; }
+body.light-mode .ord-grid-even { background:#fff; }
+body.light-mode .ord-grid-odd  { background:#f8f8f8; }
+body.light-mode .ord-grid-head { border-color:#ddd; }
+body.light-mode .ord-grid-row  { border-color:#eee; }
+body.light-mode .ord-total-bar   { background:#f5f5f5; border-color:#ddd; }
+body.light-mode .ord-item-name   { color:#111; }
+body.light-mode .ord-gc-sub      { color:#111; }
+body.light-mode .ord-date-line   { background:#ddd; }
+body.light-mode .ord-spacer-line { background:repeating-linear-gradient(90deg,#ccc 0,#ccc 8px,transparent 8px,transparent 16px); }
+body.light-mode .ord-code-mag    { background:#f5f0d0; }
+body.light-mode .ord-code-forn   { background:#fde8e8; }
+
+/* ── Lock collaborativo overlay ── */
+.ord-lock-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ord-lock-msg {
+  text-align: center;
+  color: #fff;
+  padding: 16px;
+}
+
+/* ── Mini azioni articolo ordine ── */
+.ord-mini-btn {
+  padding: 2px 6px; border-radius: 4px;
+  border: 1px solid #333; background: transparent;
+  color: #555; font-size: 10px; cursor: pointer;
+  touch-action: manipulation; min-height: 24px;
+}
+.ord-mini-btn:active { filter: brightness(.7); }
+.ord-mini-on { color: var(--accent); border-color: rgba(255,215,0,.3); background: rgba(255,215,0,.06); }
+.ord-mini-pct {
+  width: 52px; padding: 5px 6px; border: 1px solid #444;
+  border-radius: 5px; background: #181818; color: #68d391;
+  font-size: 14px; font-weight: 700; text-align: center;
+}
+/* Riga azioni evidenziata per scampolo (giallo) e rotolo (rosso) */
+.ord-actions-scampolo {
+  background: rgba(255,215,0,.08);
+  border-left: 3px solid var(--accent);
+}
+.ord-actions-rotolo {
+  background: rgba(229,62,62,.08);
+  border-left: 3px solid #e53e3e;
+}
+.ord-nota-input {
+  width: 100%; padding: 5px 8px; border: 1px solid #2a2a2a;
+  border-radius: 6px; background: #141414; color: #aaa;
+  font-size: 11px; box-sizing: border-box; outline: none;
+}
+.ord-nota-input:focus { border-color: var(--accent); color: #ddd; }
+
+/* ── Ordine completato bloccato ── */
+.ord-card--done {
+  background: #0a120a !important;
+  border-color: #38a16933 !important;
+  border-top-color: #38a16966 !important;
+}
+.ord-card--done .ord-item-name { color: #777; }
+.ord-card--done .ord-gc-qty { color: #777; }
+.ord-card--done .ord-gc-price { color: #666; }
+.ord-card--done .ord-gc-sub { color: #68d391; }
+.ord-card--done .ord-total-value { color: #68d391; }
+.ord-card--done .ord-cliente-nome { color: #999; }
+.ord-card--done .ord-item-codes span { color: #555; }
+
+/* ── Select unità misura ordini ── */
+.ord-unit-select {
+  display: block; margin: 0 auto;
+  background: #111; border: none; color: #888;
+  font-size: 10px; font-weight: 600; text-align: center;
+  cursor: pointer; outline: none; padding: 0;
+  -webkit-appearance: none; appearance: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ord-unit-select:focus { color: var(--accent); }
+.ord-unit-select option {
+  background: #111; color: #ccc;
+}
+
+/* Riga azioni scaglionato (azzurro) */
+.ord-actions-scaglionato {
+  background: rgba(99,179,237,.08);
+  border-left: 3px solid #63b3ed;
+}
+
+/* ── Card bozza — ordine in costruzione dal banco ── */
+.ord-card--bozza {
+  background: #0a0f1a !important;
+  border: 2px solid #3182ce55 !important;
+  border-top: 4px solid #3182ce !important;
+  animation: bozzaPulse 3s ease-in-out infinite;
+}
+@keyframes bozzaPulse {
+  0%,100% { border-color: #3182ce55; border-top-color: #3182ce; }
+  50%      { border-color: #63b3ed88; border-top-color: #90cdf4; }
+}
+.ord-card-stato--bozza {
+  background: #1a2744;
+  color: #63b3ed;
+  font-size: 11px;
+  letter-spacing: 2px;
+  padding: 7px 16px;
+  text-align: center;
+  font-weight: 900;
+}
+body.light-mode .ord-card--bozza { background: #eff8ff !important; border-color: #3182ce55 !important; }
+body.light-mode .ord-card-stato--bozza { background: #dbeafe; color: #1d4ed8; }
+
+/* ── Card ex-bozza — ordine promosso da bozza a nuovo ── */
+.ord-card--exbozza {
+  border-color: #e53e3e55 !important;
+  border-top: 4px solid #e53e3e !important;
+}
+body.light-mode .ord-card--exbozza { border-color: #fecdd355 !important; }
+
+/* ── Tasto elimina articolo (×) ── */
+.ord-item-del {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  font-size: 11px; font-weight: 900; line-height: 1;
+  color: #888; background: #2a2a2a;
+  cursor: pointer;
+  margin-left: 6px; vertical-align: middle;
+  transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.ord-item-del:hover, .ord-item-del:active { color: #fc8181; background: #e53e3e33; }
+.ord-item-del--confirm {
+  color: #fff !important;
+  background: #e53e3e !important;
+  font-size: 9px;
+  animation: delPulse .6s ease-in-out infinite;
+}
+@keyframes delPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
+body.light-mode .ord-item-del { color: #999; background: #e8e8e8; }
+body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { color: #e53e3e; background: #fde8e8; }
+
+/* ═══════════════════════════════════════════════════════════════
+   TAB ORDINI (#to) — layout mobile, ricerca, contatore
+   ═══════════════════════════════════════════════════════════════ */
+
+#to .panel {
+  padding: 10px 10px 140px;
+}
+
+#to .panel > div[style*="flex"][style*="wrap"] {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+#to .panel > div[style*="flex"][style*="wrap"]::-webkit-scrollbar {
+  display: none;
+}
+
+#ord-search {
+  font-size: 16px; /* previene zoom iOS */
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+
+#to button[onclick*="filterOrdini"] {
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+#ord-counter-banner .ord-counter-pulse > div:first-child {
+  font-size: 32px;
+}
+
+/* Filtri fornitore (4 slot + Tutti) — tab Ordini fornitore / Da ordinare */
+.ord-forn-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.ord-forn-filt-tutti {
+  padding: 6px 12px;
+  border-radius: 14px;
+  border: 2px solid #333;
+  background: transparent;
+  color: #888;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ord-forn-filt-tutti--on {
+  border-color: var(--accent, #f5c400);
+  background: rgba(245, 196, 0, 0.12);
+  color: var(--accent, #f5c400);
+}
+.ord-forn-filt-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  border: 2px solid #333;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ord-forn-filt-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+.ord-forn-filt-n {
+  font-weight: 700;
+  opacity: 0.85;
+  font-size: 10px;
+}
+.ord-dao-empty-msg {
+  padding: 16px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: #777;
+}
+.ord-dao-forn-alt {
+  font-size: 10px;
+  color: #63b3ed;
+  margin-top: 2px;
+}
+.ord-dao-forn-inp--title {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* Vista "Da ordinare" — gruppi per colore fornitore (tab ordini) */
+.ord-dao-group {
+  background: var(--ct-card, #1a1b1d);
+  border: 1px solid #333;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.ord-dao-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #222;
+}
+.ord-dao-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ord-dao-color-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ct-muted, #7a7d82);
+}
+.ord-dao-forn-inp {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed #444;
+  color: var(--ct-text, #f0f0f0);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 2px 4px;
+  outline: none;
+  font-family: inherit;
+}
+.ord-dao-forn-inp:focus {
+  border-bottom-color: var(--ct-yellow, var(--accent));
+}
+.ord-dao-count {
+  font-size: 11px;
+  color: var(--ct-muted, #7a7d82);
+  white-space: nowrap;
+}
+.ord-dao-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #1a1b1d;
+}
+.ord-dao-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #252628;
+}
+.ord-dao-thumb--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.ord-dao-info {
+  flex: 1;
+  min-width: 0;
+}
+.ord-dao-nome {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ct-text, #f0f0f0);
+  white-space: normal;
+  word-break: break-word;
+}
+.ord-dao-meta {
+  font-size: 10px;
+  color: var(--ct-muted, #7a7d82);
+  margin-top: 2px;
+}
+.ord-dao-meta b {
+  color: #ddd;
+}
+.ord-dao-nota {
+  font-size: 10px;
+  color: #f6ad55;
+  font-style: italic;
+  margin-top: 2px;
+}
+.ord-dao-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+.dao-btn-cestino {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #2a2a2a;
+  color: #aaa;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.dao-btn-cestino:active {
+  filter: brightness(0.9);
+}
+.ord-dao-qty {
+  font-size: 11px;
+  color: var(--ct-muted, #7a7d82);
+}
+.ord-dao-sub {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ct-yellow, var(--accent));
+}
+
+body.light-mode .ord-dao-group {
+  background: #fff;
+  border-color: #e0e0e0;
+}
+body.light-mode .ord-dao-header {
+  border-color: #e8e8e8;
+}
+body.light-mode .ord-dao-nome {
+  color: var(--text);
+}
+body.light-mode .ord-forn-filt-tutti {
+  border-color: #ccc;
+}
+body.light-mode .ord-forn-filt-slot {
+  border-color: #ccc;
+}
+body.light-mode .dao-btn-cestino {
+  border-color: #ccc;
+  background: #f5f5f5;
+  color: #555;
+}
+
+/* Pannello "ordina a fornitori" (slide-up dal basso, aperto da carrello) */
+#ord-forn-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 72vh;
+  background: #1a1a1a;
+  border-top: 2px solid var(--accent);
+  border-radius: 18px 18px 0 0;
+  z-index: 3500;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform .32s cubic-bezier(.32, 1, .23, 1);
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, .6);
+}
+
+#ord-forn-panel.ord-forn-panel--open {
+  transform: translateY(0);
+}
+
+#ord-forn-handle {
+  padding: 8px 0 4px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.ord-forn-handle-bar {
+  display: inline-block;
+  width: 40px;
+  height: 4px;
+  background: #444;
+  border-radius: 2px;
+}
+
+.ord-forn-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 16px 10px;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+
+.ord-forn-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 12px;
+}
+
+.ord-forn-vendor-group {
+  margin-bottom: 14px;
+  background: #1e1e1e;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #2a2a2a;
+}
+
+.ord-forn-vendor-title {
+  padding: 8px 12px;
+  background: #222;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ord-forn-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #242424;
+}
+.ord-forn-line:last-child {
+  border-bottom: none;
+}
+
+.ord-forn-footer {
+  padding: 12px 16px 20px;
+  border-top: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+
+.ord-forn-confirm {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #dd6b20, var(--accent));
+  border: none;
+  border-radius: 14px;
+  color: #111;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: .5px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.ord-forn-confirm:active {
+  opacity: .85;
+}
+
+body.light-mode #ord-forn-panel {
+  background: #fff;
+  border-top-color: var(--accent);
+}
+body.light-mode .ord-forn-vendor-group {
+  background: #f5f5f5;
+  border-color: #ddd;
+}
+body.light-mode .ord-forn-vendor-title {
+  background: #eee;
+  border-color: #ddd;
+}
+body.light-mode .ord-forn-line {
+  border-color: #e8e8e8;
+}
+
+/* Ordini — mobile stretto: padding riga / header (griglia #to su max-width 768 sotto) */
+@media (max-width: 520px) {
+  .ord-gc-desc {
+    padding: 1px 4px 2px 2px;
+    min-width: 0;
+  }
+  .ord-td-desc { min-width: 0; }
+  .ord-item-codes {
+    margin-top: 2px;
+    gap: 4px 6px;
+  }
+  #to .ord-grid-row,
+  #tc .ord-grid-row {
+    padding-top: 2px !important;
+    padding-bottom: 3px !important;
+  }
+  #to .ord-grid-head {
+    padding-top: 1px;
+    padding-bottom: 1px;
+  }
+  #to .ord-gh,
+  #tc .ord-gh {
+    padding: 3px 2px;
+    font-size: 8px;
+    letter-spacing: 0.4px;
+  }
+  #to .ord-items-wrap .ord-gc-sub {
+    font-size: 15px;
+    min-height: 0;
+  }
+  #to .ord-items-wrap .ord-gc-price {
+    font-size: 13px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   Tab Ordini (#to) — solo mobile: layout come carrello (#tc .ct-card)
+   Schermo ≥769px: invariato (griglia desktop ordini.css sopra)
+   ═══════════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  #to .ord-items-wrap .ord-grid {
+    grid-template-columns:
+      minmax(6.25rem, 1fr)
+      minmax(64px, auto)
+      minmax(4.5rem, 1fr)
+      minmax(4.5rem, 1fr);
+    column-gap: 3px;
+    padding: 0 4px;
+    align-items: start;
+    box-sizing: border-box;
+  }
+  #to .ord-items-wrap .ord-gc-desc {
+    min-width: 0;
+    align-self: start;
+  }
+  #to .ord-items-wrap .ord-gc-qty {
+    min-width: 0;
+    justify-self: center;
+  }
+  #to .ord-items-wrap .ord-gc-price,
+  #to .ord-items-wrap .ord-gc-sub {
+    min-width: 4.5rem;
+    overflow: visible;
+  }
+  /* Nome prodotto: testo completo, come tab carrello */
+  #to .ord-items-wrap .ord-item-name {
+    display: block;
+    overflow: visible;
+    word-break: normal;
+    overflow-wrap: break-word;
+    line-height: 1.35;
+    min-height: 0;
+    -webkit-line-clamp: unset;
+    -webkit-box-orient: unset;
+    font-size: 14px;
+    font-weight: 800;
+  }
+  #to .ord-items-wrap .ord-gc-price {
+    align-items: center;
+    justify-content: flex-start;
+    font-size: 12px;
+    line-height: 1.3;
+    color: #c4c4c4;
+    gap: 4px;
+  }
+  #to .ord-items-wrap .ord-gc-sub {
+    align-items: flex-end;
+    justify-content: flex-start;
+    font-size: 12px;
+    line-height: 1.3;
+    font-weight: 900;
+    color: var(--accent);
+    min-height: 0;
+    gap: 2px;
+  }
+  #to .ord-items-wrap .ord-gc-sub .ct-prz-stack,
+  #to .ord-items-wrap .ord-gc-sub .ct-prz-stack--tot {
+    align-items: flex-end;
+    text-align: right;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  #to .ord-items-wrap .ord-gc-price .ct-prz-stack {
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    gap: 5px;
+    padding: 2px 0 3px;
+    flex-shrink: 0;
+  }
+  #to .ord-items-wrap .ct-prz-stack.ct-prz-stack--unit .ct-old--orig,
+  #to .ord-items-wrap .ct-prz-stack.ct-prz-stack--unit .ct-sub--final,
+  #to .ord-items-wrap .ct-prz-stack.ct-prz-stack--unit .ct-prz-sconto-sav {
+    text-align: center;
+    max-width: 100%;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  #to .ord-items-wrap .ct-prz-stack .ct-old--orig {
+    position: relative;
+    z-index: 0;
+    line-height: 1.25;
+    margin: 0;
+    padding: 0 1px;
+    font-size: 11px;
+  }
+  #to .ord-items-wrap .ct-prz-stack .ct-sub--final {
+    line-height: 1.2;
+    margin: 0;
+    padding: 0 1px;
+  }
+  #to .ord-items-wrap .ct-prz-stack.ct-prz-stack--unit .ct-sub--final {
+    font-size: 14px;
+  }
+  #to .ord-items-wrap .ct-prz-stack .ct-prz-sconto-sav,
+  #to .ord-items-wrap .ct-prz-stack--tot .ct-prz-sconto-sav {
+    line-height: 1.25;
+    margin: 0;
+    margin-top: 1px;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+  }
+  #to .ord-items-wrap .ct-prz-stack--tot .ct-sub--final {
+    font-size: 16px;
+    text-align: right;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  /* Zona Base €/kg: va a capo come nel carrello */
+  #to .ord-items-wrap .ct-pb-inline:has(.ct-pb-struck) {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    row-gap: 5px;
+  }
+  #to .ord-items-wrap .ct-pb-inline:has(.ct-pb-struck) .ct-pb-disc {
+    flex: 1 1 100%;
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 5px 10px;
+    padding-top: 1px;
+  }
+  #to .ord-items-wrap .ord-grid-row {
+    padding-top: 6px;
+    padding-bottom: 10px;
+  }
+}
+
+/* ═══ Storico ordini archiviati (tab Ordini — 📂 Storico) ═══ */
+.ord-storico-view {
+  padding: 4px 8px 16px;
+  box-sizing: border-box;
+}
+.ord-storico-toolbar {
+  margin-bottom: 12px;
+}
+.ord-storico-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: #1a1b1d;
+  color: var(--ct-text, #f0f0f0);
+  font-size: 14px;
+  margin-bottom: 10px;
+  font-family: inherit;
+}
+.ord-storico-forn-filt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.ord-storico-f-tutti,
+.ord-storico-f-slot {
+  padding: 6px 10px;
+  border-radius: 14px;
+  border: 2px solid #333;
+  background: transparent;
+  color: #888;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  touch-action: manipulation;
+}
+.ord-storico-f-tutti.ord-storico-f--on {
+  border-color: var(--accent, #f5c400);
+  background: rgba(245, 196, 0, 0.1);
+  color: var(--accent, #f5c400);
+}
+.ord-storico-f-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+.ord-storico-head {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #805ad5;
+  margin-bottom: 10px;
+}
+.ord-storico-empty {
+  text-align: center;
+  color: #555;
+  padding: 28px 12px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.ord-storico-card {
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  border-top: 3px solid #805ad5;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ord-storico-card:active {
+  filter: brightness(1.06);
+}
+.ord-storico-card-hd {
+  background: #805ad522;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.ord-storico-card-cliente {
+  font-size: 14px;
+  font-weight: 800;
+  color: #d6bcfa;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+.ord-storico-card-when {
+  font-size: 11px;
+  color: #805ad5;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ord-storico-card-sum {
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ord-storico-card-n {
+  font-size: 11px;
+  color: #888;
+}
+.ord-storico-card-tot {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--accent, #68d391);
+}
+.ord-storico-card-hint {
+  font-size: 9px;
+  color: #555;
+  padding: 0 12px 8px;
+  text-align: center;
+}
+.ord-storico-more-wrap {
+  text-align: center;
+  padding: 12px 8px;
+}
+.ord-storico-more {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 1px solid #805ad544;
+  background: #805ad511;
+  color: #c4b5fd;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+}
+.ord-storico-clear-wrap {
+  text-align: center;
+  padding: 8px;
+}
+.ord-storico-clear {
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 1px solid #e53e3e44;
+  background: transparent;
+  color: #fc8181;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Modale dettaglio storico */
+.ord-storico-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9600;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  font-family: inherit;
+}
+@media (min-width: 520px) {
+  .ord-storico-modal {
+    align-items: center;
+  }
+}
+.ord-storico-modal-bd {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+}
+.ord-storico-modal-panel {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--ct-card, #1a1b1d);
+  border-radius: 16px 16px 0 0;
+  border: 1px solid #333;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.5);
+  padding: 12px 12px 20px;
+  box-sizing: border-box;
+}
+@media (min-width: 520px) {
+  .ord-storico-modal-panel {
+    border-radius: 16px;
+  }
+}
+.ord-storico-modal-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.ord-storico-modal-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--ct-text, #f0f0f0);
+  flex: 1;
+  min-width: 0;
+}
+.ord-storico-modal-x {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: #2a2a2a;
+  color: #aaa;
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.ord-storico-modal-meta {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 12px;
+}
+.ord-storico-detail-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #2a2a2a;
+  font-size: 13px;
+  font-weight: 700;
+  color: #888;
+}
+.ord-storico-detail-tot {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--accent, #68d391);
+}
+
+/* Dettaglio storico: stessi pesi colonna della tab ordini su mobile */
+@media (max-width: 768px) {
+  .ord-storico-detail-grid.ord-items-wrap .ord-grid {
+    grid-template-columns:
+      minmax(6.25rem, 1fr)
+      minmax(64px, auto)
+      minmax(4.5rem, 1fr)
+      minmax(4.5rem, 1fr);
+    column-gap: 3px;
+    padding: 0 2px;
+  }
+  .ord-storico-detail-grid .ord-gc-sub {
+    font-size: 15px;
+    font-weight: 900;
+    color: var(--accent);
+  }
+  .ord-storico-detail-grid .ord-item-name {
+    font-size: 14px;
+    font-weight: 800;
+  }
+}
+body.light-mode .ord-storico-search {
+  background: #fff;
+  border-color: #ddd;
+  color: #111;
+}

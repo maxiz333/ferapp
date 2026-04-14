@@ -176,7 +176,7 @@ function _doMagSearch(){
       html += '<button onclick="document.getElementById(\'mag-foto-inp-' + i + '\').click()" style="width:52px;height:52px;border-radius:8px;border:1px dashed #444;background:#111;color:#555;font-size:10px;cursor:pointer;line-height:1.3;">📷<br>foto</button>';
       html += '<input type="file" id="mag-foto-inp-' + i + '" accept="image/*" capture="environment" style="display:none;" onchange="magSalvaFoto(' + i + ',this)">';
     }
-    html += '<div style="font-size:15px;font-weight:900;color:var(--accent);display:flex;align-items:center;gap:6px;">€ ' + esc(r.prezzo || '0') + (((r.isPromo===true && String(r.promoTipo||'')==='G') && typeof htmlPromoGBadge==='function') ? htmlPromoGBadge() : '') + '</div>';
+    html += '<div style="font-size:15px;font-weight:900;color:var(--accent);">€ ' + esc(r.prezzo || '0') + '</div>';
     // Qty + unità
     html += '<div style="display:flex;gap:3px;align-items:center;">';
     html += '<input type="number" min="0" value="' + esc(String(qty)) + '" placeholder="Qtà" ' +

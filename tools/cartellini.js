@@ -379,61 +379,31 @@ function ct_findDbIdxByCartellino(ct){
   return -1;
 }
 
-/** Chiusura promo giornalino: salva storico [G], poi resetta prezzo/promo solo se salvataggio ok. */
-function ct_closePromoOnDelete(ct, deferCommit){
+/** Chiusura promo giornalino: salva storico [G], resetta prezzo, disattiva flag promo. */
+function ct_closePromoOnDelete(ct){
   if(!ct || !ct.giornalino) return false; // sicurezza: non toccare righe non promo
   var dbIdx = ct_findDbIdxByCartellino(ct);
   if(dbIdx < 0 || !rows[dbIdx]) return false;
   var r = rows[dbIdx];
-  var now = new Date();
+  var oggi = new Date();
+  var oggiIt = oggi.toLocaleDateString('it-IT');
   var promoPrezzo = String(ct.prezzo || r.prezzo || '').trim();
-  var commitNow = !deferCommit;
-  var oldPrezzo = r.prezzo;
-  var oldPrezzoOld = r.prezzoOld;
-  var oldData = r.data;
-  var oldIsPromo = r.isPromo;
-  var oldPromoTipo = r.promoTipo;
   if(!r.priceHistory) r.priceHistory = [];
-  var histEntry = {
-    prezzo: promoPrezzo || oldPrezzo || '',
-    data: now.toISOString(),
-    tipo: 'G',
-    nota: 'Fine Promozione Giornalino'
-  };
-  r.priceHistory.unshift(histEntry);
-  if(r.priceHistory.length > 30) r.priceHistory.length = 30;
-
-  // Primo salvataggio: storico promo. Se fallisce, non toccare il prezzo.
-  if(commitNow){
-    try{
-      lsSet(SK, rows);
-    }catch(e){
-      r.priceHistory.shift();
-      return false;
-    }
+  if(promoPrezzo){
+    r.priceHistory.unshift({
+      prezzo: promoPrezzo,
+      data: r.data || oggiIt,
+      tag: 'G',
+      dataFine: oggiIt,
+      tipo: 'finePromo'
+    });
+    if(r.priceHistory.length > 30) r.priceHistory.length = 30;
   }
-
   if(promoPrezzo) r.prezzoOld = promoPrezzo;
   r.prezzo = '0,00';
-  r.data = now.toLocaleDateString('it-IT');
+  r.data = oggiIt;
   r.isPromo = false;
   r.promoTipo = '';
-
-  // Secondo salvataggio: reset promo terminata.
-  if(commitNow){
-    try{
-      lsSet(SK, rows);
-    }catch(e2){
-      // rollback prudente
-      r.prezzo = oldPrezzo;
-      r.prezzoOld = oldPrezzoOld;
-      r.data = oldData;
-      r.isPromo = oldIsPromo;
-      r.promoTipo = oldPromoTipo;
-      return false;
-    }
-  }
-
   if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(dbIdx);
   return true;
 }
@@ -463,7 +433,7 @@ function ct_svuota(){
   showConfirm('Svuotare tutti i cartellini?', function(){
     var promoChiuse = 0;
     ctRows.forEach(function(r){
-      if(ct_closePromoOnDelete(r, true)) promoChiuse++;
+      if(ct_closePromoOnDelete(r)) promoChiuse++;
       cestino.unshift(Object.assign({},r,{deletedAt:new Date().toLocaleString('it-IT')}));
     });
     ctRows = [];
@@ -737,9 +707,8 @@ function ct_syncDB(){
   }
   var oggi = new Date().toLocaleDateString('it-IT');
   var stats = { prezzi:0, codF:0, nuovi:0, promo:0 };
-  var daFareRows = (ctRows || []).filter(function(ct){ return ct && !ct.fatto; });
 
-  daFareRows.forEach(function(ct){
+  ctRows.forEach(function(ct){
     if(!ct.codM && !ct.codF) return;
     var prezzo = ct.prezzo || '';
 
