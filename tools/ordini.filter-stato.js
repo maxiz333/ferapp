@@ -2,6 +2,7 @@
 
 function filterOrdini(f){
   if(f==='lavorazione') f='nuovo';
+  if(f==='bozza') f='nuovo';
   // Chiudi vista "da ordinare"
   if(_daOrdView){
     _daOrdView=false;

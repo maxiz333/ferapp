@@ -69,17 +69,13 @@ function richediNotifPermesso(){
 }
 
 function _openOrdiniFromNotificationSequence(filtro){
-  goTab('to');
-  // Sequenza forzata: reset stato tab/filtro e doppio render per allineare UI già aperte.
+  if(typeof goTab === 'function') goTab('to');
   setTimeout(function(){
-    if(typeof filterOrdini === 'function') filterOrdini(filtro);
-  }, 90);
-  setTimeout(function(){
+    console.log('NOTIFICA: Forzo caricamento ordini nuovi');
+    var f = filtro === 'bozza' ? 'nuovo' : filtro;
+    if(typeof filterOrdini === 'function') filterOrdini(f);
     if(typeof renderOrdini === 'function') renderOrdini();
-  }, 220);
-  setTimeout(function(){
-    if(typeof renderOrdini === 'function') renderOrdini();
-  }, 420);
+  }, 300);
 }
 
 function mostraNotificaOrdine(ord){

@@ -2,6 +2,8 @@
 
 function filterOrdini(f){
   if(f==='lavorazione') f='nuovo';
+  // Bozze in lista solo con filtro "nuovo" / "tutti" (stesso pulsante Nuovo)
+  if(f==='bozza') f='nuovo';
   // Chiudi vista "da ordinare"
   if(_daOrdView){
     _daOrdView=false;

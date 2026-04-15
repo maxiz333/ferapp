@@ -178,18 +178,21 @@ function openOrdiniNuovoFromNotification(){
   _openOrdiniFromNotificationSequence('nuovo');
 }
 
+/**
+ * Click notifica Chrome → tab Ordini con lista "Nuovo" subito popolata.
+ * A: goTab('to') subito (goTabDirect già invoca renderOrdini per #to).
+ * B: attesa 300ms per DOM/tab attiva.
+ * C: filterOrdini (imposta ordFiltro e render interno).
+ * D: renderOrdini() esplicito (refresh completo, dati già in ordini[] da Firebase).
+ */
 function _openOrdiniFromNotificationSequence(filtro){
-  goTab('to');
-  // Sequenza forzata: reset stato tab/filtro e doppio render per allineare UI già aperte.
+  if(typeof goTab === 'function') goTab('to');
   setTimeout(function(){
-    if(typeof filterOrdini === 'function') filterOrdini(filtro);
-  }, 90);
-  setTimeout(function(){
+    console.log('NOTIFICA: Forzo caricamento ordini nuovi');
+    var f = filtro === 'bozza' ? 'nuovo' : filtro;
+    if(typeof filterOrdini === 'function') filterOrdini(f);
     if(typeof renderOrdini === 'function') renderOrdini();
-  }, 220);
-  setTimeout(function(){
-    if(typeof renderOrdini === 'function') renderOrdini();
-  }, 420);
+  }, 300);
 }
 
 function mostraNotificaOrdine(ord){
