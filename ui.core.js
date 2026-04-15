@@ -174,6 +174,15 @@ function richediNotifPermesso(){
   }
 }
 
+function openOrdiniNuovoFromNotification(){
+  goTab('to');
+  if(typeof filterOrdini === 'function'){
+    filterOrdini('nuovo');
+  } else if(typeof renderOrdini === 'function'){
+    renderOrdini();
+  }
+}
+
 function mostraNotificaOrdine(ord){
   // -- 1. Notifica di sistema -------------------------------------------
   if(_notifPermesso && 'Notification' in window && Notification.permission === 'granted'){
@@ -188,7 +197,7 @@ function mostraNotificaOrdine(ord){
       });
       notif.onclick = function(){
         window.focus();
-        goTab('to');
+        openOrdiniNuovoFromNotification();
         notif.close();
       };
     } catch(e){ console.warn('Notifica sistema fallita:', e); }
@@ -416,7 +425,7 @@ function closeOrdineModal(){
 
 function ordineModalVaiOrdini(){
   closeOrdineModal();
-  goTab('to');
+  openOrdiniNuovoFromNotification();
 }
 
 // Chiudi cliccando fuori

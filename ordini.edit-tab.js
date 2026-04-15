@@ -3,8 +3,40 @@
 // --- MODIFICA ORDINE DAL TAB ORDINI ---------------------------
 var _editOrdIdx=null;
 var _editOrdItems=null;
+var _editOrdSnapshotItemsJson=null;
+var _editOrdHadRealChanges=false;
 var _editOrdSyncTimer=null;
 var _EDIT_ORD_SYNC_MS=140;
+
+function _editOrdNormalizeItemsForCompare(items){
+  return (items||[]).map(function(it){
+    return {
+      desc:String(it&&it.desc||''),
+      codM:String(it&&it.codM||''),
+      codF:String(it&&it.codF||''),
+      qty:Number(parseFloat(it&&it.qty||0).toFixed(4)),
+      unit:String(it&&it.unit||''),
+      prezzoUnit:String(it&&it.prezzoUnit||''),
+      nota:String(it&&it.nota||''),
+      scampolo:!!(it&&it.scampolo),
+      fineRotolo:!!(it&&it.fineRotolo),
+      _scontoApplicato:Number(parseFloat(it&&it._scontoApplicato||0).toFixed(4)),
+      _scontoTipo:String(it&&it._scontoTipo||''),
+      _prezzoOriginale:String(it&&it._prezzoOriginale||''),
+      _prezzoUnitaBase:String(it&&it._prezzoUnitaBase||''),
+      _scaglionato:!!(it&&it._scaglionato),
+      _scaglioneQta:Number(parseFloat(it&&it._scaglioneQta||0).toFixed(4)),
+      congelato:!!ordItemCongelato(it),
+      scaglioni:JSON.stringify(it&&it.scaglioni||[])
+    };
+  });
+}
+
+function _editOrdHasRealChanges(){
+  if(_editOrdSnapshotItemsJson == null || !_editOrdItems) return false;
+  var nowJson = JSON.stringify(_editOrdNormalizeItemsForCompare(_editOrdItems));
+  return nowJson !== _editOrdSnapshotItemsJson;
+}
 
 function _linkedCartForOrdine(ord){
   if(!ord) return null;
@@ -20,6 +52,11 @@ function _flushEditOrdineToStorage(opts){
   if(_editOrdIdx===null||_editOrdIdx<0) return;
   var ord=ordini[_editOrdIdx];
   if(!ord||!_editOrdItems) return;
+  var hasChanges = _editOrdHasRealChanges();
+  if(!hasChanges){
+    return;
+  }
+  _editOrdHadRealChanges = true;
   ord.items=JSON.parse(JSON.stringify(_editOrdItems));
   var tot=_editOrdItems.reduce(function(s,it){
     if(ordItemCongelato(it)) return s;
@@ -66,6 +103,8 @@ function modificaOrdineDaTab(gi){
     }
     _editOrdIdx = gi2;
     _editOrdItems = JSON.parse(JSON.stringify(ordini[gi2].items || []));
+    _editOrdSnapshotItemsJson = JSON.stringify(_editOrdNormalizeItemsForCompare(_editOrdItems));
+    _editOrdHadRealChanges = false;
     renderEditOrdine();
     document.getElementById('edit-ord-overlay').style.display='flex';
     if(typeof ordRefreshLockUI === 'function') ordRefreshLockUI();
@@ -283,5 +322,7 @@ function chiudiEditOrdine(){
   document.getElementById('edit-ord-overlay').style.display='none';
   _editOrdIdx=null;
   _editOrdItems=null;
+  _editOrdSnapshotItemsJson=null;
+  _editOrdHadRealChanges=false;
   if(typeof feedbackSend==='function') feedbackSend();
 }

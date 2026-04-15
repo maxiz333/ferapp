@@ -52,19 +52,19 @@ function aggiornaOrdine(cartId){
     if(ord.modificheDiff.length > 5) ord.modificheDiff.length = 5; // max 5 storici
     // NON toccare ord.nota con la diff — la nota resta quella del cliente
     ord.nota = notaBase;
+    ord.modificato=true;
+    ord.modificatoAt=new Date().toLocaleString('it-IT');
+    ord.modificatoAtISO=new Date().toISOString();
+    // Salva chi ha modificato
+    if(typeof _currentUser !== 'undefined' && _currentUser){
+      if(!ord.commesso) ord.commesso = _currentUser.key;
+      ord.modificatoDa = _currentUser.key;
+    }
   } else {
     ord.nota = notaBase;
   }
   ord.totale=ordTotaleSenzaCongelati(ord).toFixed(2);
   ord.scontoGlobale=cart.scontoGlobale||null;
-  ord.modificato=true;
-  ord.modificatoAt=new Date().toLocaleString('it-IT');
-  ord.modificatoAtISO=new Date().toISOString();
-  // Salva chi ha modificato
-  if(typeof _currentUser !== 'undefined' && _currentUser){
-    if(!ord.commesso) ord.commesso = _currentUser.key;
-    ord.modificatoDa = _currentUser.key;
-  }
   saveOrdini();
   // Rimetti il carrello come inviato
   cart.stato='inviato';
@@ -79,6 +79,7 @@ function annullaModifica(cartId){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart)return;
   if(cart.ordId){
+    if(typeof ordUnlock === 'function') ordUnlock(cart.ordId);
     var ord=ordini.find(function(o){return o.id===cart.ordId;});
     if(ord){
       cart.items=JSON.parse(JSON.stringify(ord.items));

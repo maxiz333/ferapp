@@ -189,10 +189,36 @@ function _aggiornaBozzaOrdine(cart){
   if(!cart||!cart.bozzaOrdId)return;
   var bozza=ordini.find(function(o){return o.id===cart.bozzaOrdId;});
   if(!bozza||bozza.stato!=='bozza')return;
+  function _canonItems(arr){
+    return JSON.stringify((arr||[]).map(function(it){
+      return {
+        desc:String(it&&it.desc||''),
+        codM:String(it&&it.codM||''),
+        codF:String(it&&it.codF||''),
+        qty:Number(parseFloat(it&&it.qty||0).toFixed(4)),
+        unit:String(it&&it.unit||''),
+        prezzoUnit:String(it&&it.prezzoUnit||''),
+        nota:String(it&&it.nota||''),
+        scampolo:!!(it&&it.scampolo),
+        fineRotolo:!!(it&&it.fineRotolo),
+        sconto:Number(parseFloat(it&&it._scontoApplicato||0).toFixed(4))
+      };
+    }));
+  }
   var prevFrozen=(bozza.items||[]).filter(function(it){ return ordItemCongelato(it); }).map(function(it){ return JSON.parse(JSON.stringify(it)); });
-  bozza.items=JSON.parse(JSON.stringify(cart.items||[])).concat(prevFrozen);
-  bozza.nomeCliente=cart.nome||'—';
-  bozza.nota=cart.nota||'';
+  var nextItems=JSON.parse(JSON.stringify(cart.items||[])).concat(prevFrozen);
+  var nextNome=cart.nome||'—';
+  var nextNota=cart.nota||'';
+  var prevItemsCanon=_canonItems(bozza.items||[]);
+  var nextItemsCanon=_canonItems(nextItems);
+  var prevNome=String(bozza.nomeCliente||'—');
+  var prevNota=String(bozza.nota||'');
+  if(prevItemsCanon===nextItemsCanon && prevNome===String(nextNome) && prevNota===String(nextNota)){
+    return;
+  }
+  bozza.items=nextItems;
+  bozza.nomeCliente=nextNome;
+  bozza.nota=nextNota;
   bozza.totale=ordTotaleSenzaCongelati(bozza).toFixed(2);
   bozza.modificato=true;
   bozza.modificatoAt=new Date().toLocaleString('it-IT');
@@ -205,10 +231,37 @@ function _aggiornaOrdineDaCarrelloModifica(cart){
   if(!cart||!cart.ordId||cart.stato!=='modifica') return;
   var ord=ordini.find(function(o){ return o.id===cart.ordId; });
   if(!ord) return;
+  function _canonItems(arr){
+    return JSON.stringify((arr||[]).map(function(it){
+      return {
+        desc:String(it&&it.desc||''),
+        codM:String(it&&it.codM||''),
+        codF:String(it&&it.codF||''),
+        qty:Number(parseFloat(it&&it.qty||0).toFixed(4)),
+        unit:String(it&&it.unit||''),
+        prezzoUnit:String(it&&it.prezzoUnit||''),
+        nota:String(it&&it.nota||''),
+        scampolo:!!(it&&it.scampolo),
+        fineRotolo:!!(it&&it.fineRotolo),
+        sconto:Number(parseFloat(it&&it._scontoApplicato||0).toFixed(4))
+      };
+    }));
+  }
   var prevFrozen=(ord.items||[]).filter(function(it){ return ordItemCongelato(it); }).map(function(it){ return JSON.parse(JSON.stringify(it)); });
-  ord.items=JSON.parse(JSON.stringify(cart.items||[])).concat(prevFrozen);
-  ord.nomeCliente=cart.nome||ord.nomeCliente||'—';
-  ord.nota=cart.nota||'';
+  var nextItems=JSON.parse(JSON.stringify(cart.items||[])).concat(prevFrozen);
+  var nextNome=cart.nome||ord.nomeCliente||'—';
+  var nextNota=cart.nota||'';
+  var prevItemsCanon=_canonItems(ord.items||[]);
+  var nextItemsCanon=_canonItems(nextItems);
+  if(prevItemsCanon===nextItemsCanon &&
+    String(ord.nomeCliente||'—')===String(nextNome) &&
+    String(ord.nota||'')===String(nextNota) &&
+    String(ord.scontoGlobale||'')===String(cart.scontoGlobale||'')){
+    return;
+  }
+  ord.items=nextItems;
+  ord.nomeCliente=nextNome;
+  ord.nota=nextNota;
   ord.scontoGlobale=cart.scontoGlobale||null;
   ord.totale=ordTotaleSenzaCongelati(ord).toFixed(2);
   saveOrdini();
