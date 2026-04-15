@@ -6,6 +6,9 @@ var invSottoScorta=false;
 var invGiornalino=false;
 var _magDupCodes = {};
 var magChronoMode = 'none'; // none | added | modified
+var MAG_CHRONO_WINDOW_MS = 72 * 60 * 60 * 1000; // 3 giorni precisi
+var magChronoCutoffMs = 0; // calcolato una volta all'attivazione filtro
+var magChronoNowMs = 0; // istante di riferimento del filtro
 function _syncMagIdxFirebase(i){
   if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(i);
 }
@@ -46,6 +49,13 @@ function magScanDuplicati(){
 
 function _applyMagChronoMode(mode){
   magChronoMode = mode || 'none';
+  if(magChronoMode === 'added' || magChronoMode === 'modified'){
+    magChronoNowMs = Date.now();
+    magChronoCutoffMs = magChronoNowMs - MAG_CHRONO_WINDOW_MS;
+  } else {
+    magChronoNowMs = 0;
+    magChronoCutoffMs = 0;
+  }
   var btn = document.getElementById('mag-recenti-btn');
   if(btn){
     if(magChronoMode === 'added'){
@@ -827,8 +837,22 @@ function mostraFotoSpecifiche(rowIdx){
 }
 
 function saveMagRow(i,field,val){
+  if(!rows[i]) return;
   if(!magazzino[i]) magazzino[i]={};
   _takeSnapshot();
+  if(field === 'codM'){
+    var codM = (typeof sanitizeCodiceMagazzinoInput === 'function')
+      ? sanitizeCodiceMagazzinoInput(val)
+      : String(val == null ? '' : val).trim();
+    var dup = (typeof findDuplicateCodMagazzino === 'function') ? findDuplicateCodMagazzino(codM, i) : null;
+    if(dup){
+      if(typeof showCodiceMagazzinoDuplicateError === 'function') showCodiceMagazzinoDuplicateError(codM, dup.desc);
+      return;
+    }
+    rows[i].codM = codM;
+    rows[i]._updatedAt = Date.now();
+    if(rows.length <= 5000) lsSet(SK, rows);
+  }
   if(field==='qty'){
     var prevQty = magazzino[i].qty!==undefined&&magazzino[i].qty!=='' ? Number(magazzino[i].qty) : null;
     var newQty  = val!=='' ? parseFloat(val) : null;

@@ -117,17 +117,21 @@ var isRem=removed.has(String(i));
 }
 
 function readRow(i){
-  if(!rows[i]) return;
+  if(!rows[i]) return false;
   var prev = rows[i];
-  var newCodM = (document.getElementById('m'+i)||{}).value||'';
+  var rawCodM = (document.getElementById('m'+i)||{}).value||'';
+  var newCodM = (typeof sanitizeCodiceMagazzinoInput === 'function')
+    ? sanitizeCodiceMagazzinoInput(rawCodM)
+    : String(rawCodM).trim();
+  var mel = document.getElementById('m'+i);
+  if(mel) mel.value = newCodM;
   if(typeof findDuplicateCodMagazzino === 'function'){
     var dupRow = findDuplicateCodMagazzino(newCodM, i);
     if(dupRow){
       if(typeof showCodiceMagazzinoDuplicateError === 'function') showCodiceMagazzinoDuplicateError(newCodM, dupRow.desc);
-      else showToastGen('red', "Errore: Il codice " + String(newCodM).trim() + " è già in uso per l'articolo " + (dupRow.desc || '—'));
-      var mel = document.getElementById('m'+i);
+      else showToastGen('red', "⚠️ Errore: Il codice " + String(newCodM).trim() + " è già assegnato all'articolo " + (dupRow.desc || '—') + ". Usa un codice diverso.");
       if(mel) mel.value = prev.codM || '';
-      return;
+      return false;
     }
   }
   var now = Date.now();
@@ -148,9 +152,16 @@ function readRow(i){
     lastProductChangeAt: prev.lastProductChangeAt,
     _updatedAt: now
   };
+  return true;
 }
 
-function upd(i){readRow(i);save();updateStats();updRowColor(i);if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(i);}
+function upd(i){
+  if(readRow(i) === false) return;
+  save();
+  updateStats();
+  updRowColor(i);
+  if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(i);
+}
 function updRowColor(i){
   var tr=document.querySelector('#tb tr[data-idx="'+i+'"]');
   if(!tr) return;
@@ -170,7 +181,7 @@ function updRowColor(i){
 }
 function updPrice(i){
   var oldPrezzo=rows[i]?rows[i].prezzo:'';
-  readRow(i);
+  if(readRow(i) === false) return;
   if(oldPrezzo && oldPrezzo!==rows[i].prezzo){
     if(!rows[i].priceHistory) rows[i].priceHistory=[];
     rows[i].priceHistory.unshift({prezzo:oldPrezzo, data:new Date().toLocaleDateString('it-IT')});
@@ -231,7 +242,12 @@ function delRow(i){
 
 function save(){
   _takeSnapshot();
-  rows.forEach(function(_,i){if(document.getElementById('d'+i)) readRow(i);});
+  var ok = true;
+  rows.forEach(function(_,i){
+    if(!ok) return;
+    if(document.getElementById('d'+i) && readRow(i) === false) ok = false;
+  });
+  if(!ok) return;
   // Salta localStorage se il catalogo è troppo grande (limite ~5MB)
   if(rows.length <= 5000) lsSet(SK,rows);
   lsSet(MAGK,magazzino);

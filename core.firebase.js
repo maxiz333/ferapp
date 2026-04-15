@@ -6,6 +6,203 @@ document.addEventListener('DOMContentLoaded', function(){
   setTimeout(_authInit, 800);
 });
 
+var _dbMaintRunning = false;
+var _dbMaintTimer = null;
+var _dbMaintInterval = null;
+var DB_MAINT_LAST_KEY = 'cp4_db_maintenance_last_run';
+var DB_MAINT_CFG_KEY = 'cp4_db_maintenance_cfg';
+var DB_MAINT_DEFAULT_CFG = {
+  rowsLimitTotal: 1200,
+  rowsLimitLocks: 300,
+  rowsLimitAlerts: 500,
+  rowsLimitTmp: 500
+};
+function _dbMaintReadCfg(){
+  var cfg = {};
+  try{
+    cfg = JSON.parse(localStorage.getItem(DB_MAINT_CFG_KEY) || '{}') || {};
+  }catch(e){ cfg = {}; }
+  if(typeof window !== 'undefined' && window.AppDbMaintenanceConfig && typeof window.AppDbMaintenanceConfig === 'object'){
+    Object.keys(window.AppDbMaintenanceConfig).forEach(function(k){ cfg[k] = window.AppDbMaintenanceConfig[k]; });
+  }
+  return Object.assign({}, DB_MAINT_DEFAULT_CFG, cfg);
+}
+var _dbMaintCfg = _dbMaintReadCfg();
+var DB_MAINT_DAY_MS = 24 * 60 * 60 * 1000;
+var DB_MAINT_LOCK_MAX_AGE = 24 * 60 * 60 * 1000;
+var DB_MAINT_ALERT_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
+var DB_MAINT_TMP_MAX_AGE = 48 * 60 * 60 * 1000;
+var DB_MAINT_ROWS_LIMIT_TOTAL = Number(_dbMaintCfg.rowsLimitTotal) || DB_MAINT_DEFAULT_CFG.rowsLimitTotal;
+var DB_MAINT_ROWS_LIMIT_LOCKS = Number(_dbMaintCfg.rowsLimitLocks) || DB_MAINT_DEFAULT_CFG.rowsLimitLocks;
+var DB_MAINT_ROWS_LIMIT_ALERTS = Number(_dbMaintCfg.rowsLimitAlerts) || DB_MAINT_DEFAULT_CFG.rowsLimitAlerts;
+var DB_MAINT_ROWS_LIMIT_TMP = Number(_dbMaintCfg.rowsLimitTmp) || DB_MAINT_DEFAULT_CFG.rowsLimitTmp;
+
+function _dbMaintGetLastRun(){
+  try{
+    return Number(localStorage.getItem(DB_MAINT_LAST_KEY) || 0) || 0;
+  }catch(e){
+    return 0;
+  }
+}
+
+function _dbMaintSetLastRun(ts){
+  try{ localStorage.setItem(DB_MAINT_LAST_KEY, String(ts || Date.now())); }catch(e){}
+}
+
+function _dbMaintObjectCount(v){
+  if(!v || typeof v !== 'object') return 0;
+  return Object.keys(v).length;
+}
+
+function _dbMaintPickTimestamp(v){
+  if(v == null) return 0;
+  if(typeof v === 'number' && isFinite(v) && v > 0) return v;
+  if(typeof v === 'string'){
+    var asNum = Number(v);
+    if(isFinite(asNum) && asNum > 0) return asNum;
+    var asDate = Date.parse(v);
+    if(isFinite(asDate) && asDate > 0) return asDate;
+  }
+  if(typeof v !== 'object') return 0;
+  var keys = [
+    'at','ts','time','timestamp','updatedAt','createdAt','lastUpdate','lastUpdatedAt',
+    'date','data','readAt','seenAt','completedAt','doneAt'
+  ];
+  for(var i=0;i<keys.length;i++){
+    var n = _dbMaintPickTimestamp(v[keys[i]]);
+    if(n > 0) return n;
+  }
+  return 0;
+}
+
+function _dbMaintIsReadOrCompleted(v){
+  if(!v || typeof v !== 'object') return false;
+  if(v.letta === true || v.letto === true || v.visto === true || v.read === true || v.seen === true) return true;
+  if(v.completata === true || v.completato === true || v.completed === true || v.done === true || v.chiusa === true) return true;
+  var stato = String(v.stato || '').toLowerCase();
+  if(stato === 'completato' || stato === 'completata' || stato === 'chiuso' || stato === 'chiusa' || stato === 'letto' || stato === 'letta') return true;
+  return false;
+}
+
+function _dbMaintNeedsRun(meta, force){
+  _dbMaintCfg = _dbMaintReadCfg();
+  DB_MAINT_ROWS_LIMIT_TOTAL = Number(_dbMaintCfg.rowsLimitTotal) || DB_MAINT_DEFAULT_CFG.rowsLimitTotal;
+  DB_MAINT_ROWS_LIMIT_LOCKS = Number(_dbMaintCfg.rowsLimitLocks) || DB_MAINT_DEFAULT_CFG.rowsLimitLocks;
+  DB_MAINT_ROWS_LIMIT_ALERTS = Number(_dbMaintCfg.rowsLimitAlerts) || DB_MAINT_DEFAULT_CFG.rowsLimitAlerts;
+  DB_MAINT_ROWS_LIMIT_TMP = Number(_dbMaintCfg.rowsLimitTmp) || DB_MAINT_DEFAULT_CFG.rowsLimitTmp;
+  if(force) return true;
+  var now = Date.now();
+  var last = _dbMaintGetLastRun();
+  if(!last || (now - last) >= DB_MAINT_DAY_MS) return true;
+  if(meta.total > DB_MAINT_ROWS_LIMIT_TOTAL) return true;
+  if(meta.locks > DB_MAINT_ROWS_LIMIT_LOCKS) return true;
+  if(meta.alerts > DB_MAINT_ROWS_LIMIT_ALERTS) return true;
+  if(meta.tmp > DB_MAINT_ROWS_LIMIT_TMP) return true;
+  return false;
+}
+
+function dbSystemMaintenance(options){
+  options = options || {};
+  if(_dbMaintRunning) return Promise.resolve(false);
+  if(!_fbReady || !_fbDb) return Promise.resolve(false);
+
+  _dbMaintRunning = true;
+  var now = Date.now();
+  var force = !!options.force;
+  var rootRef = _fbDb.ref();
+
+  return Promise.all([
+    _fbDb.ref('ordiniLocks').once('value'),
+    _fbDb.ref('segnalazioniUfficio').once('value'),
+    _fbDb.ref('notifiche/segnalazioniUfficio').once('value'),
+    _fbDb.ref('movimentiTemporanei').once('value'),
+    _fbDb.ref('logTemporanei').once('value')
+  ]).then(function(snaps){
+    var locks = snaps[0].val() || {};
+    var segnalazioni = snaps[1].val() || {};
+    var segnalazioniNotif = snaps[2].val() || {};
+    var movTmp = snaps[3].val() || {};
+    var logTmp = snaps[4].val() || {};
+
+    var meta = {
+      locks: _dbMaintObjectCount(locks),
+      alerts: _dbMaintObjectCount(segnalazioni) + _dbMaintObjectCount(segnalazioniNotif),
+      tmp: _dbMaintObjectCount(movTmp) + _dbMaintObjectCount(logTmp)
+    };
+    meta.total = meta.locks + meta.alerts + meta.tmp;
+
+    if(!_dbMaintNeedsRun(meta, force)) return false;
+
+    var updates = {};
+    var removed = 0;
+
+    Object.keys(locks).forEach(function(k){
+      var row = locks[k];
+      var at = _dbMaintPickTimestamp(row);
+      if(at > 0 && (now - at) > DB_MAINT_LOCK_MAX_AGE){
+        updates['ordiniLocks/' + k] = null;
+        removed++;
+      }
+    });
+
+    function cleanSegnalazioni(path, data){
+      Object.keys(data).forEach(function(k){
+        var row = data[k];
+        if(!_dbMaintIsReadOrCompleted(row)) return;
+        var at = _dbMaintPickTimestamp(row);
+        if(at > 0 && (now - at) > DB_MAINT_ALERT_MAX_AGE){
+          updates[path + '/' + k] = null;
+          removed++;
+        }
+      });
+    }
+    cleanSegnalazioni('segnalazioniUfficio', segnalazioni);
+    cleanSegnalazioni('notifiche/segnalazioniUfficio', segnalazioniNotif);
+
+    function cleanTmp(path, data){
+      Object.keys(data).forEach(function(k){
+        var row = data[k];
+        var at = _dbMaintPickTimestamp(row);
+        if(at > 0 && (now - at) > DB_MAINT_TMP_MAX_AGE){
+          updates[path + '/' + k] = null;
+          removed++;
+        }
+      });
+    }
+    cleanTmp('movimentiTemporanei', movTmp);
+    cleanTmp('logTemporanei', logTmp);
+
+    var done = function(){
+      _dbMaintSetLastRun(now);
+      console.log('Manutenzione Database: Rimossi ' + removed + ' elementi obsoleti. Database ottimizzato.');
+      return true;
+    };
+    if(!removed) return done();
+    return new Promise(function(resolve){
+      rootRef.update(updates, function(err){
+        if(err) console.warn('Manutenzione Database: aggiornamento incompleto', err);
+        resolve(done());
+      });
+    });
+  }).catch(function(err){
+    console.warn('Manutenzione Database: errore durante la pulizia', err);
+    return false;
+  }).then(function(res){
+    _dbMaintRunning = false;
+    return res;
+  }, function(err){
+    _dbMaintRunning = false;
+    throw err;
+  });
+}
+
+function _scheduleDbSystemMaintenance(){
+  if(_dbMaintTimer) clearTimeout(_dbMaintTimer);
+  if(_dbMaintInterval) clearInterval(_dbMaintInterval);
+  _dbMaintTimer = setTimeout(function(){ dbSystemMaintenance({ reason: 'startup' }); }, 1500);
+  _dbMaintInterval = setInterval(function(){ dbSystemMaintenance({ reason: 'health-check' }); }, 30 * 60 * 1000);
+}
+
 (function(){
   function _safeLsGet(k, d){
     try{
@@ -174,6 +371,7 @@ document.addEventListener('DOMContentLoaded', function(){
       setTimeout(loadMagazzinoFB, 50);
     }
 
+    _scheduleDbSystemMaintenance();
     console.log('Firebase connesso');
   }catch(e){console.error('Firebase:',e);_hideLoadingBar();}
 })();

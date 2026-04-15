@@ -46,6 +46,112 @@ function updateAltroBadge(){
   if(ab) ab.style.display = hasBadge ? '' : 'none';
 }
 
+var _DB_MAINT_UI_KEY = 'cp4_db_maintenance_cfg';
+function _dbMaintUiDefaults(){
+  if(typeof DB_MAINT_DEFAULT_CFG === 'object' && DB_MAINT_DEFAULT_CFG){
+    return {
+      rowsLimitTotal: Number(DB_MAINT_DEFAULT_CFG.rowsLimitTotal) || 1200,
+      rowsLimitLocks: Number(DB_MAINT_DEFAULT_CFG.rowsLimitLocks) || 300,
+      rowsLimitAlerts: Number(DB_MAINT_DEFAULT_CFG.rowsLimitAlerts) || 500,
+      rowsLimitTmp: Number(DB_MAINT_DEFAULT_CFG.rowsLimitTmp) || 500
+    };
+  }
+  return { rowsLimitTotal: 1200, rowsLimitLocks: 300, rowsLimitAlerts: 500, rowsLimitTmp: 500 };
+}
+function _dbMaintUiRead(){
+  var cfg = {};
+  try{ cfg = JSON.parse(localStorage.getItem(_DB_MAINT_UI_KEY) || '{}') || {}; }catch(e){ cfg = {}; }
+  var d = _dbMaintUiDefaults();
+  return {
+    rowsLimitTotal: Number(cfg.rowsLimitTotal) || d.rowsLimitTotal,
+    rowsLimitLocks: Number(cfg.rowsLimitLocks) || d.rowsLimitLocks,
+    rowsLimitAlerts: Number(cfg.rowsLimitAlerts) || d.rowsLimitAlerts,
+    rowsLimitTmp: Number(cfg.rowsLimitTmp) || d.rowsLimitTmp
+  };
+}
+function _dbMaintUiSetStatus(msg, color){
+  var el = document.getElementById('dbm-status');
+  if(!el) return;
+  el.textContent = msg || '';
+  el.style.color = color || 'var(--muted)';
+}
+function _dbMaintUiFill(){
+  var cfg = _dbMaintUiRead();
+  var d = _dbMaintUiDefaults();
+  var e1 = document.getElementById('dbm-limit-total');
+  var e2 = document.getElementById('dbm-limit-locks');
+  var e3 = document.getElementById('dbm-limit-alerts');
+  var e4 = document.getElementById('dbm-limit-tmp');
+  if(e1) e1.value = cfg.rowsLimitTotal;
+  if(e2) e2.value = cfg.rowsLimitLocks;
+  if(e3) e3.value = cfg.rowsLimitAlerts;
+  if(e4) e4.value = cfg.rowsLimitTmp;
+  _dbMaintUiSetStatus(
+    'Default: totali ' + d.rowsLimitTotal + ' · lock ' + d.rowsLimitLocks + ' · segnalazioni ' + d.rowsLimitAlerts + ' · temporanei ' + d.rowsLimitTmp,
+    'var(--muted)'
+  );
+}
+function openDbMaintenanceSettings(){
+  closeAltroMenu();
+  _dbMaintUiFill();
+  var ov = document.getElementById('dbm-ov');
+  if(ov) ov.classList.add('open');
+}
+function closeDbMaintenanceSettings(){
+  var ov = document.getElementById('dbm-ov');
+  if(ov) ov.classList.remove('open');
+}
+function saveDbMaintenanceSettings(){
+  var e1 = document.getElementById('dbm-limit-total');
+  var e2 = document.getElementById('dbm-limit-locks');
+  var e3 = document.getElementById('dbm-limit-alerts');
+  var e4 = document.getElementById('dbm-limit-tmp');
+  var cfg = {
+    rowsLimitTotal: parseInt((e1 && e1.value) || '0', 10),
+    rowsLimitLocks: parseInt((e2 && e2.value) || '0', 10),
+    rowsLimitAlerts: parseInt((e3 && e3.value) || '0', 10),
+    rowsLimitTmp: parseInt((e4 && e4.value) || '0', 10)
+  };
+  if(!cfg.rowsLimitTotal || !cfg.rowsLimitLocks || !cfg.rowsLimitAlerts || !cfg.rowsLimitTmp ||
+     cfg.rowsLimitTotal < 1 || cfg.rowsLimitLocks < 1 || cfg.rowsLimitAlerts < 1 || cfg.rowsLimitTmp < 1){
+    _dbMaintUiSetStatus('Inserisci solo numeri maggiori di zero.', '#e53e3e');
+    if(typeof showToastGen === 'function') showToastGen('red', 'Valori manutenzione non validi');
+    return;
+  }
+  try{
+    localStorage.setItem(_DB_MAINT_UI_KEY, JSON.stringify(cfg));
+    window.AppDbMaintenanceConfig = Object.assign({}, cfg);
+    if(typeof DB_MAINT_ROWS_LIMIT_TOTAL !== 'undefined') DB_MAINT_ROWS_LIMIT_TOTAL = cfg.rowsLimitTotal;
+    if(typeof DB_MAINT_ROWS_LIMIT_LOCKS !== 'undefined') DB_MAINT_ROWS_LIMIT_LOCKS = cfg.rowsLimitLocks;
+    if(typeof DB_MAINT_ROWS_LIMIT_ALERTS !== 'undefined') DB_MAINT_ROWS_LIMIT_ALERTS = cfg.rowsLimitAlerts;
+    if(typeof DB_MAINT_ROWS_LIMIT_TMP !== 'undefined') DB_MAINT_ROWS_LIMIT_TMP = cfg.rowsLimitTmp;
+    _dbMaintUiSetStatus('Soglie salvate con successo.', '#68d391');
+    if(typeof showToastGen === 'function') showToastGen('green', '✅ Soglie manutenzione salvate');
+  }catch(e){
+    _dbMaintUiSetStatus('Salvataggio non riuscito: ' + (e.message || 'errore'), '#e53e3e');
+  }
+}
+function resetDbMaintenanceSettings(){
+  try{ localStorage.removeItem(_DB_MAINT_UI_KEY); }catch(e){}
+  delete window.AppDbMaintenanceConfig;
+  _dbMaintUiFill();
+  _dbMaintUiSetStatus('Ripristinati i valori di default.', '#63b3ed');
+  if(typeof showToastGen === 'function') showToastGen('blue', 'Default manutenzione ripristinati');
+}
+function runDbMaintenanceNow(){
+  if(typeof dbSystemMaintenance !== 'function'){
+    _dbMaintUiSetStatus('Funzione manutenzione non disponibile in questa schermata.', '#e53e3e');
+    return;
+  }
+  _dbMaintUiSetStatus('Pulizia in corso...', '#f6ad55');
+  Promise.resolve(dbSystemMaintenance({ force: true, reason: 'manual-ui' })).then(function(){
+    _dbMaintUiSetStatus('Pulizia completata. Controlla la console per il report.', '#68d391');
+    if(typeof showToastGen === 'function') showToastGen('green', '🧹 Manutenzione database completata');
+  }).catch(function(err){
+    _dbMaintUiSetStatus('Errore manutenzione: ' + (err && err.message ? err.message : 'sconosciuto'), '#e53e3e');
+  });
+}
+
 
 // --- Notifiche Ordine -----------------------------------------------------
 var _notifPermesso = false;

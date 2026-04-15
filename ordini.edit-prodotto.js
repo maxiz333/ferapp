@@ -109,12 +109,16 @@ function saveEditProdotto(){
 
   // gf() - definita globalmente in [SECTION: UTILS]
 
-  var newCodM = gf('ep-codm');
+  var newCodM = (typeof sanitizeCodiceMagazzinoInput === 'function')
+    ? sanitizeCodiceMagazzinoInput(gf('ep-codm'))
+    : gf('ep-codm');
+  var codMEl = document.getElementById('ep-codm');
+  if(codMEl) codMEl.value = newCodM;
   if(typeof findDuplicateCodMagazzino === 'function'){
     var dupCod = findDuplicateCodMagazzino(newCodM, i);
     if(dupCod){
       if(typeof showCodiceMagazzinoDuplicateError === 'function') showCodiceMagazzinoDuplicateError(newCodM, dupCod.desc);
-      else showToastGen('red', "Errore: Il codice " + String(newCodM).trim() + " è già in uso per l'articolo " + (dupCod.desc || '—'));
+      else showToastGen('red', "⚠️ Errore: Il codice " + String(newCodM).trim() + " è già assegnato all'articolo " + (dupCod.desc || '—') + ". Usa un codice diverso.");
       return;
     }
   }

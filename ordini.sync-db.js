@@ -8,6 +8,7 @@ function _syncPrezziOrdineAlDB(ord){
   var aggiornatiPrezzi = 0;
   var aggiornatiQty = 0;
   var sottoScortaList = [];
+  var productTouched = false;
 
   ord.items.forEach(function(it){
     var prezzoOrd = it.prezzoUnit;
@@ -42,7 +43,9 @@ function _syncPrezziOrdineAlDB(ord){
       r.prezzo = prezzoOrd;
       r.data = new Date().toLocaleDateString('it-IT');
       r.size = (typeof autoSize === 'function') ? autoSize(prezzoOrd) : r.size;
+      if(typeof touchRowProductChangeAt === 'function') touchRowProductChangeAt(r);
       changed = true;
+      productTouched = true;
       aggiornatiPrezzi++;
     }
 
@@ -68,7 +71,9 @@ function _syncPrezziOrdineAlDB(ord){
       if(nuovaQty <= soglia){
         sottoScortaList.push({ desc: r.desc || it.desc || '?', qty: nuovaQty, soglia: soglia });
       }
+      if(typeof touchRowProductChangeAt === 'function') touchRowProductChangeAt(r);
       changed = true;
+      productTouched = true;
       aggiornatiQty++;
     }
 
@@ -77,7 +82,10 @@ function _syncPrezziOrdineAlDB(ord){
     }
   });
 
-  if(aggiornatiPrezzi) lsSet(SK, rows);
+  if(productTouched){
+    lsSet(SK, rows);
+    lsSet(MAGK, magazzino);
+  }
 
   // Toast riepilogo
   var parts = [];

@@ -53,6 +53,9 @@ function _doMagSearch(){
   var chronoMode = (typeof magChronoMode !== 'undefined') ? magChronoMode : 'none';
   var hasChrono  = chronoMode === 'added' || chronoMode === 'modified';
   var mode       = (typeof magMode !== 'undefined') ? magMode : 'prod';
+  var nowMs = Date.now();
+  var recentiLimitMs = (typeof magChronoCutoffMs === 'number' && magChronoCutoffMs > 0) ? magChronoCutoffMs : (nowMs - 72 * 60 * 60 * 1000);
+  var recentiMaxMs = (typeof magChronoNowMs === 'number' && magChronoNowMs > 0) ? magChronoNowMs : nowMs;
 
   // Nessun criterio → placeholder
   if(!hasSearch && !hasFilter && !hasSottoSc && !hasChrono){
@@ -74,7 +77,6 @@ function _doMagSearch(){
 
   var MAX = 50;
   var results = [], tot = 0, sottoScorta = 0;
-  var recentiLimitMs = Date.now() - (3 * 24 * 60 * 60 * 1000);
   if(typeof rebuildMagDuplicateCodes === 'function') rebuildMagDuplicateCodes();
 
   for(var i = 0; i < rows.length; i++){
@@ -110,10 +112,10 @@ function _doMagSearch(){
     if(hasChrono){
       var cAt = (typeof getRowCreatedAt === 'function') ? getRowCreatedAt(r) : 0;
       if(chronoMode === 'added'){
-        if(cAt < recentiLimitMs) continue;
+        if(cAt < recentiLimitMs || cAt > recentiMaxMs) continue;
       } else if(chronoMode === 'modified'){
         var modAt = (typeof getRowModifiedChronoAt === 'function') ? getRowModifiedChronoAt(r, i) : 0;
-        if(modAt < recentiLimitMs) continue;
+        if(modAt < recentiLimitMs || modAt > recentiMaxMs) continue;
       }
     }
 
@@ -149,6 +151,7 @@ function _doMagSearch(){
     (sottoScorta ? '<div class="sc r"><span class="n" style="color:#e53e3e">' + sottoScorta + '</span>Sotto scorta</div>' : '') +
     (chronoMode === 'added' ? '<div class="sc"><span class="n" style="color:#68d391">3g</span>Ultimi aggiunti</div>' : '') +
     (chronoMode === 'modified' ? '<div class="sc"><span class="n" style="color:#63b3ed">3g</span>Ultimi modificati</div>' : '') +
+    (chronoMode === 'modified' ? '<div class="sc"><span class="n" style="color:#63b3ed">' + results.length + '</span>Visualizzati: ' + results.length + ' articoli modificati negli ultimi 3 gg</div>' : '') +
     (Object.keys(_magDupCodes||{}).length ? '<div class="sc r"><span class="n" style="color:#f6ad55">' + Object.keys(_magDupCodes).length + '</span>Codici doppi</div>' : '');
 
   list.classList.toggle('mag-list--chrono', hasChrono);

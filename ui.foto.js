@@ -106,11 +106,24 @@ async function elaboraFotoAI(base64, mediaType){
 function confermaDaFoto(){
     var desc = gf('foto-desc');
   if(!desc){ showToastOk('-- Inserisci almeno una descrizione'); return; }
+  var codM = (typeof sanitizeCodiceMagazzinoInput === 'function')
+    ? sanitizeCodiceMagazzinoInput(gf('foto-codm'))
+    : gf('foto-codm');
+  var codMEl = document.getElementById('foto-codm');
+  if(codMEl) codMEl.value = codM;
+  if(codM && typeof findDuplicateCodMagazzino === 'function'){
+    var dupFoto = findDuplicateCodMagazzino(codM, -1);
+    if(dupFoto){
+      if(typeof showCodiceMagazzinoDuplicateError === 'function') showCodiceMagazzinoDuplicateError(codM, dupFoto.desc);
+      else showToastGen('red', "⚠️ Errore: Il codice " + codM + " è già assegnato all'articolo " + (dupFoto.desc || '—') + ". Usa un codice diverso.");
+      return;
+    }
+  }
   showConfirm('⚠️ Aggiungere "'+desc+'" come NUOVO articolo al database?', function(){
     var newRow = {
       desc: desc,
       codF: gf('foto-codf'),
-      codM: gf('foto-codm'),
+      codM: codM,
       prezzo: gf('foto-prezzo'),
       prezzoOld: '',
       note: gf('foto-note'),

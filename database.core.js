@@ -31,6 +31,11 @@ function normalizeCodiceMagazzino(v){
   return s.toLowerCase().replace(/\s+/g, '');
 }
 
+/** Pulisce il codice magazzino in input utente (trim anti-spazi fantasma). */
+function sanitizeCodiceMagazzinoInput(v){
+  return String(v == null ? '' : v).trim();
+}
+
 /** Confronto codici magazzino con tolleranza zeri iniziali. */
 function codiciMagazzinoUguali(a, b){
   var na = normalizeCodiceMagazzino(a);
@@ -61,9 +66,9 @@ function findDuplicateCodMagazzino(codM, excludeIdx){
 function showCodiceMagazzinoDuplicateError(codM, dupDesc){
   var cm = String(codM == null ? '' : codM).trim();
   var d = dupDesc == null ? '—' : String(dupDesc);
-  var msg = "Errore: Il codice " + cm + " è già in uso per l'articolo " + d;
+  var msg = "⚠️ Errore: Il codice " + cm + " è già assegnato all'articolo " + d + ". Usa un codice diverso.";
   if(typeof showToastGen === 'function') showToastGen('red', msg);
-  else if(typeof window !== 'undefined' && window.alert) window.alert(msg);
+  if(typeof window !== 'undefined' && window.alert) window.alert(msg);
 }
 
 /** Timestamp articolo (nuovi/modificati in alto); fallback stabile per dati legacy. */
@@ -104,16 +109,9 @@ function touchRowProductChangeAt(r){
   if(r) r.lastProductChangeAt = Date.now();
 }
 
-/** Filtro “Ultimi modificati” (3 giorni): max tra _updatedAt riga e magazzino (allineato a touch espliciti su prezzo/scheda/carrello). */
+/** Filtro “Ultimi modificati” (3 giorni): solo modifiche reali prodotto (prezzo/qtà/promo), non update tecnici. */
 function getRowModifiedChronoAt(r, idx){
-  var ur = (r && r._updatedAt != null) ? Number(r._updatedAt) : 0;
-  if(!isFinite(ur)) ur = 0;
-  var um = 0;
-  if(typeof magazzino !== 'undefined' && magazzino && magazzino[idx] && magazzino[idx]._updatedAt != null){
-    um = Number(magazzino[idx]._updatedAt);
-    if(!isFinite(um)) um = 0;
-  }
-  return Math.max(ur, um);
+  return getRowProductChangeAt(r);
 }
 
 // Sconti forbice: rotolo = % fissa sul listino (non azzerare)
@@ -492,7 +490,7 @@ function nacConferma(){
   var qty=parseFloat((document.getElementById('nac-qty')||{}).value)||1;
   var unit=(document.getElementById('nac-unit')||{}).value||'pz';
   var codF=(document.getElementById('nac-codf')||{}).value||'';
-  var codM=(document.getElementById('nac-codm')||{}).value||'';
+  var codM=sanitizeCodiceMagazzinoInput((document.getElementById('nac-codm')||{}).value||'');
   var nota=(document.getElementById('nac-nota')||{}).value||'';
   (cart.items=cart.items||[]).push({desc:desc.trim(),codF:codF,codM:codM,prezzoUnit:prezzo,qty:qty,unit:unit,nota:nota,scampolo:false,hasScaglioni:false,scaglioni:[],_scaglioniAperti:false});
   saveCarrelli();nacChiudi();renderCartTabs();
