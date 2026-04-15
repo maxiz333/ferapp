@@ -167,7 +167,7 @@ function _doMagSearch(){
     var r = o.r, i = o.i, m = o.m, isLow = o.isLow;
     var codMJson = JSON.stringify(r.codM == null ? '' : String(r.codM));
     var qty    = o.qty !== null ? o.qty : '';
-    var unit   = m.unit   || 'pz';
+    var unit   = (typeof normalizeUmValue === 'function') ? normalizeUmValue(m.unit || 'pz') : (m.unit || 'pz');
     var specs  = m.specs  || '';
     var marca  = m.marca  || '';
     var sub    = m.subcat || '';
@@ -238,8 +238,9 @@ function _doMagSearch(){
             'style="width:58px;padding:4px 6px;border:1px solid var(--border);border-radius:5px;background:#111;color:var(--text);font-size:13px;font-weight:700;text-align:center;" ' +
             'onchange="saveQta(' + i + ',this.value)" oninput="saveQta(' + i + ',this.value)">';
     html += '<select style="width:52px;padding:4px;border:1px solid var(--border);border-radius:5px;background:#111;color:var(--accent);font-size:11px;" onchange="saveMagRow(' + i + ',\'unit\',this.value)">';
-    ['pz','mt','kg','lt','conf','rot','sc'].forEach(function(u){
-      html += '<option' + (unit === u ? ' selected' : '') + '>' + u + '</option>';
+    var umList = (typeof UM_STANDARD !== 'undefined' && UM_STANDARD && UM_STANDARD.length) ? UM_STANDARD : ['pz','kg','MQ','mt','conf'];
+    umList.forEach(function(u){
+      html += '<option value="' + u + '"' + (unit === u ? ' selected' : '') + '>' + u + '</option>';
     });
     html += '</select>';
     html += '</div>';

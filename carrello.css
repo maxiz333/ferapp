@@ -1540,6 +1540,54 @@ button[touch-action="manipulation"],
   font-size: 9px;
 }
 
+/* Superficie MQ: H × L compatti vicino all'UM */
+.ct-mq-hl {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 3px 4px;
+  margin-top: 4px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.ct-mq-hl-lbl {
+  font-size: 8px;
+  font-weight: 800;
+  color: #888;
+  flex-shrink: 0;
+}
+.ct-mq-x {
+  font-size: 10px;
+  color: #666;
+  font-weight: 700;
+  flex-shrink: 0;
+  padding: 0 1px;
+}
+.ct-mq-inp {
+  width: 36px;
+  min-width: 32px;
+  max-width: 52px;
+  flex: 0 1 40px;
+  box-sizing: border-box;
+  padding: 2px 4px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #1a1a1c;
+  color: #f0f0f0 !important;
+  -webkit-text-fill-color: #f0f0f0;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: inherit;
+}
+.ct-mq-inp::placeholder { color: #555; -webkit-text-fill-color: #555; }
+.ct-mq-inp:focus {
+  outline: none;
+  border-color: var(--ct-yellow, #f5c400);
+}
+
 /* Scampolo / totale riga: verticale (listino sopra, finale sotto) */
 .ct-prz-stack {
   display: flex;
@@ -1778,6 +1826,15 @@ body.light-mode .ct-pb-inp:focus {
 body.light-mode .ct-pb-inp::placeholder {
   color: #888;
   -webkit-text-fill-color: #888;
+}
+body.light-mode .ct-mq-inp {
+  color: #1a1a1a !important;
+  -webkit-text-fill-color: #1a1a1a;
+  background: #fff;
+  border-color: #c5c5c5;
+}
+body.light-mode .ct-mq-inp:focus {
+  border-color: var(--accent, #c9a000);
 }
 
 /* ── MOBILE: denso ma prezzi grandi, nome largo, touch ≥44px (pollice) ─ */

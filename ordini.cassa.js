@@ -52,8 +52,12 @@ function openCassa(gi){
   fattoBtn.onclick=function(){
     var o=ordini.find(function(x){return x.id===_cassaOrdId;});
     if(o){
+      var prevSt = (o.stato==='lavorazione') ? 'nuovo' : (o.stato||'');
       if(o.id && typeof ordUnlock === 'function') ordUnlock(o.id);
-      if(typeof _syncPrezziOrdineAlDB === 'function') _syncPrezziOrdineAlDB(o);
+      if(prevSt !== 'completato' && typeof _syncPrezziOrdineAlDB === 'function'){
+        _syncPrezziOrdineAlDB(o);
+        o._magSyncApplied = true;
+      }
       o.stato='completato';
       if(!o.statiLog)o.statiLog={};
       o.statiLog.completato={ora:new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('it-IT')};

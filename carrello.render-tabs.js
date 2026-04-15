@@ -258,22 +258,39 @@ function renderCartTabs(){
       h += '<div class="ord-gc-qty ct-grid-qty">';
       h += '<div class="ct-qty ct-qty--compact">';
       h += '<button class="ct-qty-btn" onclick="cartDelta(\'' + cart.id + '\',' + idx + ',-1)">−</button>';
-      h += '<button class="ct-qty-val" onclick="openQtyNumpad(\'' + cart.id + '\',' + idx + ')">' + Math.round(q) + '</button>';
+      h += '<button type="button" class="ct-qty-val" id="cart-qty-val-' + idx + '" onclick="openQtyNumpad(\'' + cart.id + '\',' + idx + ')">' + esc((typeof itemFormatQtyDisplay === 'function') ? itemFormatQtyDisplay(q, it.unit) : String(q)) + '</button>';
       h += '<button class="ct-qty-btn" onclick="cartDelta(\'' + cart.id + '\',' + idx + ',1)">＋</button>';
       h += '</div>';
-      var units = ['pz','mt','m','kg','lt','cf','ml','gr','mm','cm','m²','m³'];
-      var curUnit = it.unit || 'pz';
+      var units = (typeof UM_STANDARD !== 'undefined' && UM_STANDARD && UM_STANDARD.length) ? UM_STANDARD : ['pz','kg','MQ','mt','conf'];
+      var curUnit = (typeof normalizeUmValue === 'function') ? normalizeUmValue(it.unit || 'pz') : (it.unit || 'pz');
       h += '<select class="ct-um-select ct-um--mini" onchange="cartSetUnit(\'' + cart.id + '\',' + idx + ',this.value)">';
       units.forEach(function(u){
         h += '<option value="' + u + '"' + (u === curUnit ? ' selected' : '') + '>' + u + '</option>';
       });
       h += '</select>';
+      if(typeof itemIsMqUm === 'function' && itemIsMqUm(curUnit)){
+        var hSup = it.h_superficie != null ? String(it.h_superficie) : '';
+        var lSup = it.l_superficie != null ? String(it.l_superficie) : '';
+        h += '<div class="ct-mq-hl" onclick="event.stopPropagation()">';
+        h += '<span class="ct-mq-hl-lbl" title="Altezza (m)">H</span>';
+        h += '<input type="text" class="ct-mq-inp" inputmode="decimal" autocomplete="off" ';
+        h += 'value="' + esc(hSup) + '" placeholder="—" title="Altezza m" ';
+        h += 'oninput="cartSetMqSuperficie(\'' + cart.id + '\',' + idx + ',\'h\',this.value)" ';
+        h += 'onclick="event.stopPropagation();this.select()" />';
+        h += '<span class="ct-mq-x">×</span>';
+        h += '<span class="ct-mq-hl-lbl" title="Larghezza (m)">L</span>';
+        h += '<input type="text" class="ct-mq-inp" inputmode="decimal" autocomplete="off" ';
+        h += 'value="' + esc(lSup) + '" placeholder="—" title="Larghezza m" ';
+        h += 'oninput="cartSetMqSuperficie(\'' + cart.id + '\',' + idx + ',\'l\',this.value)" ';
+        h += 'onclick="event.stopPropagation();this.select()" />';
+        h += '</div>';
+      }
       if(itemUsesPrezzoPerBaseUm(it.unit)){
         var bd = itemBaseUmScontoDisplay(it);
         var suffPB = itemPrezzoBaseUmSuffix(it.unit);
         var qhPB = itemUmQtyHint(it.unit);
         h += '<div class="ct-pb-inline" id="cart-pb-' + idx + '">';
-        h += '<span class="ct-pb-tag" title="Prezzo per ' + esc(suffPB) + ', quantità in ' + esc(qhPB) + '">Base</span>';
+        h += '<span class="ct-pb-tag" title="Prezzo per ' + esc(suffPB) + ', quantità in ' + esc(qhPB) + '">Prezzo Base</span>';
         h += '<input type="text" class="ct-pb-inp" inputmode="decimal" ';
         h += 'value="' + esc(it._prezzoUnitaBase || '') + '" placeholder="—" ';
         h += 'title="Prezzo listino ' + esc(suffPB) + ' · qtà ' + esc(qhPB) + '" ';

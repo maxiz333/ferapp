@@ -119,38 +119,122 @@ var SCONTO_ROTOLO_DEFAULT_PCT = 10;
 var SCONTO_SCAMPOLO_DEFAULT_PCT = 30;
 var SCONTO_SCAGLIONI_DEFAULT_PCT = 5;
 
+// UM standard applicazione (unica fonte per tutte le tendine).
+var UM_STANDARD = ['pz', 'kg', 'MQ', 'mt', 'conf'];
+
+/** Normalizza UM legacy/varianti alla forma standard condivisa. */
+function normalizeUmValue(unit){
+  var u = String(unit == null ? '' : unit).trim().toLowerCase();
+  if(!u) return 'pz';
+  if(u === 'pz' || u === 'pezzo' || u === 'pezzi' || u === 'pc' || u === 'pcs') return 'pz';
+  if(u === 'kg' || u === 'kilo' || u === 'chilo' || u === 'chilogrammo' || u === 'kilogrammo') return 'kg';
+  if(u === 'mt' || u === 'm' || u === 'metro' || u === 'metri') return 'mt';
+  if(u === 'mq' || u === 'm²' || u === 'm2' || u === 'metro quadro' || u === 'metri quadri') return 'MQ';
+  if(u === 'lt' || u === 'l' || u === 'litro' || u === 'litri') return 'conf';
+  if(u === 'rot' || u === 'sc' || u === 'cf' || u === 'confez' || u === 'confezione' || u === 'confezioni') return 'conf';
+  if(u === 'conf' || u === 'cf' || u === 'confezione' || u === 'confezioni') return 'conf';
+  return 'pz';
+}
+
+/** Costruisce le option HTML UM standard con selezione coerente. */
+function umOptionsHtml(selected){
+  var sel = normalizeUmValue(selected);
+  return UM_STANDARD.map(function(u){
+    return '<option value="' + u + '"' + (u === sel ? ' selected' : '') + '>' + u + '</option>';
+  }).join('');
+}
+
 /** UM con prezzo per unità base (kg, m, litro) e quantità nella UM di riga (es. g, cm, ml). */
 function itemUsesPrezzoPerBaseUm(unit){
+  var uNorm = normalizeUmValue(unit);
+  if(uNorm === 'kg' || uNorm === 'mt' || uNorm === 'MQ') return true;
   var u = String(unit || '').toLowerCase();
-  return u === 'kg' || u === 'g' || u === 'gr' || u === 'm' || u === 'mt' || u === 'cm' || u === 'ml' || u === 'lt';
+  return u === 'g' || u === 'gr' || u === 'cm' || u === 'ml' || u === 'lt' || u === 'm²' || u === 'm2' || u === 'mq';
 }
 
 /** Fattore: prezzoUnitàRiga = prezzoUnitàBase × fattore (es. g → 0,001 per €/kg). */
 function itemUmToBasePriceFactor(unit){
+  var uNorm = normalizeUmValue(unit);
+  if(uNorm === 'kg' || uNorm === 'mt' || uNorm === 'MQ') return 1;
   var u = String(unit || '').toLowerCase();
-  if(u === 'kg' || u === 'm' || u === 'mt' || u === 'lt') return 1;
+  if(u === 'lt') return 1;
   if(u === 'g' || u === 'gr' || u === 'ml') return 0.001;
   if(u === 'cm') return 0.01;
   return 1;
 }
 
 function itemPrezzoBaseUmSuffix(unit){
+  var uNorm = normalizeUmValue(unit);
+  if(uNorm === 'kg') return '€/kg';
+  if(uNorm === 'mt') return '€/mt';
+  if(uNorm === 'MQ') return '€/mq';
   var u = String(unit || '').toLowerCase();
-  if(u === 'kg' || u === 'g' || u === 'gr') return '€/kg';
-  if(u === 'm' || u === 'mt' || u === 'cm') return '€/m';
+  if(u === 'g' || u === 'gr') return '€/kg';
+  if(u === 'cm') return '€/mt';
   if(u === 'lt' || u === 'ml') return '€/l';
   return '€';
 }
 
 function itemUmQtyHint(unit){
+  var uNorm = normalizeUmValue(unit);
+  if(uNorm === 'kg') return 'kg';
+  if(uNorm === 'mt') return 'mt';
+  if(uNorm === 'MQ') return 'mq';
   var u = String(unit || '').toLowerCase();
-  if(u === 'kg') return 'kg';
   if(u === 'g' || u === 'gr') return 'g';
-  if(u === 'm' || u === 'mt') return 'm';
   if(u === 'cm') return 'cm';
   if(u === 'lt') return 'l';
   if(u === 'ml') return 'ml';
   return '';
+}
+
+/** True se la quantità articolo può avere decimali (es. mq, mt, kg, lt). */
+function itemUnitAllowsDecimalQty(unit){
+  var uNorm = normalizeUmValue(unit);
+  if(uNorm === 'kg' || uNorm === 'mt' || uNorm === 'MQ') return true;
+  var u = String(unit || '').toLowerCase();
+  return u === 'g' || u === 'gr' || u === 'cm' ||
+    u === 'lt' || u === 'ml' ||
+    u === 'm²' || u === 'm2' || u === 'mq' || u === 'm³' || u === 'm3';
+}
+
+/** True se l'UM di riga è metri quadri (MQ). */
+function itemIsMqUm(unit){
+  return normalizeUmValue(unit) === 'MQ';
+}
+
+/** Parse dimensione H/L per superficie (virgola o punto, solo valori > 0). */
+function parseMqDimensionInput(val){
+  if(val == null) return NaN;
+  var s = String(val).trim().replace(/\s+/g, '').replace(',', '.');
+  if(s === '') return NaN;
+  var n = parseFloat(s);
+  return isFinite(n) && n > 0 ? n : NaN;
+}
+
+/**
+ * Se UM è MQ e h_superficie × l_superficie sono entrambi validi, imposta it.qty = H * L.
+ * Ritorna true solo se la quantità è stata aggiornata da H·L.
+ */
+function itemMqSuperficieSyncQty(it){
+  if(!it || !itemIsMqUm(it.unit)) return false;
+  var h = parseMqDimensionInput(it.h_superficie);
+  var l = parseMqDimensionInput(it.l_superficie);
+  if(!isFinite(h) || !isFinite(l)) return false;
+  var area = h * l;
+  if(!(area > 0) || !isFinite(area)) return false;
+  it.qty = Math.round(area * 10000) / 10000;
+  return true;
+}
+
+/** Formatta quantità per UI: intero per pz, decimale pulito per unità continue. */
+function itemFormatQtyDisplay(qty, unit){
+  var q = parseFloat(qty || 0);
+  if(!isFinite(q)) q = 0;
+  if(itemUnitAllowsDecimalQty(unit)){
+    return String(Number(q.toFixed(3)));
+  }
+  return String(Math.round(q));
 }
 
 /** Testo per stampe (DDT, ricevuta, WA): es. "Prezzo base: 2,40 €/kg (qtà in g)". Vuoto se non c'è _prezzoUnitaBase valido. */
@@ -489,6 +573,7 @@ function nacConferma(){
   var prezzo=(document.getElementById('nac-prezzo')||{}).value||'0';
   var qty=parseFloat((document.getElementById('nac-qty')||{}).value)||1;
   var unit=(document.getElementById('nac-unit')||{}).value||'pz';
+  if(typeof normalizeUmValue === 'function') unit = normalizeUmValue(unit);
   var codF=(document.getElementById('nac-codf')||{}).value||'';
   var codM=sanitizeCodiceMagazzinoInput((document.getElementById('nac-codm')||{}).value||'');
   var nota=(document.getElementById('nac-nota')||{}).value||'';

@@ -39,6 +39,7 @@ function filterOrdini(f){
 function setStatoOrdine(gi,stato){
   var o=ordini[gi];if(!o)return;
   if(stato==='lavorazione') stato='nuovo';
+  var prevStato = (o.stato==='lavorazione') ? 'nuovo' : (o.stato||'');
   console.log('[LOCK] setStatoOrdine — ordine:', o.id, 'nuovo stato:', stato);
   var lockInfo = ordIsLockedByOther(o.id);
   if(lockInfo){
@@ -46,11 +47,17 @@ function setStatoOrdine(gi,stato){
     showToastGen('orange','🔒 IN LAVORAZIONE — Triplo tap per forzare');
     return;
   }
-  if(stato==='completato'){
+  if(stato==='completato' && prevStato!=='completato'){
     ordUnlock(o.id);
     _syncPrezziOrdineAlDB(o);
+    o._magSyncApplied = true;
   } else if(stato==='pronto'){
     ordUnlock(o.id);
+  } else if((stato==='nuovo' || stato==='annullato') && prevStato==='completato'){
+    if(o._magSyncApplied !== false && typeof _revertSyncPrezziOrdineAlDB === 'function'){
+      _revertSyncPrezziOrdineAlDB(o);
+    }
+    o._magSyncApplied = false;
   }
   o.stato=stato;
   if(!o.statiLog)o.statiLog={};

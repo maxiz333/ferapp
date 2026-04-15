@@ -29,7 +29,7 @@ function cartAddItem(rowIdx){
   var m=magazzino[rowIdx]||{};
   var hasScag=!!(m.scaglioni&&m.scaglioni.length);
   var newItem={rowIdx:rowIdx,desc:r.desc||'',codF:r.codF||'',codM:r.codM||'',specs:m.specs||'',
-    posizione:m.posizione||'',prezzoUnit:r.prezzo||'0',qty:1,unit:m.unit||'pz',
+    posizione:m.posizione||'',prezzoUnit:r.prezzo||'0',qty:1,unit:(typeof normalizeUmValue === 'function' ? normalizeUmValue(m.unit||'pz') : (m.unit||'pz')),
     scampolo:false,hasScaglioni:hasScag,scaglioni:hasScag?JSON.parse(JSON.stringify(m.scaglioni)):[],
     nota:'',_scaglioniAperti:false,daOrdinare:false};
   (cart.items=cart.items||[]).push(newItem);
@@ -66,13 +66,24 @@ function cartAddItem(rowIdx){
 function cartDelta(cartId,idx,delta){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
-  var oldQ=Math.round(parseFloat(cart.items[idx].qty)||0);
-  // Fix: incremento sempre intero (1, 2, 3...) — minimo assoluto 1
-  var newQty = oldQ + Math.round(delta);
-  cart.items[idx].qty = Math.max(1, newQty);
+  var itQty = cart.items[idx];
+  if(typeof itemIsMqUm === 'function' && itemIsMqUm(itQty.unit)){
+    delete itQty.h_superficie;
+    delete itQty.l_superficie;
+  }
+  var allowDec = (typeof itemUnitAllowsDecimalQty === 'function') ? itemUnitAllowsDecimalQty(itQty.unit) : false;
+  var oldQ = parseFloat(itQty.qty || 0);
+  if(!isFinite(oldQ) || oldQ <= 0) oldQ = allowDec ? 1 : 1;
+  var step = allowDec ? 0.1 : 1;
+  var newQty = oldQ + (Math.round(delta) * step);
+  if(allowDec){
+    itQty.qty = Math.max(0.1, Math.round(newQty * 1000) / 1000);
+  } else {
+    itQty.qty = Math.max(1, Math.round(newQty));
+  }
   _cartRicalcolaPrezzoVendita(cart.items[idx]);
   var o=ordinePerCarrelloStorico(cart);
-  if(o&&oldQ!==cart.items[idx].qty){
+  if(o&&Math.abs(oldQ-cart.items[idx].qty)>0.0001){
     var it=cart.items[idx];
     ordineAppendStorico(o,'Quantità '+((it&&it.desc)||'?')+': '+oldQ+' → '+it.qty+' '+(it.unit||'pz'));
     if(typeof saveOrdini==='function') saveOrdini();
@@ -83,12 +94,23 @@ function cartDelta(cartId,idx,delta){
 function cartSetQty(cartId,idx,val){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
-  var oldQ=Math.round(parseFloat(cart.items[idx].qty)||0);
-  // Fix: solo interi, minimo 1
-  cart.items[idx].qty = Math.max(1, Math.round(parseFloat(val)||1));
+  var itQty = cart.items[idx];
+  if(typeof itemIsMqUm === 'function' && itemIsMqUm(itQty.unit)){
+    delete itQty.h_superficie;
+    delete itQty.l_superficie;
+  }
+  var allowDec = (typeof itemUnitAllowsDecimalQty === 'function') ? itemUnitAllowsDecimalQty(itQty.unit) : false;
+  var oldQ=parseFloat(itQty.qty||0);
+  var parsed = parseFloat(val);
+  if(!isFinite(parsed) || parsed <= 0) parsed = allowDec ? 0.1 : 1;
+  if(allowDec){
+    itQty.qty = Math.max(0.1, Math.round(parsed * 1000) / 1000);
+  } else {
+    itQty.qty = Math.max(1, Math.round(parsed));
+  }
   _cartRicalcolaPrezzoVendita(cart.items[idx]);
   var o=ordinePerCarrelloStorico(cart);
-  if(o&&oldQ!==cart.items[idx].qty){
+  if(o&&Math.abs(oldQ-cart.items[idx].qty)>0.0001){
     var it=cart.items[idx];
     ordineAppendStorico(o,'Quantità '+((it&&it.desc)||'?')+': '+oldQ+' → '+it.qty+' '+(it.unit||'pz'));
     if(typeof saveOrdini==='function') saveOrdini();
@@ -142,7 +164,11 @@ function cartSetUnit(cartId,idx,val){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
   var it=cart.items[idx];
-  it.unit=val;
+  it.unit=(typeof normalizeUmValue === 'function') ? normalizeUmValue(val) : val;
+  if(typeof itemIsMqUm === 'function' && !itemIsMqUm(it.unit)){
+    delete it.h_superficie;
+    delete it.l_superficie;
+  }
   cartStripStaleRotoloInteroNota(it);
   if(!itemUsesPrezzoPerBaseUm(val)){
     delete it._prezzoUnitaBase;
@@ -358,6 +384,30 @@ function itemApplyPrezzoUnitaBase(it){
 }
 
 var _cartBaseUmTimers = {};
+var _cartMqHlTimers = {};
+
+function cartSetMqSuperficie(cartId, idx, which, rawVal){
+  var cart = carrelli.find(function(c){ return c.id === cartId; });
+  if(!cart || !cart.items[idx]) return;
+  var it = cart.items[idx];
+  if(typeof itemIsMqUm !== 'function' || !itemIsMqUm(it.unit)) return;
+  if(which === 'h') it.h_superficie = rawVal;
+  else if(which === 'l') it.l_superficie = rawVal;
+  if(typeof itemMqSuperficieSyncQty === 'function') itemMqSuperficieSyncQty(it);
+  _cartRicalcolaPrezzoVendita(it);
+  cartRefreshLineAndTotals(cartId, idx);
+  var key = cartId + '_' + idx + '_mq';
+  clearTimeout(_cartMqHlTimers[key]);
+  _cartMqHlTimers[key] = setTimeout(function(){
+    saveCarrelli();
+    var o = ordinePerCarrelloStorico(cart);
+    if(o && typeof saveOrdini === 'function') saveOrdini();
+    if(typeof _aggiornaBozzaOrdine === 'function' && cart.bozzaOrdId) _aggiornaBozzaOrdine(cart);
+    if(typeof _aggiornaOrdineDaCarrelloModifica === 'function' && cart.stato === 'modifica' && cart.ordId){
+      _aggiornaOrdineDaCarrelloModifica(cart);
+    }
+  }, 420);
+}
 
 function cartInputPrezzoUnitaBase(cartId, idx, el){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
@@ -422,6 +472,10 @@ function cartRefreshLineAndTotals(cartId, idx){
       var subColor = it._tuttoRotolo ? '#fc8181' : (it.fineRotolo ? '#f6ad55' : 'var(--accent)');
       subEl.innerHTML = '<div class="ord-gc-sub-val" style="color:' + subColor + '">€' + sub + '</div>';
     }
+  }
+  var qTap = document.getElementById('cart-qty-val-' + idx);
+  if(qTap){
+    qTap.textContent = (typeof itemFormatQtyDisplay === 'function') ? itemFormatQtyDisplay(it.qty, it.unit) : String(q);
   }
   var tot = (cart.items || []).reduce(function(s, row){
     return s + _prezzoEffettivo(row) * parseFloat(row.qty || 0);
@@ -669,6 +723,10 @@ function openQtyNumpad(cartId,idx){
   if(!cart||!cart.items[idx])return;
   var it=cart.items[idx];
   openNumpad(it.desc,it.qty,it.unit||'pz',function(val){
+    if(typeof itemIsMqUm === 'function' && itemIsMqUm(it.unit)){
+      delete it.h_superficie;
+      delete it.l_superficie;
+    }
     it.qty=val;_cartRicalcolaPrezzoVendita(it);saveCarrelli();renderCartTabs();
   });
 }

@@ -1328,8 +1328,9 @@ body.light-mode #confirm-overlay > div { background:#fff; }
     <!-- Prezzi -->
     <div style="display:flex;gap:8px;margin-bottom:10px;">
       <div style="flex:1;">
-        <div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">💰 Prezzo vendita</div>
+        <div id="ep-prezzo-label" style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">💰 Prezzo vendita</div>
         <input type="text" id="ep-prezzo" style="width:100%;padding:7px 10px;border:1px solid var(--accent)44;border-radius:8px;background:#111;color:var(--accent);font-size:15px;font-weight:900;">
+        <div id="ep-prezzo-base-hint" style="display:none;font-size:10px;color:#63b3ed;margin-top:4px;">Prezzo Base collegato (usato nel magazzino)</div>
       </div>
       <div style="flex:1;">
         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">↩️ Prezzo vecchio</div>
@@ -1376,7 +1377,7 @@ body.light-mode #confirm-overlay > div { background:#fff; }
       <div style="width:90px;">
         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Unità</div>
         <select id="ep-unit" style="width:100%;padding:7px 6px;border:1px solid var(--border);border-radius:6px;background:#111;color:var(--text);font-size:13px;">
-          <option>pz</option><option>mt</option><option>kg</option><option>lt</option><option>conf</option><option>rot</option><option>sc</option>
+          <option value="pz">pz</option><option value="kg">kg</option><option value="MQ">MQ</option><option value="mt">mt</option><option value="conf">conf</option>
         </select>
       </div>
     </div>

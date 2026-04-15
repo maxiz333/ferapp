@@ -957,6 +957,11 @@ body.light-mode .ord-forn-line {
   }
 }
 
+/* H × L superficie MQ (tab Ordini, stessi token del carrello) */
+#to .ord-items-wrap .ord-mq-hl {
+  margin-top: 4px;
+}
+
 /* ═══ Storico ordini archiviati (tab Ordini — 📂 Storico) ═══ */
 .ord-storico-view {
   padding: 4px 8px 16px;

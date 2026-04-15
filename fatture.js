@@ -105,8 +105,10 @@ function renderOfRighe(){
     h += '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">';
     h += '<input value="'+esc(r.desc)+'" placeholder="Articolo..." onchange="_ofRighe['+i+'].desc=this.value" style="flex:1;padding:7px;border-radius:7px;border:1px solid #2a2a2a;background:#111;color:var(--text);font-size:12px;font-family:inherit;">';
     h += '<input type="number" value="'+esc(r.qty)+'" min="1" onchange="_ofRighe['+i+'].qty=this.value" style="width:48px;padding:7px;border-radius:7px;border:1px solid #2a2a2a;background:#111;color:var(--accent);font-size:12px;font-weight:700;text-align:center;font-family:inherit;">';
-    h += '<select onchange="_ofRighe['+i+'].unit=this.value" style="padding:7px 4px;border-radius:7px;border:1px solid #2a2a2a;background:#111;color:var(--text);font-size:11px;font-family:inherit;">';
-    ['pz','mt','kg','lt','conf'].forEach(function(u){ h += '<option'+(r.unit===u?' selected':'')+'>'+u+'</option>'; });
+    h += '<select onchange="_ofRighe['+i+'].unit=(typeof normalizeUmValue===\'function\'?normalizeUmValue(this.value):this.value)" style="padding:7px 4px;border-radius:7px;border:1px solid #2a2a2a;background:#111;color:var(--text);font-size:11px;font-family:inherit;">';
+    var umList=(typeof UM_STANDARD!=='undefined'&&UM_STANDARD&&UM_STANDARD.length)?UM_STANDARD:['pz','kg','MQ','mt','conf'];
+    var uSel=(typeof normalizeUmValue==='function')?normalizeUmValue(r.unit||'pz'):(r.unit||'pz');
+    umList.forEach(function(u){ h += '<option value="'+u+'"'+(uSel===u?' selected':'')+'>'+u+'</option>'; });
     h += '</select>';
     h += '<input value="'+esc(r.prezzoUnit)+'" placeholder="-" onchange="_ofRighe['+i+'].prezzoUnit=this.value" style="width:54px;padding:7px;border-radius:7px;border:1px solid #2a2a2a;background:#111;color:var(--accent);font-size:12px;font-weight:700;text-align:right;font-family:inherit;">';
     if(_ofRighe.length>1) h += '<button onclick="_ofRighe.splice('+i+',1);renderOfRighe()" style="background:transparent;border:none;color:#555;font-size:16px;cursor:pointer;padding:0 4px;">-</button>';

@@ -7,21 +7,22 @@ function _syncPrezziOrdineAlDB(ord){
   if(!ord || !ord.items || !ord.items.length) return;
   var aggiornatiPrezzi = 0;
   var aggiornatiQty = 0;
+  var aggiornateUm = 0;
   var sottoScortaList = [];
   var productTouched = false;
+  var magTouched = false;
 
   ord.items.forEach(function(it){
     var prezzoOrd = it.prezzoUnit;
-    var qVenduta = parseFloat(it.qty || 0);
-
-    // Trova articolo nel database
-    var dbIdx = -1;
-    if(it.rowIdx !== undefined && it.rowIdx !== null && rows[it.rowIdx]) dbIdx = it.rowIdx;
-    else if(it.codM){
-      for(var ri = 0; ri < rows.length; ri++){
-        if(rows[ri] && rows[ri].codM === it.codM){ dbIdx = ri; break; }
+    var prezzoDaSalvare = prezzoOrd;
+    if(it && typeof itemUsesPrezzoPerBaseUm === 'function' && itemUsesPrezzoPerBaseUm(it.unit)){
+      var pb = parsePriceIT(it._prezzoUnitaBase);
+      if(pb > 0){
+        prezzoDaSalvare = itemFormatPrezzoLineStr(pb);
       }
     }
+    var qVenduta = parseFloat(String(it.qty == null ? 0 : it.qty).replace(',', '.')) || 0;
+    var dbIdx = _ordResolveDbIdx(it);
     if(dbIdx < 0 || !rows[dbIdx]) return;
 
     var r = rows[dbIdx];
@@ -29,7 +30,7 @@ function _syncPrezziOrdineAlDB(ord){
     var changed = false;
 
     // ── 1. Aggiorna prezzo ──────────────────────────────────────
-    if(prezzoOrd && prezzoOrd !== '0' && prezzoOrd !== '' && r.prezzo !== prezzoOrd){
+    if(prezzoDaSalvare && prezzoDaSalvare !== '0' && prezzoDaSalvare !== '' && r.prezzo !== prezzoDaSalvare){
       if(r.prezzo){
         if(!r.priceHistory) r.priceHistory = [];
         if(r.prezzoOld && r.prezzoOld !== r.prezzo){
@@ -40,9 +41,9 @@ function _syncPrezziOrdineAlDB(ord){
         r.priceHistory.unshift({ prezzo: r.prezzo, data: r.data || '' });
         if(r.priceHistory.length > 5) r.priceHistory.length = 5;
       }
-      r.prezzo = prezzoOrd;
+      r.prezzo = prezzoDaSalvare;
       r.data = new Date().toLocaleDateString('it-IT');
-      r.size = (typeof autoSize === 'function') ? autoSize(prezzoOrd) : r.size;
+      r.size = (typeof autoSize === 'function') ? autoSize(prezzoDaSalvare) : r.size;
       if(typeof touchRowProductChangeAt === 'function') touchRowProductChangeAt(r);
       changed = true;
       productTouched = true;
@@ -50,9 +51,16 @@ function _syncPrezziOrdineAlDB(ord){
     }
 
     // ── 2. Aggiorna unità di misura ─────────────────────────────
-    if(it.unit && it.unit !== (m.unit || 'pz')){
-      m.unit = it.unit;
-      changed = true;
+    if(it.unit){
+      var unitOrd = (typeof normalizeUmValue === 'function') ? normalizeUmValue(it.unit) : it.unit;
+      var unitMag = (typeof normalizeUmValue === 'function') ? normalizeUmValue(m.unit || 'pz') : (m.unit || 'pz');
+      if(unitOrd !== unitMag){
+        m.unit = unitOrd;
+        magazzino[dbIdx] = m; // persiste UM anche se non cambia la qty
+        changed = true;
+        magTouched = true;
+        aggiornateUm++;
+      }
     }
 
     // ── 3. Scarico magazzino (qty) ──────────────────────────────
@@ -74,6 +82,7 @@ function _syncPrezziOrdineAlDB(ord){
       if(typeof touchRowProductChangeAt === 'function') touchRowProductChangeAt(r);
       changed = true;
       productTouched = true;
+      magTouched = true;
       aggiornatiQty++;
     }
 
@@ -84,6 +93,8 @@ function _syncPrezziOrdineAlDB(ord){
 
   if(productTouched){
     lsSet(SK, rows);
+  }
+  if(productTouched || magTouched){
     lsSet(MAGK, magazzino);
   }
 
@@ -91,6 +102,7 @@ function _syncPrezziOrdineAlDB(ord){
   var parts = [];
   if(aggiornatiPrezzi) parts.push(aggiornatiPrezzi + ' prezz' + (aggiornatiPrezzi === 1 ? 'o' : 'i'));
   if(aggiornatiQty) parts.push(aggiornatiQty + ' qt' + (aggiornatiQty === 1 ? 'à' : 'à'));
+  if(aggiornateUm) parts.push(aggiornateUm + ' UM');
   if(parts.length){
     showToastGen('green', '💰 Aggiornati: ' + parts.join(' · '));
   }
@@ -103,5 +115,82 @@ function _syncPrezziOrdineAlDB(ord){
       }).join('\n');
       showToastGen('red', msg.trim());
     }, 1800);
+  }
+}
+
+/** Ritorna indice articolo database da riga ordine (rowIdx/codM). */
+function _ordResolveDbIdx(it){
+  if(!it) return -1;
+  if(it.rowIdx !== undefined && it.rowIdx !== null && rows[it.rowIdx]){
+    var byIdx = parseInt(it.rowIdx, 10);
+    return isNaN(byIdx) ? it.rowIdx : byIdx;
+  }
+  if(it.codM){
+    for(var ri = 0; ri < rows.length; ri++){
+      if(!rows[ri]) continue;
+      if(typeof codiciMagazzinoUguali === 'function'){
+        if(codiciMagazzinoUguali(rows[ri].codM, it.codM)) return ri;
+      } else if(String(rows[ri].codM || '').trim() === String(it.codM || '').trim()){
+        return ri;
+      }
+    }
+  }
+  if(it.codF){
+    var codF = String(it.codF || '').trim();
+    if(codF){
+      for(var rf = 0; rf < rows.length; rf++){
+        if(rows[rf] && String(rows[rf].codF || '').trim() === codF) return rf;
+      }
+    }
+  }
+  if(it.desc){
+    var d = String(it.desc || '').trim().toLowerCase();
+    if(d){
+      for(var rd = 0; rd < rows.length; rd++){
+        if(rows[rd] && String(rows[rd].desc || '').trim().toLowerCase() === d) return rd;
+      }
+    }
+  }
+  return -1;
+}
+
+/** Riporta a magazzino le quantità vendute quando un ordine torna Nuovo/Annullato. */
+function _revertSyncPrezziOrdineAlDB(ord){
+  if(!ord || !ord.items || !ord.items.length) return;
+  var reintegrati = 0;
+  var touched = false;
+
+  ord.items.forEach(function(it){
+    var qVenduta = parseFloat(String(it.qty == null ? 0 : it.qty).replace(',', '.')) || 0;
+    if(!(qVenduta > 0)) return;
+
+    var dbIdx = _ordResolveDbIdx(it);
+    if(dbIdx < 0 || !rows[dbIdx]) return;
+
+    var r = rows[dbIdx];
+    var m = magazzino[dbIdx] || {};
+    if(m.qty === undefined || m.qty === '') return;
+
+    var prevQty = Number(m.qty);
+    if(!isFinite(prevQty)) return;
+    var nuovaQty = prevQty + qVenduta;
+    m.qty = nuovaQty;
+    magazzino[dbIdx] = m;
+    if(typeof registraMovimento === 'function'){
+      registraMovimento(dbIdx, 'annullo-fatto', qVenduta, prevQty, nuovaQty, 'Ordine #' + (ord.numero || ord.id));
+    }
+    if(typeof touchRowProductChangeAt === 'function') touchRowProductChangeAt(r);
+    if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(dbIdx);
+    reintegrati++;
+    touched = true;
+  });
+
+  if(touched){
+    lsSet(SK, rows);
+    lsSet(MAGK, magazzino);
+    if(typeof updateStockBadge === 'function') updateStockBadge();
+  }
+  if(reintegrati){
+    showToastGen('green', '↩️ Magazzino reintegrato su ' + reintegrati + ' articol' + (reintegrati === 1 ? 'o' : 'i'));
   }
 }

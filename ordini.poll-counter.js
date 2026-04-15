@@ -4,6 +4,39 @@
 var _autoRefreshInterval=null;
 var _lastOrdiniJson='';
 
+function _bozzaItemNotifySig(it){
+  return {
+    desc:String(it&&it.desc||''),
+    codM:String(it&&it.codM||''),
+    codF:String(it&&it.codF||''),
+    qty:Number(parseFloat(it&&it.qty||0).toFixed(4)),
+    unit:String(it&&it.unit||''),
+    prezzoUnit:String(it&&it.prezzoUnit||''),
+    nota:String(it&&it.nota||''),
+    scampolo:!!(it&&it.scampolo),
+    fineRotolo:!!(it&&it.fineRotolo),
+    _scontoApplicato:Number(parseFloat(it&&it._scontoApplicato||0).toFixed(4)),
+    _scontoTipo:String(it&&it._scontoTipo||''),
+    _prezzoOriginale:String(it&&it._prezzoOriginale||''),
+    _prezzoUnitaBase:String(it&&it._prezzoUnitaBase||''),
+    _scaglionato:!!(it&&it._scaglionato),
+    _scaglioneQta:Number(parseFloat(it&&it._scaglioneQta||0).toFixed(4)),
+    congelato:!!ordItemCongelato(it),
+    scaglioni:JSON.stringify(it&&it.scaglioni||[])
+  };
+}
+
+function _bozzaNotifySignature(o){
+  return JSON.stringify({
+    id:String(o&&o.id||''),
+    stato:String(o&&o.stato||''),
+    nomeCliente:String(o&&o.nomeCliente||''),
+    nota:String(o&&o.nota||''),
+    totale:String(o&&o.totale||''),
+    items:(o&&o.items||[]).map(_bozzaItemNotifySig)
+  });
+}
+
 var _bozzaBadgeLast = -1; // -1 = primo avvio, non notificare
 function _updateBozzaBadge(){
   var nBozze=ordini.filter(function(o){return o.stato==='bozza';}).length;
@@ -57,10 +90,10 @@ function startAutoRefresh(){
         // Rileva bozze aggiornate (stessa quantità ma contenuto diverso)
         var freshBozzeIds=fresh.filter(function(o){return o.stato==='bozza';}).map(function(o){return o.id;});
         var prevBozzeMap={};
-        prev.filter(function(o){return o.stato==='bozza';}).forEach(function(o){prevBozzeMap[o.id]=JSON.stringify(o);});
+        prev.filter(function(o){return o.stato==='bozza';}).forEach(function(o){prevBozzeMap[o.id]=_bozzaNotifySignature(o);});
         freshBozzeIds.forEach(function(bid){
           var fb=fresh.find(function(o){return o.id===bid;});
-          if(fb && prevBozzeMap[bid] && prevBozzeMap[bid]!==JSON.stringify(fb)){
+          if(fb && prevBozzeMap[bid] && prevBozzeMap[bid]!==_bozzaNotifySignature(fb)){
             if(typeof mostraBozzaAggiornata === 'function') mostraBozzaAggiornata(fb);
           }
         });

@@ -175,12 +175,21 @@ function richediNotifPermesso(){
 }
 
 function openOrdiniNuovoFromNotification(){
+  _openOrdiniFromNotificationSequence('nuovo');
+}
+
+function _openOrdiniFromNotificationSequence(filtro){
   goTab('to');
-  if(typeof filterOrdini === 'function'){
-    filterOrdini('nuovo');
-  } else if(typeof renderOrdini === 'function'){
-    renderOrdini();
-  }
+  // Sequenza forzata: reset stato tab/filtro e doppio render per allineare UI già aperte.
+  setTimeout(function(){
+    if(typeof filterOrdini === 'function') filterOrdini(filtro);
+  }, 90);
+  setTimeout(function(){
+    if(typeof renderOrdini === 'function') renderOrdini();
+  }, 220);
+  setTimeout(function(){
+    if(typeof renderOrdini === 'function') renderOrdini();
+  }, 420);
 }
 
 function mostraNotificaOrdine(ord){
@@ -228,8 +237,7 @@ function mostraNotificaBozza(bozza){
       });
       notif.onclick = function(){
         window.focus();
-        goTab('to');
-        if(typeof filterOrdini === 'function') filterOrdini('bozza');
+        _openOrdiniFromNotificationSequence('bozza');
         notif.close();
       };
     } catch(e){ console.warn('Notifica bozza fallita:', e); }
@@ -295,8 +303,7 @@ function closeBozzaModal(){
 
 function bozzaModalVaiOrdini(){
   closeBozzaModal();
-  goTab('to');
-  if(typeof filterOrdini === 'function') filterOrdini('bozza');
+  _openOrdiniFromNotificationSequence('bozza');
 }
 
 // Chiudi bozza modal cliccando fuori

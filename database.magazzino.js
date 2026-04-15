@@ -426,7 +426,7 @@ function renderInventario(){
     var catLabel='';
     if(catId){var cf=categorie.find(function(x){return x.id===catId;});catLabel=cf?cf.nome:'';}
     var sub=m.subcat||'';
-    var unit=m.unit||'pz';
+    var unit=(typeof normalizeUmValue === 'function') ? normalizeUmValue(m.unit||'pz') : (m.unit||'pz');
     var specs=m.specs||'';
     var pos=m.posizione||'';
     var marca=m.marca||'';
@@ -662,7 +662,7 @@ function renderMagazzino(){
     items.forEach(function(o){
       var r=o.r,i=o.i,m=o.m,isLow=o.isLow;
       var qty=m.qty||'';
-      var unit=m.unit||'pz';
+      var unit=(typeof normalizeUmValue === 'function') ? normalizeUmValue(m.unit||'pz') : (m.unit||'pz');
       var sub=m.subcat||'';
       var marca=m.marca||'';
       var specs=m.specs||'';
@@ -696,8 +696,9 @@ function renderMagazzino(){
         'style="width:58px;padding:4px 6px;border:1px solid var(--border);border-radius:5px;background:#111;color:var(--text);font-size:13px;font-weight:700;text-align:center;" '+
         'onchange="saveQta('+i+',this.value)" oninput="saveQta('+i+',this.value)">';
       html+='<select style="width:52px;padding:4px 4px;border:1px solid var(--border);border-radius:5px;background:#111;color:var(--accent);font-size:11px;margin-left:3px;" onchange="saveMagRow('+i+',\'unit\',this.value)">';
-      ['pz','mt','kg','lt','conf','rot','sc'].forEach(function(u){
-        html+='<option'+(unit===u?' selected':'')+'>'+u+'</option>';
+      var umList=(typeof UM_STANDARD!=='undefined'&&UM_STANDARD&&UM_STANDARD.length)?UM_STANDARD:['pz','kg','MQ','mt','conf'];
+      umList.forEach(function(u){
+        html+='<option value="'+u+'"'+(unit===u?' selected':'')+'>'+u+'</option>';
       });
       html+='</select>';
       html+='</div>'; // fine flex qt-+unit-
@@ -880,7 +881,11 @@ function saveMagRow(i,field,val){
     // Aggiorna visuale scorta nella riga senza perdere il focus
     _updateMagQtyRow(i, newQty);
   } else {
-    magazzino[i][field]=val;
+    if(field === 'unit'){
+      magazzino[i][field] = (typeof normalizeUmValue === 'function') ? normalizeUmValue(val) : val;
+    } else {
+      magazzino[i][field]=val;
+    }
     magazzino[i]._updatedAt = Date.now();
     if(rows[i]) rows[i]._updatedAt = Date.now();
     lsSet(MAGK,magazzino);
@@ -898,7 +903,8 @@ function _updateMagQtyRow(i, qty){
   var badge = document.getElementById('mag-scorta-badge-'+i);
   if(badge){
     if(isLow){
-      badge.textContent='- SCORTA BASSA - '+qty+' '+(magazzino[i].unit||'pz')+' (min: '+(magazzino[i].soglia||0)+')';
+      var uNorm = (typeof normalizeUmValue === 'function') ? normalizeUmValue(magazzino[i].unit||'pz') : (magazzino[i].unit||'pz');
+      badge.textContent='- SCORTA BASSA - '+qty+' '+uNorm+' (min: '+(magazzino[i].soglia||0)+')';
       badge.style.display='inline-block';
     } else {
       badge.style.display='none';
@@ -910,7 +916,7 @@ function _updateMagQtyRow(i, qty){
 function buildQtaCell(i){
   var m=magazzino[i]||{};
   var qty=m.qty!==undefined&&m.qty!==''?m.qty:'';
-  var unit=m.unit||'pz';
+  var unit=(typeof normalizeUmValue === 'function') ? normalizeUmValue(m.unit||'pz') : (m.unit||'pz');
   var soglia=m.soglia!==undefined&&m.soglia!==''?Number(m.soglia):null;
   var isLow=soglia!==null && qty!=='' && Number(qty)<=soglia && Number(qty)>=0;
   var col=isLow?'#e53e3e':'var(--accent)';

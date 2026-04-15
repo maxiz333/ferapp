@@ -68,6 +68,20 @@ function richediNotifPermesso(){
   }
 }
 
+function _openOrdiniFromNotificationSequence(filtro){
+  goTab('to');
+  // Sequenza forzata: reset stato tab/filtro e doppio render per allineare UI già aperte.
+  setTimeout(function(){
+    if(typeof filterOrdini === 'function') filterOrdini(filtro);
+  }, 90);
+  setTimeout(function(){
+    if(typeof renderOrdini === 'function') renderOrdini();
+  }, 220);
+  setTimeout(function(){
+    if(typeof renderOrdini === 'function') renderOrdini();
+  }, 420);
+}
+
 function mostraNotificaOrdine(ord){
   // -- 1. Notifica di sistema -------------------------------------------
   if(_notifPermesso && 'Notification' in window && Notification.permission === 'granted'){
@@ -82,7 +96,7 @@ function mostraNotificaOrdine(ord){
       });
       notif.onclick = function(){
         window.focus();
-        goTab('to');
+        _openOrdiniFromNotificationSequence('nuovo');
         notif.close();
       };
     } catch(e){ console.warn('Notifica sistema fallita:', e); }
@@ -113,8 +127,7 @@ function mostraNotificaBozza(bozza){
       });
       notif.onclick = function(){
         window.focus();
-        goTab('to');
-        if(typeof filterOrdini === 'function') filterOrdini('bozza');
+        _openOrdiniFromNotificationSequence('bozza');
         notif.close();
       };
     } catch(e){ console.warn('Notifica bozza fallita:', e); }
@@ -180,8 +193,7 @@ function closeBozzaModal(){
 
 function bozzaModalVaiOrdini(){
   closeBozzaModal();
-  goTab('to');
-  if(typeof filterOrdini === 'function') filterOrdini('bozza');
+  _openOrdiniFromNotificationSequence('bozza');
 }
 
 // Chiudi bozza modal cliccando fuori
@@ -310,7 +322,7 @@ function closeOrdineModal(){
 
 function ordineModalVaiOrdini(){
   closeOrdineModal();
-  goTab('to');
+  _openOrdiniFromNotificationSequence('nuovo');
 }
 
 // Chiudi cliccando fuori

@@ -30,6 +30,10 @@ function ordInlineEdit(el, gi, ii, field){
         var nq = parseFloat(v);
         if(!nq || nq <= 0) nq = parseFloat(it.qty)||1;
         it.qty = nq;
+        if(typeof itemIsMqUm === 'function' && itemIsMqUm(it.unit)){
+          delete it.h_superficie;
+          delete it.l_superficie;
+        }
         // Ricalcola prezzo scaglionato
         ensurePrezzoOriginaleDaListino(it, false);
         if(it._scaglionato && it._prezzoOriginale && it._scontoApplicato > 0){

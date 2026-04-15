@@ -56,7 +56,16 @@ function openEditProdotto(i, isNew){
 
   // Unit-
   var unitSel = document.getElementById('ep-unit');
-  if(unitSel){ unitSel.value = m.unit || 'pz'; }
+  if(unitSel){
+    if(typeof umOptionsHtml === 'function') unitSel.innerHTML = umOptionsHtml(m.unit || 'pz');
+    unitSel.value = (typeof normalizeUmValue === 'function') ? normalizeUmValue(m.unit || 'pz') : (m.unit || 'pz');
+    unitSel.onchange = function(){ epRefreshPrezzoBaseUi(); };
+  }
+  var prezzoInp = document.getElementById('ep-prezzo');
+  if(prezzoInp){
+    prezzoInp.oninput = function(){ epRefreshPrezzoBaseUi(); };
+  }
+  epRefreshPrezzoBaseUi();
 
   // Popola categorie
   var catSel = document.getElementById('ep-cat');
@@ -102,6 +111,23 @@ function epDeltaQty(delta){
   inp.value = Math.max(0, cur + delta);
 }
 
+function epRefreshPrezzoBaseUi(){
+  var unitEl = document.getElementById('ep-unit');
+  var prezzoLbl = document.getElementById('ep-prezzo-label');
+  var hintEl = document.getElementById('ep-prezzo-base-hint');
+  if(!unitEl) return;
+  var unit = unitEl.value || 'pz';
+  var isBase = (typeof itemUsesPrezzoPerBaseUm === 'function') ? itemUsesPrezzoPerBaseUm(unit) : false;
+  var suff = (typeof itemPrezzoBaseUmSuffix === 'function') ? itemPrezzoBaseUmSuffix(unit) : '€';
+  if(prezzoLbl){
+    prezzoLbl.textContent = isBase ? ('💰 Prezzo base (' + suff + ')') : '💰 Prezzo vendita';
+  }
+  if(hintEl){
+    hintEl.style.display = isBase ? 'block' : 'none';
+    hintEl.textContent = isBase ? ('Prezzo Base collegato (' + suff + ') e usato nel magazzino') : '';
+  }
+}
+
 function saveEditProdotto(){
   if(_epIdx === null) return;
   var i = _epIdx;
@@ -125,6 +151,14 @@ function saveEditProdotto(){
 
   // Aggiorna row
   var newPrezzo = gf('ep-prezzo');
+  var unitEl = document.getElementById('ep-unit');
+  var unitNow = unitEl ? unitEl.value : 'pz';
+  if(typeof normalizeUmValue === 'function') unitNow = normalizeUmValue(unitNow);
+  var isBaseUm = (typeof itemUsesPrezzoPerBaseUm === 'function') ? itemUsesPrezzoPerBaseUm(unitNow) : false;
+  if(isBaseUm && parsePriceIT(newPrezzo) > 0){
+    // Per UM base (kg/mt/mq/lt ecc.) il prezzo articolo è sempre il prezzo base.
+    newPrezzo = itemFormatPrezzoLineStr(parsePriceIT(newPrezzo));
+  }
   if(newPrezzo && newPrezzo !== rows[i].prezzo){
     if(!rows[i].priceHistory) rows[i].priceHistory = [];
     rows[i].priceHistory.push({ prezzo: rows[i].prezzo, data: rows[i].data });
@@ -147,8 +181,7 @@ function saveEditProdotto(){
   var qtyVal = gf('ep-qty');
   var newQtyEdit = qtyVal !== '' ? parseFloat(qtyVal) : '';
   magazzino[i].qty   = newQtyEdit;
-  var unitEl = document.getElementById('ep-unit');
-  magazzino[i].unit  = unitEl ? unitEl.value : 'pz';
+  magazzino[i].unit  = unitNow || 'pz';
   var sogVal = gf('ep-soglia');
   magazzino[i].soglia  = sogVal !== '' ? parseFloat(sogVal) : '';
   var catEl = document.getElementById('ep-cat');

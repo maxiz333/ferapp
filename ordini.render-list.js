@@ -148,6 +148,9 @@ function renderOrdini(){
         var isFz=ordItemCongelato(it);
         var pu=parsePriceIT(it.prezzoUnit);
         var q=parseFloat(it.qty||0);
+        var curUnitOrd=(typeof normalizeUmValue==='function')?normalizeUmValue(it.unit||'pz'):(it.unit||'pz');
+        var mqOrdRow=curUnitOrd==='MQ';
+        var qDispStr=(typeof itemFormatQtyDisplay==='function')?itemFormatQtyDisplay(q,it.unit):String(q);
         var sub=isFz?'0.00':(pu*q).toFixed(2);
         var promoG = (typeof isPromoGItem === 'function') ? isPromoGItem(it) : false;
 
@@ -181,34 +184,74 @@ function renderOrdini(){
         if(it.daOrdinare) h+='<div class="ord-item-daord">🚚 DA ORDINARE</div>';
         h+='</div>';
 
-        // Quantità + unità + (opz.) prezzo base compatto
-        h+='<div class="ord-gc-qty'+(_canEdit&&!isFz?' ord-editable':'')+'"'+(_canEdit&&!isFz?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'qty\')" title="Tap per modificare"':'')+' style="display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;">';
-        h+='<div style="display:flex;align-items:center;flex-wrap:wrap;gap:2px;">'+q;
+        // Quantità + unità + (opz.) H×L per MQ + prezzo base compatto
+        h+='<div class="ord-gc-qty'+(_canEdit&&!isFz&&!mqOrdRow?' ord-editable':'')+'"'+(_canEdit&&!isFz&&!mqOrdRow?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'qty\')" title="Tap per modificare"':'')+' style="display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;">';
+        h+='<div style="display:flex;align-items:center;flex-wrap:wrap;gap:2px;">';
+        if(_canEdit&&!isFz&&mqOrdRow){
+          h+='<span class="ord-qty-disp" id="ord-qty-disp-'+ord.id+'-'+ii+'" onclick="event.stopPropagation();ordInlineEdit(this,'+gi+','+ii+',\'qty\')" title="Tap per quantità manuale (azzera H×L)" style="cursor:pointer;font-weight:700;">'+esc(qDispStr)+'</span>';
+        } else {
+          h+=qDispStr;
+        }
         if(_canEdit&&!isFz){
           h+='<select class="ord-unit-select" onclick="event.stopPropagation()" onchange="ordSetUnit('+gi+','+ii+',this.value)">';
-          var units=['pz','mt','m','kg','lt','cf','ml','gr','mm','cm','m\xB2','m\xB3'];
-          units.forEach(function(u){ h+='<option value="'+u+'"'+(u===(it.unit||'pz')?' selected':'')+'>'+u+'</option>'; });
+          var units=(typeof UM_STANDARD!=='undefined'&&UM_STANDARD&&UM_STANDARD.length)?UM_STANDARD:['pz','kg','MQ','mt','conf'];
+          var curUnit=(typeof normalizeUmValue==='function')?normalizeUmValue(it.unit||'pz'):(it.unit||'pz');
+          units.forEach(function(u){ h+='<option value="'+u+'"'+(u===curUnit?' selected':'')+'>'+u+'</option>'; });
           h+='</select>';
         } else {
           h+='<span class="ord-unit">'+esc(it.unit||'pz')+'</span>';
         }
         h+='</div>';
-        if(itemUsesPrezzoPerBaseUm(it.unit) && !isFz && _canEdit){
+        if(mqOrdRow){
+          if(_canEdit&&!isFz){
+            var hSupO=it.h_superficie!=null?String(it.h_superficie):'';
+            var lSupO=it.l_superficie!=null?String(it.l_superficie):'';
+            h+='<div class="ct-mq-hl ord-mq-hl" onclick="event.stopPropagation()">';
+            h+='<span class="ct-mq-hl-lbl" title="Altezza (m)">H</span>';
+            h+='<input type="text" class="ct-mq-inp" inputmode="decimal" autocomplete="off" ';
+            h+='value="'+esc(hSupO)+'" placeholder="—" title="Altezza m" ';
+            h+='oninput="ordSetMqSuperficie('+gi+','+ii+',\'h\',this.value)" ';
+            h+='onclick="event.stopPropagation();this.select()" />';
+            h+='<span class="ct-mq-x">×</span>';
+            h+='<span class="ct-mq-hl-lbl" title="Larghezza (m)">L</span>';
+            h+='<input type="text" class="ct-mq-inp" inputmode="decimal" autocomplete="off" ';
+            h+='value="'+esc(lSupO)+'" placeholder="—" title="Larghezza m" ';
+            h+='oninput="ordSetMqSuperficie('+gi+','+ii+',\'l\',this.value)" ';
+            h+='onclick="event.stopPropagation();this.select()" />';
+            h+='</div>';
+          } else {
+            var hRo=it.h_superficie!=null&&String(it.h_superficie).trim()!==''?esc(String(it.h_superficie)):'—';
+            var lRo=it.l_superficie!=null&&String(it.l_superficie).trim()!==''?esc(String(it.l_superficie)):'—';
+            h+='<div class="ct-mq-hl ord-mq-hl ord-mq-hl--readonly">';
+            h+='<span class="ct-mq-hl-lbl">H</span><span style="font-size:11px;font-weight:700;">'+hRo+'</span>';
+            h+='<span class="ct-mq-x">×</span>';
+            h+='<span class="ct-mq-hl-lbl">L</span><span style="font-size:11px;font-weight:700;">'+lRo+'</span>';
+            h+='</div>';
+          }
+        }
+        if(itemUsesPrezzoPerBaseUm(it.unit) && !isFz){
           var bdO=itemBaseUmScontoDisplay(it);
           var suffO=itemPrezzoBaseUmSuffix(it.unit);
-          h+='<div class="ct-pb-inline" id="ord-pb-'+ord.id+'-'+ii+'" onclick="event.stopPropagation()">';
-          h+='<span class="ct-pb-tag" title="Prezzo listino '+esc(suffO)+'">Base</span>';
-          h+='<input type="text" class="ct-pb-inp" inputmode="decimal" ';
-          h+='value="'+esc(it._prezzoUnitaBase||'')+'" placeholder="—" ';
-          h+='oninput="ordInputPrezzoUnitaBase('+gi+','+ii+',this)" ';
-          h+='onclick="event.stopPropagation();this.select()" />';
-          h+='<span class="ct-pb-disc" id="ord-pb-disc-'+ord.id+'-'+ii+'">';
-          if(bdO && bdO.hasSc){
-            h+='<span class="ct-pb-struck">€'+formatPrezzoUnitDisplay(bdO.b0)+'</span>';
-            h+='<span class="ct-pb-final">€'+formatPrezzoUnitDisplay(bdO.b1)+'</span>';
-            h+='<span class="ct-pb-sav">-€'+formatPrezzoUnitDisplay(bdO.savPerBase)+'</span>';
+          if(_canEdit){
+            h+='<div class="ct-pb-inline" id="ord-pb-'+ord.id+'-'+ii+'" onclick="event.stopPropagation()">';
+            h+='<span class="ct-pb-tag" title="Prezzo listino '+esc(suffO)+'">Prezzo Base</span>';
+            h+='<input type="text" class="ct-pb-inp" inputmode="decimal" ';
+            h+='value="'+esc(it._prezzoUnitaBase||'')+'" placeholder="—" ';
+            h+='oninput="ordInputPrezzoUnitaBase('+gi+','+ii+',this)" ';
+            h+='onclick="event.stopPropagation();this.select()" />';
+            h+='<span class="ct-pb-disc" id="ord-pb-disc-'+ord.id+'-'+ii+'">';
+            if(bdO && bdO.hasSc){
+              h+='<span class="ct-pb-struck">€'+formatPrezzoUnitDisplay(bdO.b0)+'</span>';
+              h+='<span class="ct-pb-final">€'+formatPrezzoUnitDisplay(bdO.b1)+'</span>';
+              h+='<span class="ct-pb-sav">-€'+formatPrezzoUnitDisplay(bdO.savPerBase)+'</span>';
+            }
+            h+='</span></div>';
+          } else if(it._prezzoUnitaBase){
+            h+='<div class="ct-pb-inline">';
+            h+='<span class="ct-pb-tag">Prezzo Base</span>';
+            h+='<span class="ct-prz-single">€'+esc(it._prezzoUnitaBase)+' '+esc(suffO)+'</span>';
+            h+='</div>';
           }
-          h+='</span></div>';
         }
         h+='</div>';
 

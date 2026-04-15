@@ -201,7 +201,9 @@ function _aggiornaBozzaOrdine(cart){
         nota:String(it&&it.nota||''),
         scampolo:!!(it&&it.scampolo),
         fineRotolo:!!(it&&it.fineRotolo),
-        sconto:Number(parseFloat(it&&it._scontoApplicato||0).toFixed(4))
+        sconto:Number(parseFloat(it&&it._scontoApplicato||0).toFixed(4)),
+        h_superficie:String(it&&it.h_superficie!=null?it.h_superficie:''),
+        l_superficie:String(it&&it.l_superficie!=null?it.l_superficie:'')
       };
     }));
   }
@@ -243,7 +245,9 @@ function _aggiornaOrdineDaCarrelloModifica(cart){
         nota:String(it&&it.nota||''),
         scampolo:!!(it&&it.scampolo),
         fineRotolo:!!(it&&it.fineRotolo),
-        sconto:Number(parseFloat(it&&it._scontoApplicato||0).toFixed(4))
+        sconto:Number(parseFloat(it&&it._scontoApplicato||0).toFixed(4)),
+        h_superficie:String(it&&it.h_superficie!=null?it.h_superficie:''),
+        l_superficie:String(it&&it.l_superficie!=null?it.l_superficie:'')
       };
     }));
   }
@@ -295,6 +299,7 @@ function inviaOrdine(cartId){
     items:(function(){
       var cpy=JSON.parse(JSON.stringify(cart.items));
       cpy.forEach(function(it){
+        if(typeof normalizeUmValue === 'function') it.unit = normalizeUmValue(it.unit || 'pz');
         ensurePrezzoOriginaleDaListino(it, true);
         var sc=it._scontoApplicato||0;
         var base=parsePriceIT(it._prezzoOriginale);

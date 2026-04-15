@@ -55,7 +55,7 @@ function _odRenderItems(ord){
     var isFz=ordItemCongelato(it);
     var desc=it.desc||'';
     var qty=parseFloat(it.qty||1);
-    var unit=it.unit||'pz';
+    var unit=(typeof normalizeUmValue === 'function') ? normalizeUmValue(it.unit||'pz') : (it.unit||'pz');
     var pu=(it.prezzoUnit||'0').toString();
     var sub=(parseFloat(pu.replace(',','.'))*qty).toFixed(2);
     var isSc=it.scampolo||false;
@@ -108,8 +108,22 @@ function _odRenderItems(ord){
     h+='</div>';
     // Unit-
     h+='<select onchange="odUpd('+i+',\'unit\',this.value)" style="background:#111;border:1px solid #2a2a2a;border-radius:6px;color:var(--text);font-size:11px;padding:4px 4px;outline:none;font-family:inherit;flex-shrink:0;">';
-    ['pz','mt','kg','lt','conf','rot','sc'].forEach(function(u){ h+='<option'+(unit===u?' selected':'')+'>'+u+'</option>'; });
+    var umList=(typeof UM_STANDARD!=='undefined'&&UM_STANDARD&&UM_STANDARD.length)?UM_STANDARD:['pz','kg','MQ','mt','conf'];
+    umList.forEach(function(u){ h+='<option value="'+u+'"'+(unit===u?' selected':'')+'>'+u+'</option>'; });
     h+='</select>';
+    if(unit==='MQ'){
+      var hOd=it.h_superficie!=null?String(it.h_superficie):'';
+      var lOd=it.l_superficie!=null?String(it.l_superficie):'';
+      h+='<div class="ct-mq-hl" style="margin:0;flex-wrap:nowrap;" onclick="event.stopPropagation()">';
+      h+='<span class="ct-mq-hl-lbl">H</span>';
+      h+='<input type="text" class="ct-mq-inp" inputmode="decimal" value="'+esc(hOd)+'" placeholder="—" ';
+      h+='oninput="odSetMqSuperficie('+i+',\'h\',this.value)" style="width:34px;min-width:30px;" />';
+      h+='<span class="ct-mq-x">×</span>';
+      h+='<span class="ct-mq-hl-lbl">L</span>';
+      h+='<input type="text" class="ct-mq-inp" inputmode="decimal" value="'+esc(lOd)+'" placeholder="—" ';
+      h+='oninput="odSetMqSuperficie('+i+',\'l\',this.value)" style="width:34px;min-width:30px;" />';
+      h+='</div>';
+    }
     // Prezzo
     h+='<span style="font-size:10px;color:#444;flex-shrink:0;">-</span>';
     h+='<input type="text" value="'+esc(pu)+'" oninput="odUpd('+i+',\'prezzoUnit\',this.value)" style="width:52px;background:transparent;border:none;border-bottom:1px solid #2a2a2a;color:#63b3ed;font-size:12px;font-weight:700;text-align:right;outline:none;font-family:inherit;padding:1px 2px;flex-shrink:0;">';
@@ -174,11 +188,52 @@ function _odRenderItems(ord){
   }
   el.innerHTML=h;
 }
+function odSetMqSuperficie(i, which, rawVal){
+  var ord=ordini.find(function(o){return o.id===_ordDetailId;});
+  if(!ord||!ord.items[i])return;
+  var it=ord.items[i];
+  if(ordItemCongelato(it)) return;
+  if(typeof itemIsMqUm!=='function'||!itemIsMqUm(it.unit)) return;
+  if(which==='h') it.h_superficie=rawVal;
+  else if(which==='l') it.l_superficie=rawVal;
+  if(typeof itemMqSuperficieSyncQty==='function') itemMqSuperficieSyncQty(it);
+  if(typeof _cartRicalcolaPrezzoVendita==='function') _cartRicalcolaPrezzoVendita(it);
+  _odApplicaScaglione(it);
+  var qShow=(typeof itemFormatQtyDisplay==='function')?itemFormatQtyDisplay(it.qty,it.unit):String(parseFloat(it.qty||0));
+  var elQ=document.getElementById('odq-'+i);
+  if(elQ) elQ.textContent=qShow;
+  var pu=(it.prezzoUnit||'0').toString().replace(',','.');
+  var sub=(parseFloat(pu)*parseFloat(it.qty||0)).toFixed(2);
+  var elS=document.getElementById('ods-'+i);
+  if(elS) elS.textContent='-'+sub;
+  var tot=_odTot(ord);
+  var elT=document.getElementById('odh-totale');
+  if(elT) elT.textContent='- '+tot.toFixed(2);
+  ord.totale=tot.toFixed(2);
+  saveOrdini();
+  _odSyncCartFromOrdIfBozza(ord);
+}
 function odUpd(i,field,val){
   var ord=ordini.find(function(o){return o.id===_ordDetailId;});
   if(!ord||!ord.items[i])return;
   if(ordItemCongelato(ord.items[i])&&field!=='prezzoUnit') return;
+  if(field==='unit' && typeof normalizeUmValue === 'function') val = normalizeUmValue(val);
   ord.items[i][field]=val;
+  if(field==='unit'){
+    if(typeof itemIsMqUm==='function' && !itemIsMqUm(ord.items[i].unit)){
+      delete ord.items[i].h_superficie;
+      delete ord.items[i].l_superficie;
+    }
+    ord.totale=_odTot(ord).toFixed(2);
+    saveOrdini();
+    _odSyncCartFromOrdIfBozza(ord);
+    _odRenderItems(ord);
+    return;
+  }
+  if(field==='qty' && typeof itemIsMqUm==='function' && itemIsMqUm(ord.items[i].unit)){
+    delete ord.items[i].h_superficie;
+    delete ord.items[i].l_superficie;
+  }
   if(field==='qty'||field==='prezzoUnit'){
     var pu=(ord.items[i].prezzoUnit||'0').toString().replace(',','.');
     var sub=(parseFloat(pu)*parseFloat(ord.items[i].qty||0)).toFixed(2);
@@ -198,13 +253,27 @@ function odDQ(i,delta){
   var ord=ordini.find(function(o){return o.id===_ordDetailId;});
   if(!ord||!ord.items[i])return;
   if(ordItemCongelato(ord.items[i])) return;
-  var cur=parseFloat(ord.items[i].qty||1);
-  var nv=Math.max(1,Math.round(cur+delta));
-  ord.items[i].qty=nv;
+  var itRow=ord.items[i];
+  if(typeof itemIsMqUm==='function' && itemIsMqUm(itRow.unit)){
+    delete itRow.h_superficie;
+    delete itRow.l_superficie;
+  }
+  var cur=parseFloat(itRow.qty||1);
+  var allowDec=(typeof itemUnitAllowsDecimalQty==='function')&&itemUnitAllowsDecimalQty(itRow.unit);
+  var nv;
+  if(allowDec){
+    var step=0.1;
+    nv=Math.max(0.1,Math.round((cur+delta*step)*1000)/1000);
+  } else {
+    nv=Math.max(1,Math.round(cur+delta));
+  }
+  itRow.qty=nv;
   // Applica prezzo scaglione se attivo
   _odApplicaScaglione(ord.items[i]);
   var elQ=document.getElementById('odq-'+i);
-  if(elQ)elQ.textContent=nv;
+  if(elQ){
+    elQ.textContent=(typeof itemFormatQtyDisplay==='function')?itemFormatQtyDisplay(nv,itRow.unit):String(nv);
+  }
   var pu=(ord.items[i].prezzoUnit||'0').toString().replace(',','.');
   var sub=(parseFloat(pu)*nv).toFixed(2);
   var elS=document.getElementById('ods-'+i);

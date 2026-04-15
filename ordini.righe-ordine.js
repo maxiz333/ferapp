@@ -110,11 +110,49 @@ function _ordRecalcSave(gi){
 // Usa ordSblocca/ordBlocca definiti sopra
 
 // ── Cambia unità di misura ordine ────────────────────────────────
+var _ordMqHlTimers = {};
+
+function ordSetMqSuperficie(gi, ii, which, rawVal){
+  var ord = ordini[gi];
+  if(!ord || !ord.items[ii]) return;
+  var it = ord.items[ii];
+  if(ordItemCongelato(it)) return;
+  if(typeof itemIsMqUm !== 'function' || !itemIsMqUm(it.unit)) return;
+  if(which === 'h') it.h_superficie = rawVal;
+  else if(which === 'l') it.l_superficie = rawVal;
+  if(typeof itemMqSuperficieSyncQty === 'function') itemMqSuperficieSyncQty(it);
+  if(typeof _cartRicalcolaPrezzoVendita === 'function') _cartRicalcolaPrezzoVendita(it);
+  ord.totale = ordTotaleSenzaCongelati(ord).toFixed(2);
+  ordRefreshPrezzoBaseUmVisuals(gi, ii);
+  var oid = ord.id;
+  var key = oid + '_' + ii + '_mq';
+  clearTimeout(_ordMqHlTimers[key]);
+  _ordMqHlTimers[key] = setTimeout(function(){
+    ord.modificato = true;
+    ord.modificatoAt = new Date().toLocaleString('it-IT');
+    ord.modificatoAtISO = new Date().toISOString();
+    saveOrdini();
+    var linkedCart = carrelli.find(function(c){ return c.ordId === ord.id; });
+    if(!linkedCart && ord.stato === 'bozza'){
+      linkedCart = carrelli.find(function(c){ return c.bozzaOrdId === ord.id; });
+    }
+    if(linkedCart){
+      linkedCart.items = ordItemsSoloAttiviDeep(ord.items);
+      saveCarrelli();
+    }
+    if(ord.stato === 'bozza' && typeof renderCartTabs === 'function') renderCartTabs();
+  }, 420);
+}
+
 function ordSetUnit(gi, ii, val){
   var ord=ordini[gi]; if(!ord||!ord.items[ii]) return;
   if(ordItemCongelato(ord.items[ii])) return;
   var it = ord.items[ii];
-  it.unit=val;
+  it.unit=(typeof normalizeUmValue === 'function') ? normalizeUmValue(val) : val;
+  if(typeof itemIsMqUm === 'function' && !itemIsMqUm(it.unit)){
+    delete it.h_superficie;
+    delete it.l_superficie;
+  }
   if(!itemUsesPrezzoPerBaseUm(val)){
     delete it._prezzoUnitaBase;
   } else if(it._prezzoUnitaBase && parsePriceIT(it._prezzoUnitaBase) > 0){
@@ -185,6 +223,11 @@ function ordRefreshPrezzoBaseUmVisuals(gi, ii){
     } else {
       subEl.innerHTML = '€' + sub;
     }
+  }
+
+  var qDispEl = document.getElementById('ord-qty-disp-' + oid + '-' + ii);
+  if(qDispEl && !isFz){
+    qDispEl.textContent = (typeof itemFormatQtyDisplay === 'function') ? itemFormatQtyDisplay(it.qty, it.unit) : String(q);
   }
 
   var tot = ordTotaleSenzaCongelati(ord);
