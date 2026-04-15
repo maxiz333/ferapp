@@ -77,6 +77,12 @@ document.addEventListener('DOMContentLoaded', function(){
     _fbDb.ref('ordini').on('value',function(snap){
       var d=snap.val();
       var fresh=d ? _fbFix(d) : [];
+      if(Array.isArray(fresh)){
+        fresh.forEach(function(o){
+          if(!o) return;
+          if(typeof o.visto !== 'boolean') o.visto = typeof _ordVistoCoerceBool === 'function' ? _ordVistoCoerceBool(o.visto) : !!o.visto;
+        });
+      }
       // Aggiorna sempre _idKnown al primo sync (prima di confrontare)
       if(_first){
         fresh.forEach(function(o){if(o&&o.id){_idKnown[o.id]=true; if(o.stato==='bozza'){_bozzaKnown[o.id]=true; _bozzaSnap[o.id]=JSON.stringify(o);}}});

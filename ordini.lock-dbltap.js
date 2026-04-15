@@ -4,6 +4,8 @@ var _ordTapLockPending = {};
 
 function ordCardTapLock(ev, ordId){
   if(!ordId || typeof ordAcquireOrderLock !== 'function') return;
+  // PC/ufficio: segna subito visto (sync Firebase) anche se il lock fallisce dopo
+  if(typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(ordId);
   var key = String(ordId);
   if(_ordTapLockPending[key]) return;
   if(ev && ev.target){
@@ -16,7 +18,6 @@ function ordCardTapLock(ev, ordId){
   _ordTapLockPending[key] = true;
   ordAcquireOrderLock(ordId, { force: false }, function(ok){
     _ordTapLockPending[key] = false;
-    if(ok && typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(ordId);
     if(!ok){
       if(typeof ordRefreshLockUI === 'function') ordRefreshLockUI();
       else renderOrdini();

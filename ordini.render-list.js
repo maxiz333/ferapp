@@ -103,7 +103,7 @@ function renderOrdini(){
       h+='<div class="ord-card-stato" style="background:'+sc+';color:'+_bannerTextCol+'">';
       h+=_bannerLabel;
       if(ord.numero) h+=' — #'+ord.numero;
-      if(ord.visto) h+='<span class="ord-visto-ico" title="Visto in ufficio">\uD83D\uDC41\uFE0F</span>';
+      if(typeof ordVistoMostraIcona === 'function' && ordVistoMostraIcona(ord)) h+='<span class="ord-visto-ico" title="Visto in ufficio">\uD83D\uDC41\uFE0F</span>';
       if(_isExBozza && ost!=='nuovo' && !isBozza){
         h+=' <span style="font-size:9px;opacity:.85;font-weight:700;letter-spacing:.25px;vertical-align:middle;color:#fca5a5;">ORDINE IN ARRIVO</span>';
       }

@@ -25,7 +25,7 @@ function _ctLinkedOrdForVisto(cart){
 
 function _ctHtmlOrdineVistoBadge(cart){
   var o = _ctLinkedOrdForVisto(cart);
-  if(!o || !o.visto) return '';
+  if(!o || (typeof ordVistoMostraIcona === 'function' ? !ordVistoMostraIcona(o) : !o.visto)) return '';
   return '<span class="ord-visto-ico" title="Visto in ufficio">\uD83D\uDC41\uFE0F</span>';
 }
 

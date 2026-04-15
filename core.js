@@ -63,6 +63,26 @@ function getOrdiniArchivio(){
   }
 })();
 
+/** True se l'ordine è segnato visto (boolean o valori legacy da Firebase/export). */
+function _ordVistoCoerceBool(v){
+  return v === true || v === 1 || v === 'true' || v === '1';
+}
+function ordVistoMostraIcona(o){
+  return !!(o && _ordVistoCoerceBool(o.visto));
+}
+
+// Campo visto (ufficio → telefono): boolean esplicito per ordini legacy senza chiave
+(function(){
+  if(!Array.isArray(ordini)) return;
+  var changed = false;
+  ordini.forEach(function(o){
+    if(!o || typeof o.visto === 'boolean') return;
+    o.visto = _ordVistoCoerceBool(o.visto);
+    changed = true;
+  });
+  if(changed) lsSet(ORDK, ordini);
+})();
+
 var _fb=null,_fbDb=null,_fbReady=false,_fbSyncing=false,_fbSyncingCart=false;
 
 // Ripara dati da Firebase (converte oggetti in array)
@@ -125,12 +145,17 @@ function getNextOrdNum(){
   return num;
 }
 
-/** True su layout “ufficio” (stessa soglia della lista ordini desktop). */
+/** True su layout “ufficio”: ≥768px (iPad/finestre affiancate) oppure PC con mouse e finestra non minuscola. */
 function ordineUfficioIsWide(){
   try{
-    if(window.matchMedia) return window.matchMedia('(min-width: 769px)').matches;
+    if(window.matchMedia){
+      if(window.matchMedia('(min-width: 768px)').matches) return true;
+      try{
+        if(window.matchMedia('(pointer: fine)').matches && window.matchMedia('(min-width: 480px)').matches) return true;
+      }catch(e2){}
+    }
   }catch(e){}
-  return typeof window.innerWidth === 'number' && window.innerWidth >= 769;
+  return typeof window.innerWidth === 'number' && window.innerWidth >= 768;
 }
 
 /**
@@ -144,7 +169,7 @@ function ordineSegnaVistoSeUfficio(ordOrId){
     var id = ordOrId && ordOrId.id ? ordOrId.id : ordOrId;
     if(!id) return;
     var ord = ordini.find(function(o){ return o && o.id === id; });
-    if(!ord || ord.visto === true) return;
+    if(!ord || ordVistoMostraIcona(ord)) return;
     ord.visto = true;
     if(typeof saveOrdini === 'function') saveOrdini();
   }catch(e){ console.warn('ordineSegnaVistoSeUfficio', e); }

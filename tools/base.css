@@ -397,6 +397,14 @@ body.light-mode #fatture-popup button { color: #444; }
   opacity:.95;
   text-shadow:0 0 6px rgba(56,161,105,.55), 0 0 2px rgba(99,179,237,.4);
 }
+@media (max-width:768px){
+  .ord-visto-ico{
+    font-size:10px;
+    margin-left:2px;
+    vertical-align:middle;
+    line-height:1;
+  }
+}
 
 /* ─── Dettaglio Ordine Overlay ─── */
 #ord-detail-overlay{position:fixed;inset:0;z-index:1500;background:#141414;opacity:0;pointer-events:none;transition:opacity .2s;display:flex;flex-direction:column;overflow:hidden;}
