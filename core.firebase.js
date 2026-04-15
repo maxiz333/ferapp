@@ -347,7 +347,13 @@ function _scheduleDbSystemMaintenance(){
           console.log('[CART] activeCartId corretto a:', activeCartId);
         }
         var t = document.getElementById('tc');
-        if(t && t.classList.contains('active')) renderCartTabs();
+        if(t && t.classList.contains('active')){
+          if(typeof cartNoteFieldHasFocus === 'function' && cartNoteFieldHasFocus()){
+            /* evita renderCartTabs mentre si scrive nelle note: altrimenti si perde il focus */
+          } else if(typeof renderCartTabs === 'function'){
+            renderCartTabs();
+          }
+        }
       }catch(e){ console.error('[CART] sync Firebase errore:', e); }
       setTimeout(function(){ _fbSyncingCart = false; }, 300);
     });

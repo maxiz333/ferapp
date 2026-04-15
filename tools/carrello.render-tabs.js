@@ -402,7 +402,8 @@ function renderCartTabs(){
       var notaPanelOpen = _ctPanelState[_pKey] === 'nota';
       h += '<div id="' + pNoId + '" class="ct-panel" style="display:' + (notaPanelOpen ? 'block' : 'none') + '">';
       h += '<textarea class="ct-nota-inp" placeholder="Nota articolo..." ' +
-           'oninput="cartSetNota(\'' + cart.id + '\',' + idx + ',this.value)">' +
+           'oninput="cartSetNota(\'' + cart.id + '\',' + idx + ',this.value)" ' +
+           'onblur="cartNotaFieldBlurFlush()">' +
            esc(it.nota||'') + '</textarea>';
       h += '</div>';
 
@@ -429,7 +430,8 @@ function renderCartTabs(){
   // ── NOTA ORDINE ───────────────────────────────────────────────────────────
   h += '<div id="cart-order-nota-row">';
   h += '<textarea class="pos-nota-ordine" rows="2" placeholder="📋 Nota ordine..." ' +
-       'oninput="cartSetNotaOrdine(\'' + cart.id + '\',this.value)">' + esc(cart.nota||'') + '</textarea>';
+       'oninput="cartSetNotaOrdine(\'' + cart.id + '\',this.value)" ' +
+       'onblur="cartNotaFieldBlurFlush()">' + esc(cart.nota||'') + '</textarea>';
   h += '</div>';
 
   h += tcHtmlCompareShell();
@@ -984,7 +986,9 @@ if(typeof window !== 'undefined' && !window.__CART_ORDINI_SYNC_BOUND__){
   window.__CART_ORDINI_SYNC_BOUND__ = true;
   function _ctRefreshIfCartTabActive(){
     var tc = document.getElementById('tc');
-    if(tc && tc.classList.contains('active') && typeof renderCartTabs === 'function') renderCartTabs();
+    if(!tc || !tc.classList.contains('active') || typeof renderCartTabs !== 'function') return;
+    if(typeof cartNoteFieldHasFocus === 'function' && cartNoteFieldHasFocus()) return;
+    renderCartTabs();
   }
   window.addEventListener('sync-orders', _ctRefreshIfCartTabActive);
   window.addEventListener('db-changed', function(ev){

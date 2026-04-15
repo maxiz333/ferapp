@@ -94,8 +94,10 @@ function ordRibloccaFatto(gi){ ordBlocca(gi); }
           inNota.type='text';
           inNota.placeholder='Nota articolo (opzionale)...';
           inNota.value=it.nota||'';
+          inNota.className='ord-bozza-nota';
           inNota.style.cssText='width:100%;padding:5px 9px;border:1px solid #222;border-radius:6px;background:#0d0d0d;color:#888;font-size:11px;box-sizing:border-box;margin-bottom:8px;';
-          inNota.addEventListener('input',function(){ it.nota=this.value; saveCarrelli(); });
+          inNota.addEventListener('input',function(){ it.nota=this.value; if(typeof scheduleDebouncedSaveCarrelli==='function') scheduleDebouncedSaveCarrelli(); else saveCarrelli(); });
+          inNota.addEventListener('blur',function(){ if(typeof cartNotaFieldBlurFlush==='function') cartNotaFieldBlurFlush(); else saveCarrelli(); });
           card.appendChild(inNota);
 
           // Riga 4: toggle Scampolo + Scaglionati
@@ -241,8 +243,10 @@ function ordRibloccaFatto(gi){ ordBlocca(gi); }
         inNotaOrd.type='text';
         inNotaOrd.placeholder='Nota generale ordine...';
         inNotaOrd.value=cart.nota||'';
+        inNotaOrd.className='ord-bozza-nota';
         inNotaOrd.style.cssText='width:100%;padding:7px 10px;border:1px solid #333;border-radius:7px;background:#111;color:#aaa;font-size:12px;box-sizing:border-box;margin-top:3px;';
-        inNotaOrd.addEventListener('input',function(){ cart.nota=this.value; saveCarrelli(); });
+        inNotaOrd.addEventListener('input',function(){ cart.nota=this.value; if(typeof scheduleDebouncedSaveCarrelli==='function') scheduleDebouncedSaveCarrelli(); else saveCarrelli(); });
+        inNotaOrd.addEventListener('blur',function(){ if(typeof cartNotaFieldBlurFlush==='function') cartNotaFieldBlurFlush(); else saveCarrelli(); });
         lNota.appendChild(inNotaOrd);
         list.appendChild(lNota);
 

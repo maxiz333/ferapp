@@ -187,7 +187,7 @@ body.light-mode #confirm-overlay > div { background:#fff; }
     <button onclick="ordDetailAddItem()" style="width:100%;padding:10px;border-radius:9px;border:1px dashed #2a2a2a;background:transparent;color:#444;font-size:12px;cursor:pointer;margin-top:2px;font-family:inherit;">+ Aggiungi articolo</button>
     <div style="margin-top:14px;">
       <div style="font-size:10px;color:#3a3a3a;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:6px;">Nota</div>
-      <textarea id="ord-detail-nota" rows="2" oninput="ordDetailSaveNota()" class="ord-edit-inp" placeholder="Nessuna nota..."></textarea>
+      <textarea id="ord-detail-nota" rows="2" oninput="ordDetailSaveNota()" onblur="ordDetailSaveNota(true)" class="ord-edit-inp" placeholder="Nessuna nota..."></textarea>
     </div>
   </div>
   <div id="odv-footer">

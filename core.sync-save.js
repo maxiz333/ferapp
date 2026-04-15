@@ -51,7 +51,9 @@ function saveCarrelli(){
       console.log('[CART] saveCarrelli — Firebase aggiornato, totale condiviso:', carrelli.length);
     }catch(e){ console.error('[CART] saveCarrelli Firebase FALLITO:', e); }
   }
-  if(typeof renderOrdini==='function') renderOrdini();
+  if(typeof renderOrdini==='function'){
+    if(typeof cartNoteFieldHasFocus!=='function' || !cartNoteFieldHasFocus()) renderOrdini();
+  }
   if(typeof window!=='undefined' && typeof window.dispatchEvent==='function'){
     window.dispatchEvent(new CustomEvent('sync-orders',{detail:{source:'saveCarrelli'}}));
   }

@@ -1,5 +1,27 @@
 // ordini.dettaglio-overlay.js - estratto da ordini.js
 
+var _OD_TEXT_DEBOUNCE_MS = 900;
+var _odUpdTextTimer = null;
+var _odOrdNotaTimer = null;
+
+function _odFlushDebouncedTextSaves(){
+  if(_odUpdTextTimer){
+    clearTimeout(_odUpdTextTimer);
+    _odUpdTextTimer = null;
+    var ord=ordini.find(function(o){return o.id===_ordDetailId;});
+    if(ord){
+      ord.totale=_odTot(ord).toFixed(2);
+      saveOrdini();
+      _odSyncCartFromOrdIfBozza(ord);
+    }
+  }
+  if(_odOrdNotaTimer){
+    clearTimeout(_odOrdNotaTimer);
+    _odOrdNotaTimer = null;
+    ordDetailSaveNota(true);
+  }
+}
+
 function openOrdDetail(gi){
   try{
     var ord=ordini[gi];
@@ -12,6 +34,7 @@ function openOrdDetail(gi){
   }catch(e){console.error('openOrdDetail:',e);}
 }
 function closeOrdDetail(){
+  _odFlushDebouncedTextSaves();
   var ov=document.getElementById('ord-detail-overlay');
   if(ov)ov.classList.remove('open');
   _ordDetailId=null;
@@ -219,6 +242,19 @@ function odUpd(i,field,val){
   if(ordItemCongelato(ord.items[i])&&field!=='prezzoUnit') return;
   if(field==='unit' && typeof normalizeUmValue === 'function') val = normalizeUmValue(val);
   ord.items[i][field]=val;
+  // Testi lunghi: debounce salvataggio (evita renderOrdini a ogni tasto)
+  if(field==='nota' || field==='fornitore' || field==='specs' || field==='desc'){
+    clearTimeout(_odUpdTextTimer);
+    _odUpdTextTimer = setTimeout(function(){
+      _odUpdTextTimer = null;
+      var o=ordini.find(function(x){return x.id===_ordDetailId;});
+      if(!o||!o.items[i]) return;
+      o.totale=_odTot(o).toFixed(2);
+      saveOrdini();
+      _odSyncCartFromOrdIfBozza(o);
+    }, _OD_TEXT_DEBOUNCE_MS);
+    return;
+  }
   if(field==='unit'){
     if(typeof itemIsMqUm==='function' && !itemIsMqUm(ord.items[i].unit)){
       delete ord.items[i].h_superficie;
@@ -369,11 +405,20 @@ function ordDetailAddItem(){
   saveOrdini();
   _odRenderItems(ord);
 }
-function ordDetailSaveNota(){
+function ordDetailSaveNota(immediate){
+  if(!immediate){
+    clearTimeout(_odOrdNotaTimer);
+    _odOrdNotaTimer = setTimeout(function(){
+      _odOrdNotaTimer = null;
+      ordDetailSaveNota(true);
+    }, _OD_TEXT_DEBOUNCE_MS);
+    return;
+  }
+  _odOrdNotaTimer = null;
   var ord=ordini.find(function(o){return o.id===_ordDetailId;});
   if(!ord)return;
   var el=document.getElementById('ord-detail-nota');
-  if(el)ord.nota=el.value;
+  if(el) ord.nota = el.value;
   saveOrdini();
 }
 function ordDetailSetStato(stato){

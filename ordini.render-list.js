@@ -385,6 +385,8 @@ function renderOrdini(){
 if(typeof window!=='undefined' && !window.__ORD_SYNC_ORDERS_BOUND__){
   window.__ORD_SYNC_ORDERS_BOUND__ = true;
   window.addEventListener('sync-orders', function(){
+    var a=document.activeElement;
+    if(a && a.classList && a.classList.contains('ord-nota-input')) return;
     if(typeof renderOrdini==='function') renderOrdini();
   });
 }

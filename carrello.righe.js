@@ -487,10 +487,44 @@ function cartRefreshLineAndTotals(cartId, idx){
   }
 }
 
+// Note carrello: debounce salvataggio (evita renderCartTabs/sync a ogni tasto)
+var _CART_NOTA_DEBOUNCE_MS = 900;
+var _cartNotaDebounceTimer = null;
+
+function _cartScheduleDebouncedSave(){
+  clearTimeout(_cartNotaDebounceTimer);
+  _cartNotaDebounceTimer = setTimeout(function(){
+    _cartNotaDebounceTimer = null;
+    saveCarrelli();
+  }, _CART_NOTA_DEBOUNCE_MS);
+}
+
+/** True se il focus è su una textarea/input nota del carrello (non ricostruire il DOM). */
+function cartNoteFieldHasFocus(){
+  var a = document.activeElement;
+  if(!a || !a.classList) return false;
+  return a.classList.contains('pos-nota-ordine') || a.classList.contains('ct-nota-inp') ||
+    a.classList.contains('ord-bozza-nota') || a.classList.contains('ord-nota-input');
+}
+if(typeof window !== 'undefined'){
+  window.cartNoteFieldHasFocus = cartNoteFieldHasFocus;
+  window.scheduleDebouncedSaveCarrelli = _cartScheduleDebouncedSave;
+}
+
+/** Dopo blur sulle note: salva subito senza attendere il debounce. */
+function cartNotaFieldBlurFlush(){
+  if(_cartNotaDebounceTimer){
+    clearTimeout(_cartNotaDebounceTimer);
+    _cartNotaDebounceTimer = null;
+  }
+  saveCarrelli();
+}
+
 function cartSetNota(cartId,idx,val){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
-  cart.items[idx].nota=val;saveCarrelli();
+  cart.items[idx].nota=val;
+  _cartScheduleDebouncedSave();
 }
 function cartToggleNotaInline(cartId,idx){
   var el=document.getElementById('cart-nota-'+idx);
@@ -527,7 +561,10 @@ function cartToggleDaOrdinare(cartId,idx){
 }
 function cartSetNotaOrdine(cartId,val){
   var cart=carrelli.find(function(c){return c.id===cartId;});
-  if(cart){cart.nota=val;saveCarrelli();}
+  if(cart){
+    cart.nota=val;
+    _cartScheduleDebouncedSave();
+  }
 }
 function cartRemoveItem(cartId,idx){
   var cart=carrelli.find(function(c){return c.id===cartId;});if(!cart)return;
