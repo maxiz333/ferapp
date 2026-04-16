@@ -228,6 +228,9 @@ function _scheduleDbSystemMaintenance(){
       if(_fbSharedSyncing[path]) return;
       _fbSharedSyncing[path] = true;
       try{
+        if(globalVarName === 'fornitoriSettings' && d != null && !Array.isArray(d) && typeof d === 'object'){
+          d = Object.keys(d).map(function(k){ return d[k]; }).filter(function(x){ return x && typeof x === 'object'; });
+        }
         window[globalVarName] = d;
         window.AppStorage.set(key, d);
         if(globalVarName === 'categorie'){
@@ -369,6 +372,9 @@ function _scheduleDbSystemMaintenance(){
     _applySharedValue('shared/ordini_fornitori', window.AppKeys.ORDFORNITORI, 'ordFornitori', []);
     _applySharedValue('shared/forni_colore', window.AppKeys.FORNI_COLORE, 'forniColore', {});
     _applySharedValue('shared/ord_forn_storico', window.AppKeys.ORD_FORN_STORICO, 'ordFornStorico', []);
+    if(window.AppKeys.SETTINGS_FORNITORI){
+      _applySharedValue('settings/fornitori', window.AppKeys.SETTINGS_FORNITORI, 'fornitoriSettings', []);
+    }
 
     // ── Avvia caricamento catalogo IMMEDIATAMENTE all'apertura ──
     if(document.readyState === 'loading'){

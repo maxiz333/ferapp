@@ -5,6 +5,63 @@
 var ORD_FORN_STOR_K = window.AppKeys.ORD_FORN_STORICO;
 var ORD_FORN_COLD_K = window.AppKeys.ORD_FORN_STORICO_COLD;
 var DAO_STORICO_MAX_GG = 30;
+var FORNITORI_SETTINGS_K = window.AppKeys.SETTINGS_FORNITORI;
+if(!FORNITORI_SETTINGS_K) window.AppKeys.SETTINGS_FORNITORI = 'cp4_settings_fornitori';
+FORNITORI_SETTINGS_K = window.AppKeys.SETTINGS_FORNITORI;
+if(typeof window.fornitoriSettings === 'undefined' || window.fornitoriSettings === null){
+  window.fornitoriSettings = lsGet(FORNITORI_SETTINGS_K, []) || [];
+}
+if(!Array.isArray(window.fornitoriSettings)) window.fornitoriSettings = [];
+
+/** Slot colore fissi (filtri e menu carrello) — stesso ordine ovunque. */
+var CT_FORN_CANON_HEX = ['#e53e3e', '#38a169', '#3182ce', '#e2c400'];
+var CT_FORN_HEX_FALLBACK = {
+  '#e53e3e': 'Rosso', '#38a169': 'Verde', '#3182ce': 'Blu', '#e2c400': 'Giallo',
+  '#888888': 'Senza colore'
+};
+
+function ctNormalizeHex(c){
+  if(c == null || c === '') return '';
+  var s = String(c).trim();
+  if(s.charAt(0) !== '#') s = '#' + s.replace(/^#+/, '');
+  if(/^#([0-9a-fA-F]{3})$/.test(s)){
+    var x = s.slice(1);
+    s = '#' + x[0] + x[0] + x[1] + x[1] + x[2] + x[2];
+  }
+  if(!/^#([0-9a-fA-F]{6})$/.test(s)) return '';
+  return s.toLowerCase();
+}
+
+/** Slot colore per filtri e popup ORDINA: canon + anagrafica + eventuali hex già usati negli articoli. */
+function ctOrderedFilterColors(byColor){
+  byColor = byColor || {};
+  var seen = {};
+  var list = [];
+  function add(h){
+    h = ctNormalizeHex(h);
+    if(!h || seen[h]) return;
+    seen[h] = true;
+    list.push(h);
+  }
+  CT_FORN_CANON_HEX.forEach(function(h){ add(h); });
+  (window.fornitoriSettings || []).forEach(function(f){
+    if(f && f.colore) add(f.colore);
+  });
+  Object.keys(byColor).forEach(function(h){ add(h); });
+  return list.sort(function(a, b){
+    var ia = CT_FORN_CANON_HEX.indexOf(a), ib = CT_FORN_CANON_HEX.indexOf(b);
+    if(ia !== -1 && ib !== -1) return ia - ib;
+    if(ia !== -1) return -1;
+    if(ib !== -1) return 1;
+    return String(a).localeCompare(String(b));
+  });
+}
+
+/** Lista hex per il popup "Ordina" sulle card (ordine script: ui-card prima di questo file → funzione usata da ui-card se presente). */
+function ctHexSlotsOrdineFornitore(){
+  var byColor = typeof daoCollectDaOrdinareByColor === 'function' ? daoCollectDaOrdinareByColor() : {};
+  return ctOrderedFilterColors(byColor);
+}
 
 function ctGetForniColore(){
   return lsGet(CT_FORN_KEY, {}) || {};
@@ -15,19 +72,19 @@ function ctSaveForniColore(map){
   if(typeof window !== 'undefined') window.forniColore = map;
 }
 
-/** Slot colore fissi (filtri e menu carrello) — stesso ordine ovunque. */
-var CT_FORN_CANON_HEX = ['#e53e3e', '#38a169', '#3182ce', '#e2c400'];
-var CT_FORN_HEX_FALLBACK = {
-  '#e53e3e': 'Rosso', '#38a169': 'Verde', '#3182ce': 'Blu', '#e2c400': 'Giallo',
-  '#888888': 'Senza colore'
-};
-
 /** Nome fornitore salvato per lo slot colore; altrimenti etichetta di default. */
 function ctEtichettaFornitore(hex){
   var m = typeof ctGetForniColore === 'function' ? ctGetForniColore() : {};
-  var custom = m && m[hex];
+  var hn = ctNormalizeHex(hex) || hex;
+  var custom = (m && m[hn]) || (m && m[hex]);
   if(custom && String(custom).trim()) return String(custom).trim();
-  return CT_FORN_HEX_FALLBACK[hex] || hex || '';
+  var fs = window.fornitoriSettings || [];
+  for(var i = 0; i < fs.length; i++){
+    var f = fs[i];
+    if(!f || !f.colore) continue;
+    if(ctNormalizeHex(f.colore) === hn) return String(f.nome || '').trim();
+  }
+  return CT_FORN_HEX_FALLBACK[hex] || CT_FORN_HEX_FALLBACK[hn] || hex || '';
 }
 
 function _daoSortedKeysForDisplay(byColor){
@@ -53,21 +110,145 @@ function ctHtmlBarraFiltriFornitore(byColor, activeFilter, cfg){
   var h = '';
   h += '<div class="ord-forn-filter-row">';
   h += '<button type="button" class="ord-forn-filt-tutti' + (allOn ? ' ord-forn-filt-tutti--on' : '') + '" onclick="' + fnReset + '()">Tutti</button>';
-  CT_FORN_CANON_HEX.forEach(function(col){
+  ctOrderedFilterColors(byColor).forEach(function(col){
     var cnt = (byColor && byColor[col]) ? byColor[col].length : 0;
     var nome = ctEtichettaFornitore(col);
     var isOn = activeFilter === col;
     var st = isOn
-      ? 'border-color:' + col + ';background:' + col + '22;color:' + col + ';'
-      : 'border-color:#333;background:transparent;color:#888;';
+      ? 'border-color:' + col + ';background:' + col + '33;color:' + col + ';box-shadow:0 0 0 1px ' + col + '55;'
+      : 'border-color:' + col + '44;background:' + col + '14;color:#ccc;';
     h += '<button type="button" class="ord-forn-filt-slot" style="' + st + '" onclick="' + fnFilter + '(\'' + col + '\')">';
     h += '<span class="ord-forn-filt-dot" style="background:' + col + '"></span>';
     h += '<span class="ord-forn-filt-lbl">' + esc(nome) + '</span>';
     h += '<span class="ord-forn-filt-n">(' + cnt + ')</span>';
     h += '</button>';
   });
+  h += '<button type="button" class="ord-forn-filt-add" onclick="ctApriAggiungiFornitore()" title="Nuovo fornitore">＋</button>';
   h += '</div>';
   return h;
+}
+
+var CT_FORN_QUICK_HEX = ['#9f7aea', '#dd6b20', '#00b5d8', '#d53f8c', '#718096', '#276749'];
+
+function ctApriAggiungiFornitore(){
+  var ex = document.getElementById('ct-forn-add-modal');
+  if(ex){ ex.remove(); return; }
+  var bd = document.createElement('div');
+  bd.id = 'ct-forn-add-backdrop';
+  bd.className = 'ct-forn-add-backdrop';
+  var box = document.createElement('div');
+  box.id = 'ct-forn-add-modal';
+  box.className = 'ct-forn-add-modal';
+  box.innerHTML =
+    '<div class="ct-forn-add-title">Nuovo fornitore</div>' +
+    '<label class="ct-forn-add-lbl">Nome</label>' +
+    '<input type="text" id="ct-forn-add-nome" class="ct-forn-add-inp" placeholder="es. Sabart" autocomplete="off">' +
+    '<label class="ct-forn-add-lbl">Colore</label>' +
+    '<div class="ct-forn-add-color-row">' +
+    '<input type="color" id="ct-forn-add-color" class="ct-forn-add-color-native" value="#3182ce">' +
+    '<span class="ct-forn-add-hint">Scegli dalla ruota o dai campioni</span></div>' +
+    '<div class="ct-forn-add-swatches" id="ct-forn-add-swatches"></div>' +
+    '<div class="ct-forn-add-actions">' +
+    '<button type="button" class="ct-forn-add-btn ct-forn-add-btn--ghost" onclick="ctChiudiAggiungiFornitore()">Annulla</button>' +
+    '<button type="button" class="ct-forn-add-btn ct-forn-add-btn--ok" onclick="ctSalvaNuovoFornitore()">Salva</button>' +
+    '</div>';
+  bd.onclick = function(e){ if(e.target === bd) ctChiudiAggiungiFornitore(); };
+  document.body.appendChild(bd);
+  document.body.appendChild(box);
+  var sw = document.getElementById('ct-forn-add-swatches');
+  var chips = CT_FORN_CANON_HEX.concat(CT_FORN_QUICK_HEX);
+  var colorInp = document.getElementById('ct-forn-add-color');
+  chips.forEach(function(hex){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ct-forn-add-chip';
+    b.style.background = hex;
+    b.title = hex;
+    b.onclick = function(){ colorInp.value = hex; };
+    sw.appendChild(b);
+  });
+  setTimeout(function(){
+    var n = document.getElementById('ct-forn-add-nome');
+    if(n) n.focus();
+  }, 50);
+}
+
+function ctChiudiAggiungiFornitore(){
+  var bd = document.getElementById('ct-forn-add-backdrop');
+  var box = document.getElementById('ct-forn-add-modal');
+  if(bd) bd.remove();
+  if(box) box.remove();
+}
+
+function ctSalvaNuovoFornitore(){
+  var nomeEl = document.getElementById('ct-forn-add-nome');
+  var colEl = document.getElementById('ct-forn-add-color');
+  var nome = nomeEl ? String(nomeEl.value || '').trim() : '';
+  var colore = colEl ? ctNormalizeHex(colEl.value) : '';
+  if(!nome){
+    if(typeof showToastGen === 'function') showToastGen('yellow', 'Inserisci il nome fornitore');
+    return;
+  }
+  if(!colore){
+    if(typeof showToastGen === 'function') showToastGen('yellow', 'Scegli un colore valido');
+    return;
+  }
+  var list = Array.isArray(window.fornitoriSettings) ? window.fornitoriSettings.slice() : [];
+  var idx = -1;
+  for(var i = 0; i < list.length; i++){
+    if(list[i] && ctNormalizeHex(list[i].colore) === colore){ idx = i; break; }
+  }
+  var entry = { id: 'forn_' + Date.now(), nome: nome, colore: colore };
+  if(idx >= 0){
+    entry.id = list[idx].id || entry.id;
+    list[idx] = entry;
+  } else {
+    list.push(entry);
+  }
+  window.fornitoriSettings = list;
+  lsSet(FORNITORI_SETTINGS_K, list);
+  var map = ctGetForniColore();
+  map[colore] = nome;
+  ctSaveForniColore(map);
+  daoPropagaNomeFornitoreSuArticoli(colore, nome);
+  ctChiudiAggiungiFornitore();
+  if(typeof saveCarrelli === 'function') saveCarrelli();
+  if(typeof saveOrdini === 'function') saveOrdini();
+  if(typeof renderCartTabs === 'function') renderCartTabs();
+  if(typeof renderOrdFor === 'function') renderOrdFor();
+  if(typeof renderDaOrdinareView === 'function') renderDaOrdinareView();
+  if(typeof showToastGen === 'function') showToastGen('green', 'Fornitore salvato');
+}
+
+var _daoOrdQtyTimer = null;
+function daoSetDaOrdQtyInput(cartId, idx, el){
+  clearTimeout(_daoOrdQtyTimer);
+  _daoOrdQtyTimer = setTimeout(function(){ daoSetDaOrdQty(cartId, idx, el && el.value); }, 350);
+}
+function daoSetDaOrdQtyCommit(cartId, idx, el){
+  clearTimeout(_daoOrdQtyTimer);
+  daoSetDaOrdQty(cartId, idx, el && el.value);
+}
+
+function daoSetDaOrdQty(cartId, idx, val){
+  var cart = carrelli.find(function(c){ return c.id === cartId; });
+  if(!cart || !cart.items[idx]) return;
+  var it = cart.items[idx];
+  if(!it.daOrdinare) return;
+  var allowDec = (typeof itemUnitAllowsDecimalQty === 'function') ? itemUnitAllowsDecimalQty(it.unit) : false;
+  var parsed = parseFloat(val);
+  if(!isFinite(parsed) || parsed <= 0) parsed = allowDec ? 0.1 : 1;
+  if(allowDec){
+    it.qty = Math.max(0.1, Math.round(parsed * 1000) / 1000);
+  } else {
+    it.qty = Math.max(1, Math.round(parsed));
+  }
+  if(typeof _cartRicalcolaPrezzoVendita === 'function') _cartRicalcolaPrezzoVendita(it);
+  if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(cart);
+  if(typeof saveCarrelli === 'function') saveCarrelli();
+  if(typeof renderCartTabs === 'function') renderCartTabs();
+  if(typeof renderOrdFor === 'function') renderOrdFor();
+  if(typeof renderDaOrdinareView === 'function') renderDaOrdinareView();
 }
 
 /** Articoli "da ordinare" raggruppati per colore (con cartId + idx per azioni). */
@@ -77,7 +258,8 @@ function daoCollectDaOrdinareByColor(){
     (cart.items||[]).forEach(function(it, idx){
       if(!it.daOrdinare) return;
       if(!it._ordColore || it._ordColore === '#888888') return;
-      var col = it._ordColore;
+      var col = ctNormalizeHex(it._ordColore) || it._ordColore;
+      if(!col || col === '#888888') return;
       if(!byColor[col]) byColor[col] = [];
       byColor[col].push({ it: it, cartNome: cart.nome||'', cartId: cart.id, idx: idx });
     });
@@ -87,9 +269,13 @@ function daoCollectDaOrdinareByColor(){
 
 function daoPropagaNomeFornitoreSuArticoli(colore, nome){
   var n = (nome && String(nome).trim()) ? String(nome).trim() : '';
+  var cNorm = ctNormalizeHex(colore) || colore;
+  function matchCol(c){
+    return ctNormalizeHex(c) === cNorm || c === colore || c === cNorm;
+  }
   carrelli.forEach(function(cart){
     (cart.items||[]).forEach(function(it){
-      if(it._ordColore === colore && it.daOrdinare){
+      if(it.daOrdinare && matchCol(it._ordColore)){
         if(n) it._ordFornitoreNome = n;
         else delete it._ordFornitoreNome;
       }
@@ -98,7 +284,7 @@ function daoPropagaNomeFornitoreSuArticoli(colore, nome){
   if(typeof ordini !== 'undefined' && ordini){
     ordini.forEach(function(ord){
       (ord.items||[]).forEach(function(it){
-        if(it._ordColore === colore && it.daOrdinare){
+        if(it.daOrdinare && matchCol(it._ordColore)){
           if(n) it._ordFornitoreNome = n;
           else delete it._ordFornitoreNome;
         }
@@ -245,6 +431,7 @@ function daoHtmlBloccoStoricoRecente(){
 // renderOrdFor: renderizza la tab Ordini Fornitore raggruppati per colore
 var _ordForColorFilter=null;
 function ordForFilterColor(col){
+  col = ctNormalizeHex(col) || col;
   _ordForColorFilter=(_ordForColorFilter===col)?null:col;
   renderOrdFor();
 }
@@ -303,7 +490,11 @@ function renderOrdFor(){
       var sub  = (parsePriceIT(it.prezzoUnit)*(parseFloat(it.qty)||0)).toFixed(2);
       var showFornRow = it._ordFornitoreNome && String(it._ordFornitoreNome).trim() &&
         String(it._ordFornitoreNome).trim() !== String(titoloSlot).trim();
-      h += '<div class="ord-dao-row">';
+      var allowDec = (typeof itemUnitAllowsDecimalQty === 'function') ? itemUnitAllowsDecimalQty(it.unit) : false;
+      var qVal = parseFloat(it.qty) || 0;
+      var step = allowDec ? 'any' : '1';
+      var minV = allowDec ? '0.1' : '1';
+      h += '<div class="ord-dao-row ord-dao-row--forn" style="border-left:3px solid ' + col + '99">';
       if(it.foto) h += '<img class="ord-dao-thumb" src="' + it.foto + '" alt="" onclick="apriModalFoto(this.src)">';
       else        h += '<div class="ord-dao-thumb ord-dao-thumb--empty">📦</div>';
       h += '<div class="ord-dao-info">';
@@ -318,7 +509,12 @@ function renderOrdFor(){
       h += '</div>';
       h += '<div class="ord-dao-right" style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">';
       h += '<button type="button" onclick="daoRipulisciVoceDaOrdinare(\'' + entry.cartId + '\',' + entry.idx + ')" title="Togli da da ordinare" class="dao-btn-cestino">\uD83D\uDDD1\uFE0F</button>';
-      h += '<div class="ord-dao-qty">' + (parseFloat(it.qty)||0) + ' ' + (it.unit||'pz') + '</div>';
+      h += '<div class="ord-dao-qty-wrap">';
+      h += '<input type="number" class="ord-dao-qty-inp" min="' + minV + '" step="' + step + '" value="' + qVal + '" inputmode="decimal" ';
+      h += 'title="Quantità da ordinare" ';
+      h += 'oninput="daoSetDaOrdQtyInput(\'' + entry.cartId + '\',' + entry.idx + ',this)" ';
+      h += 'onchange="daoSetDaOrdQtyCommit(\'' + entry.cartId + '\',' + entry.idx + ',this)" />';
+      h += '<span class="ord-dao-qty-um">' + esc(it.unit||'pz') + '</span></div>';
       h += '<div class="ord-dao-sub">€' + sub + '</div>';
       h += '</div>';
       h += '</div>';
@@ -337,10 +533,11 @@ function ctSaveFornNome(colore, nome){
   clearTimeout(_ctFornTimer);
   _ctFornTimer = setTimeout(function(){
     var map = ctGetForniColore();
-    if(nome && nome.trim()) map[colore] = nome.trim();
-    else delete map[colore];
+    var ck = ctNormalizeHex(colore) || colore;
+    if(nome && nome.trim()) map[ck] = nome.trim();
+    else delete map[ck];
     ctSaveForniColore(map);
-    daoPropagaNomeFornitoreSuArticoli(colore, nome);
+    daoPropagaNomeFornitoreSuArticoli(ck, nome);
     if(typeof saveCarrelli === 'function') saveCarrelli();
     if(typeof saveOrdini === 'function') saveOrdini();
     if(typeof renderCartTabs === 'function') renderCartTabs();

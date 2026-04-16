@@ -65,9 +65,9 @@ function _cassaModeStopRefresh(){
 function _cassaModeRender(){
   var cm = document.getElementById('cassa-mode-ov');
   if(!cm) return;
-  // Filtra ordini da mostrare: nuovo + pronto (non completati, non bozze)
+  // Filtra ordini da mostrare in cassa: solo ordini attivi, escludi "pronto"
   var lista = ordini.filter(function(o){
-    return o.stato === 'nuovo' || o.stato === 'lavorazione' || o.stato === 'pronto';
+    return o.stato === 'nuovo' || o.stato === 'lavorazione';
   });
   lista.sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
 
@@ -155,7 +155,8 @@ function _cassaModeApri(gi){
     h += '<div style="flex:1;min-width:0;">';
     h += '<div style="font-size:15px;font-weight:700;color:var(--text);">'+esc(it.desc||'—')+'</div>';
     h += '<div style="font-size:11px;color:#666;margin-top:2px;">';
-    h += q + ' ' + esc(it.unit||'pz') + ' × €' + pu.toFixed(2);
+    h += '<span class="cassa-mode-qty-pill">' + q + ' ' + esc(it.unit||'pz') + '</span>';
+    h += '<span class="cassa-mode-unit-price">× €' + pu.toFixed(2) + '</span>';
     if(it.codM) h += ' · <span style="color:var(--accent);">'+esc(it.codM)+'</span>';
     if(it.codF) h += ' <span style="color:#888;">'+esc(it.codF)+'</span>';
     h += ' <span class="ord-item-del" onclick="event.stopPropagation();_cassaModeDelItem(this,'+gi+','+i+')" title="Rimuovi">×</span>';

@@ -203,7 +203,10 @@ function _aggiornaBozzaOrdine(cart){
         fineRotolo:!!(it&&it.fineRotolo),
         sconto:Number(parseFloat(it&&it._scontoApplicato||0).toFixed(4)),
         h_superficie:String(it&&it.h_superficie!=null?it.h_superficie:''),
-        l_superficie:String(it&&it.l_superficie!=null?it.l_superficie:'')
+        l_superficie:String(it&&it.l_superficie!=null?it.l_superficie:''),
+        daOrdinare:!!(it&&it.daOrdinare),
+        _ordColore:String(it&&it._ordColore||''),
+        _ordFornitoreNome:String(it&&it._ordFornitoreNome||'')
       };
     }));
   }
@@ -247,7 +250,10 @@ function _aggiornaOrdineDaCarrelloModifica(cart){
         fineRotolo:!!(it&&it.fineRotolo),
         sconto:Number(parseFloat(it&&it._scontoApplicato||0).toFixed(4)),
         h_superficie:String(it&&it.h_superficie!=null?it.h_superficie:''),
-        l_superficie:String(it&&it.l_superficie!=null?it.l_superficie:'')
+        l_superficie:String(it&&it.l_superficie!=null?it.l_superficie:''),
+        daOrdinare:!!(it&&it.daOrdinare),
+        _ordColore:String(it&&it._ordColore||''),
+        _ordFornitoreNome:String(it&&it._ordFornitoreNome||'')
       };
     }));
   }

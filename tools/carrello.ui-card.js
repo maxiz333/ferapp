@@ -103,7 +103,9 @@ function ctApriColori(cartId, idx){
   if(!cart || !cart.items[idx]) return;
   var it = cart.items[idx];
 
-  var slots = typeof CT_FORN_CANON_HEX !== 'undefined' ? CT_FORN_CANON_HEX : ['#e53e3e', '#38a169', '#3182ce', '#e2c400'];
+  var slots = typeof ctHexSlotsOrdineFornitore === 'function'
+    ? ctHexSlotsOrdineFornitore()
+    : (typeof CT_FORN_CANON_HEX !== 'undefined' ? CT_FORN_CANON_HEX : ['#e53e3e', '#38a169', '#3182ce', '#e2c400']);
 
   var popup = document.createElement('div');
   popup.id = 'ct-color-popup';
@@ -121,6 +123,9 @@ function ctApriColori(cartId, idx){
     if(isActive) html += ' ✓';
     html += '</button>';
   });
+  html += '<div class="ct-color-custom"><span class="ct-color-custom-lbl">Altro colore</span>';
+  html += '<input type="color" id="ct-ord-col-pick" class="ct-ord-col-pick" value="#718096">';
+  html += '<button type="button" class="ct-color-opt ct-color-opt--mini" onclick="ctSetColore(\'' + cartId + '\',' + idx + ',document.getElementById(\'ct-ord-col-pick\').value)">Usa</button></div>';
   html += '<button type="button" class="ct-color-opt ct-color-opt--clear" onclick="ctSetColore(\'' + cartId + '\',' + idx + ',\'\')">✕ Rimuovi da ordinare</button>';
   popup.innerHTML = html;
 
@@ -146,11 +151,17 @@ function ctSetColore(cartId, idx, colore){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
   if(!cart || !cart.items[idx]) return;
   var it = cart.items[idx];
-  it._ordColore = colore || undefined;
-  it.daOrdinare = !!colore;
-  if(colore){
+  var cNorm = (colore && typeof ctNormalizeHex === 'function') ? ctNormalizeHex(colore) : (colore || '');
+  if(colore && typeof ctNormalizeHex === 'function' && !cNorm){
+    if(typeof showToastGen === 'function') showToastGen('yellow', 'Colore non valido');
+    return;
+  }
+  if(cNorm) it._ordColore = cNorm;
+  else delete it._ordColore;
+  it.daOrdinare = !!it._ordColore;
+  if(it._ordColore){
     var map = typeof ctGetForniColore === 'function' ? ctGetForniColore() : {};
-    if(map[colore]) it._ordFornitoreNome = map[colore];
+    if(map[it._ordColore]) it._ordFornitoreNome = map[it._ordColore];
     else delete it._ordFornitoreNome;
   } else {
     delete it._ordFornitoreNome;

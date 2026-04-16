@@ -9,6 +9,8 @@ var magChronoMode = 'none'; // none | added | modified
 var MAG_CHRONO_WINDOW_MS = 72 * 60 * 60 * 1000; // 3 giorni precisi
 var magChronoCutoffMs = 0; // calcolato una volta all'attivazione filtro
 var magChronoNowMs = 0; // istante di riferimento del filtro
+/** removeFromCurrentView: righe nascoste solo nella lista "Ultimi modificati" (sessione locale; non persiste su storage). */
+var _magModifiedChronoHidden = {};
 function _syncMagIdxFirebase(i){
   if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(i);
 }
@@ -48,7 +50,11 @@ function magScanDuplicati(){
 }
 
 function _applyMagChronoMode(mode){
+  var prevMode = magChronoMode;
   magChronoMode = mode || 'none';
+  if(prevMode === 'modified' && magChronoMode !== 'modified'){
+    _magModifiedChronoHidden = {};
+  }
   if(magChronoMode === 'added' || magChronoMode === 'modified'){
     magChronoNowMs = Date.now();
     magChronoCutoffMs = magChronoNowMs - MAG_CHRONO_WINDOW_MS;
@@ -242,6 +248,7 @@ function _magResolveDeleteIndex(clickedIdx, expectedCodM){
   return -3;
 }
 
+/** deleteFromDatabase: eliminazione definitiva dell'articolo (rows/magazzino, localStorage, Firebase, indici foto). */
 function _executeMagDeleteArticolo(clickedIdx, expectedCodM){
   var idx = _magResolveDeleteIndex(clickedIdx, expectedCodM);
   if(idx < 0 || !rows[idx]) return;
@@ -305,6 +312,21 @@ function _executeMagDeleteArticolo(clickedIdx, expectedCodM){
   showToastGen('red','Articolo eliminato definitivamente');
 }
 
+/** removeFromCurrentView: solo UI lista "Ultimi modificati" — nessun delete da Firebase/storage. */
+function magRemoveFromModifiedChronoView(rowIdx){
+  if(typeof magChronoMode === 'undefined' || magChronoMode !== 'modified') return;
+  if(rowIdx == null || rowIdx < 0 || !rows || rowIdx >= rows.length || !rows[rowIdx]){
+    if(typeof showToastGen === 'function') showToastGen('orange', 'Articolo non trovato.');
+    return;
+  }
+  _magModifiedChronoHidden[String(rowIdx)] = true;
+  if(typeof renderMagazzino === 'function') renderMagazzino();
+  if(typeof showToastGen === 'function'){
+    showToastGen('green', 'Nascosto da questa lista — l\'articolo resta nel magazzino e in ricerca.');
+  }
+}
+
+/** deleteFromDatabase: dopo conferma utente, eliminazione definitiva (vedi _executeMagDeleteArticolo). */
 function magDeleteArticolo(clickedIdx, expectedCodM){
   var idxPre = _magResolveDeleteIndex(clickedIdx, expectedCodM);
   if(idxPre === -2){

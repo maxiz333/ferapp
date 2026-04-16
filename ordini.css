@@ -503,6 +503,158 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
   opacity: 0.85;
   font-size: 10px;
 }
+.ord-forn-filt-add {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 12px;
+  border: 2px dashed var(--accent, #f5c400);
+  background: rgba(245, 196, 0, 0.08);
+  color: var(--accent, #f5c400);
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: inherit;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.ord-forn-filt-add:active {
+  filter: brightness(0.92);
+}
+.ct-forn-add-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 8500;
+  background: rgba(0, 0, 0, 0.55);
+}
+.ct-forn-add-modal {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 8501;
+  width: min(92vw, 340px);
+  background: var(--ct-card, #1a1b1d);
+  border: 1px solid #333;
+  border-radius: 14px;
+  padding: 16px 18px 14px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  font-family: inherit;
+}
+.ct-forn-add-title {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--text, #f0f0f0);
+  margin-bottom: 12px;
+}
+.ct-forn-add-lbl {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin: 10px 0 4px;
+}
+.ct-forn-add-inp {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: #111;
+  color: var(--text, #f0f0f0);
+  font-size: 14px;
+  font-family: inherit;
+}
+.ct-forn-add-color-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ct-forn-add-color-native {
+  width: 52px;
+  height: 40px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+}
+.ct-forn-add-hint {
+  font-size: 10px;
+  color: #666;
+  flex: 1;
+  min-width: 120px;
+}
+.ct-forn-add-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.ct-forn-add-chip {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+.ct-forn-add-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+.ct-forn-add-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+}
+.ct-forn-add-btn--ghost {
+  background: transparent;
+  color: #888;
+  border: 1px solid #444;
+}
+.ct-forn-add-btn--ok {
+  background: var(--accent, #f5c400);
+  color: #111;
+}
+.ord-dao-qty-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.ord-dao-qty-inp {
+  width: 4.5rem;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #141416;
+  color: var(--ct-text, #f0f0f0);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: right;
+  font-family: inherit;
+}
+.ord-dao-qty-um {
+  font-size: 10px;
+  color: var(--ct-muted, #7a7d82);
+  font-weight: 700;
+}
+.ord-dao-row--forn {
+  background: rgba(255, 255, 255, 0.02);
+}
 .ord-dao-empty-msg {
   padding: 16px 12px;
   text-align: center;

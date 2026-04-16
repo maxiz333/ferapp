@@ -1722,6 +1722,19 @@ button[touch-action="manipulation"],
   border-color: transparent !important;
   margin-bottom: 0;
 }
+.ct-color-custom {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin: 10px 0 6px; padding-top: 10px; border-top: 1px solid #333;
+}
+.ct-color-custom-lbl { font-size: 10px; color: #888; font-weight: 600; }
+.ct-ord-col-pick {
+  width: 42px; height: 30px; border: 1px solid #444; padding: 0;
+  background: transparent; cursor: pointer; border-radius: 8px;
+}
+.ct-color-opt--mini {
+  display: inline-flex !important; width: auto !important; margin: 0 !important;
+  font-size: 11px !important; padding: 6px 12px !important;
+}
 .ct-color-opt:hover { background: rgba(255,255,255,.07); }
 .ct-color-opt:last-child { margin-bottom: 0; }
 

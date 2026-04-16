@@ -458,6 +458,32 @@ body.light-mode #fatture-popup button { color: #444; }
 .cassa-header{padding:16px 20px;background:#111;border-bottom:3px solid var(--accent);display:flex;justify-content:space-between;align-items:center;}
 .cassa-body{flex:1;overflow-y:auto;padding:16px 20px;}
 .cassa-item{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:2px solid #222;}
+.cassa-qty-line{
+  margin-top:4px;
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.cassa-qty-pill{
+  display:inline-block;
+  padding:3px 10px;
+  border-radius:999px;
+  background:#f5c400;
+  color:#111;
+  font-size:24px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.4px;
+  font-variant-numeric:tabular-nums;
+}
+.cassa-unit-price{
+  font-size:13px;
+  color:#9aa0a6;
+  font-weight:700;
+  white-space:nowrap;
+}
 .cassa-footer{padding:16px 20px;background:#111;border-top:3px solid var(--accent);display:flex;justify-content:space-between;align-items:center;gap:12px;}
 
 
@@ -544,6 +570,25 @@ body.light-mode #fatture-popup button { color: #444; }
   display: flex; justify-content: space-between; align-items: center;
   padding: 14px 0;
   border-bottom: 1px solid #1a1a1a;
+}
+.cassa-mode-qty-pill{
+  display:inline-block;
+  padding:3px 10px;
+  border-radius:999px;
+  background:#f5c400;
+  color:#111;
+  font-size:24px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.4px;
+  font-variant-numeric:tabular-nums;
+  margin-right:8px;
+}
+.cassa-mode-unit-price{
+  font-size:13px;
+  color:#9aa0a6;
+  font-weight:700;
+  white-space:nowrap;
 }
 .cassa-mode-item:last-child { border-bottom: none; }
 .cassa-mode-footer {

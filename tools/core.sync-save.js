@@ -21,6 +21,7 @@ function _fbSharedPathForKey(k){
   map[AK.ORDFORNITORI] = 'shared/ordini_fornitori';
   map[AK.FORNI_COLORE] = 'shared/forni_colore';
   map[AK.ORD_FORN_STORICO] = 'shared/ord_forn_storico';
+  if(AK.SETTINGS_FORNITORI) map[AK.SETTINGS_FORNITORI] = 'settings/fornitori';
   return map[k] || null;
 }
 
@@ -77,6 +78,18 @@ var _MAG_FIELDS = ['qty','unit','soglia','prezzoAcquisto','marca','specs',
 function _fbSaveArticolo(idx){
   if(!_fbReady || !_fbDb || !rows[idx]) return;
   try{
+    if(typeof sanitizeCodiceMagazzinoInput === 'function'){
+      rows[idx].codM = sanitizeCodiceMagazzinoInput(rows[idx].codM);
+    }else{
+      rows[idx].codM = String(rows[idx].codM == null ? '' : rows[idx].codM).trim();
+    }
+    if(rows[idx].codM && typeof findDuplicateCodMagazzino === 'function'){
+      var dup = findDuplicateCodMagazzino(rows[idx].codM, idx);
+      if(dup){
+        if(typeof showCodiceMagazzinoDuplicateError === 'function') showCodiceMagazzinoDuplicateError(rows[idx].codM, dup.desc);
+        return false;
+      }
+    }
     var obj = JSON.parse(JSON.stringify(rows[idx]));
     var m = magazzino[idx];
     if(m){
@@ -85,7 +98,9 @@ function _fbSaveArticolo(idx){
       });
     }
     _fbDb.ref(MAGEXT_K + '/' + idx).set(obj);
+    return true;
   }catch(e){ console.error('Firebase save articolo:', e); }
+  return false;
 }
 
 // Traccia ultimo articolo modificato per sync automatico

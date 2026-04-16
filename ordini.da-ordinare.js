@@ -25,6 +25,7 @@ function toggleDaOrdinareView(){
 // Filtro colore per vista "da ordinare" nella tab ordini
 var _daOrdColorFilter=null;
 function daOrdFilterColor(col){
+  col = typeof ctNormalizeHex === 'function' ? (ctNormalizeHex(col) || col) : col;
   _daOrdColorFilter=(_daOrdColorFilter===col)?null:col;
   renderDaOrdinareView();
 }
@@ -85,7 +86,11 @@ function renderDaOrdinareView(){
       var sub=(parsePriceIT(it.prezzoUnit)*(parseFloat(it.qty)||0)).toFixed(2);
       var showFornRow=it._ordFornitoreNome&&String(it._ordFornitoreNome).trim()&&
         String(it._ordFornitoreNome).trim()!==String(titoloSlot).trim();
-      h+='<div class="ord-dao-row">';
+      var allowDec=(typeof itemUnitAllowsDecimalQty==='function')?itemUnitAllowsDecimalQty(it.unit):false;
+      var qVal=parseFloat(it.qty)||0;
+      var step=allowDec?'any':'1';
+      var minV=allowDec?'0.1':'1';
+      h+='<div class="ord-dao-row ord-dao-row--forn" style="border-left:3px solid '+col+'99">';
       if(it.foto) h+='<img class="ord-dao-thumb" src="'+it.foto+'" alt="" onclick="apriModalFoto(this.src)">';
       else h+='<div class="ord-dao-thumb ord-dao-thumb--empty">📦</div>';
       h+='<div class="ord-dao-info">';
@@ -100,7 +105,12 @@ function renderDaOrdinareView(){
       h+='</div>';
       h+='<div class="ord-dao-right" style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">';
       h+='<button type="button" class="dao-btn-cestino" onclick="daoRipulisciVoceDaOrdinare(\''+entry.cartId+'\','+entry.idx+')" title="Togli da da ordinare">\uD83D\uDDD1\uFE0F</button>';
-      h+='<div class="ord-dao-qty">'+(parseFloat(it.qty)||0)+' '+(it.unit||'pz')+'</div>';
+      h+='<div class="ord-dao-qty-wrap">';
+      h+='<input type="number" class="ord-dao-qty-inp" min="'+minV+'" step="'+step+'" value="'+qVal+'" inputmode="decimal" ';
+      h+='title="Quantità da ordinare" ';
+      h+='oninput="daoSetDaOrdQtyInput(\''+entry.cartId+'\','+entry.idx+',this)" ';
+      h+='onchange="daoSetDaOrdQtyCommit(\''+entry.cartId+'\','+entry.idx+',this)" />';
+      h+='<span class="ord-dao-qty-um">'+esc(it.unit||'pz')+'</span></div>';
       h+='<div class="ord-dao-sub">€'+sub+'</div>';
       h+='</div>';
       h+='</div>';

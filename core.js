@@ -21,6 +21,8 @@ var carrelliCestino=lsGet(CART_CK)||[];
   var prima=carrelli.length;
   carrelli=carrelli.filter(function(c){
     if(c.stato==='inviato'||c.stato==='modifica') return true;
+    var hasDaOrd=(c.items||[]).some(function(it){ return it&&it.daOrdinare; });
+    if(hasDaOrd) return true;
     var cData='';
     if(c.creatoAtISO) cData=c.creatoAtISO.slice(0,10);
     else if(c.dataCreazione) cData=new Date(c.dataCreazione).toISOString().slice(0,10);

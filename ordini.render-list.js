@@ -363,7 +363,6 @@ function renderOrdini(){
           h+='<button onclick="ordRibloccaFatto('+gi+')" class="ord-abtn ord-abtn--done">🔒 Blocca</button>';
           h+='<button onclick="setStatoOrdine('+gi+',\'nuovo\')" class="ord-abtn ord-abtn--reopen">↩️ Riapri</button>';
         }
-        h+='<button onclick="openCassa('+gi+')" class="ord-abtn ord-abtn--cassa">💰 Cassa</button>';
         h+='</div>';
         h+='<div class="ord-actions ord-actions-sec">';
         h+='<button onclick="ordStampaDblTap(this,'+gi+')" class="ord-abtn ord-abtn--print">🖨️ Stampa</button>';

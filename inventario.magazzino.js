@@ -116,6 +116,7 @@ function _doMagSearch(){
       } else if(chronoMode === 'modified'){
         var modAt = (typeof getRowModifiedChronoAt === 'function') ? getRowModifiedChronoAt(r, i) : 0;
         if(modAt < recentiLimitMs || modAt > recentiMaxMs) continue;
+        if(typeof _magModifiedChronoHidden !== 'undefined' && _magModifiedChronoHidden[String(i)]) continue;
       }
     }
 
@@ -145,14 +146,23 @@ function _doMagSearch(){
     if(results.length > MAX) results = results.slice(0, MAX);
   }
 
-  // Stats
-  if(statsEl) statsEl.innerHTML =
-    '<div class="sc"><span class="n">' + (tot > MAX ? MAX + '+' : tot) + '</span>Trovati</div>' +
-    (sottoScorta ? '<div class="sc r"><span class="n" style="color:#e53e3e">' + sottoScorta + '</span>Sotto scorta</div>' : '') +
-    (chronoMode === 'added' ? '<div class="sc"><span class="n" style="color:#68d391">3g</span>Ultimi aggiunti</div>' : '') +
-    (chronoMode === 'modified' ? '<div class="sc"><span class="n" style="color:#63b3ed">3g</span>Ultimi modificati</div>' : '') +
-    (chronoMode === 'modified' ? '<div class="sc"><span class="n" style="color:#63b3ed">' + results.length + '</span>Visualizzati: ' + results.length + ' articoli modificati negli ultimi 3 gg</div>' : '') +
-    (Object.keys(_magDupCodes||{}).length ? '<div class="sc r"><span class="n" style="color:#f6ad55">' + Object.keys(_magDupCodes).length + '</span>Codici doppi</div>' : '');
+  // Stats (in cronologia: un solo conteggio leggibile, senza duplicare il numero)
+  if(statsEl){
+    var countDisp = tot > MAX ? MAX + '+' : String(tot);
+    var statsParts = [];
+    if(hasChrono){
+      if(chronoMode === 'added'){
+        statsParts.push('<div class="sc"><span class="n" style="color:#68d391">' + countDisp + '</span>Ultimi aggiunti (3 gg)</div>');
+      } else {
+        statsParts.push('<div class="sc"><span class="n" style="color:#63b3ed">' + countDisp + '</span>Ultimi modificati (3 gg)</div>');
+      }
+    } else {
+      statsParts.push('<div class="sc"><span class="n">' + countDisp + '</span>Trovati</div>');
+    }
+    if(sottoScorta) statsParts.push('<div class="sc r"><span class="n" style="color:#e53e3e">' + sottoScorta + '</span>Sotto scorta</div>');
+    if(Object.keys(_magDupCodes||{}).length) statsParts.push('<div class="sc r"><span class="n" style="color:#f6ad55">' + Object.keys(_magDupCodes).length + '</span>Codici doppi</div>');
+    statsEl.innerHTML = statsParts.join('');
+  }
 
   list.classList.toggle('mag-list--chrono', hasChrono);
 
@@ -194,8 +204,15 @@ function _doMagSearch(){
 
     html += '<div class="mag-card' + (hasChrono ? ' mag-card--chrono' : '') + '" style="position:relative;background:#1e1e1e;border:1px solid ' + borderCol + ';border-radius:10px;padding:10px 12px;margin-bottom:10px;' + (isLow ? 'box-shadow:0 0 0 1px #e53e3e33;' : '') + '">';
     if(hasChrono){
-      html += '<div class="mag-card-chrono-actions" role="group" aria-label="Elimina articolo">';
-      html += '<button type="button" class="mag-del-btn mag-del-btn--corner" onclick=\'magDeleteArticolo(' + i + ',' + codMJson + ')\' title="Elimina articolo">X</button>';
+      var chronoXClick = (chronoMode === 'modified')
+        ? 'magRemoveFromModifiedChronoView(' + i + ')'
+        : 'magDeleteArticolo(' + i + ',' + codMJson + ')';
+      var chronoXTitle = (chronoMode === 'modified')
+        ? 'Nascondi dalla lista modificati (non elimina dal database)'
+        : 'Elimina articolo dal database';
+      var chronoXLabel = (chronoMode === 'modified') ? 'Lista modificati' : 'Elimina articolo';
+      html += '<div class="mag-card-chrono-actions" role="group" aria-label="' + esc(chronoXLabel) + '">';
+      html += '<button type="button" class="mag-del-btn mag-del-btn--corner" onclick=\'' + chronoXClick + '\' title="' + esc(chronoXTitle) + '">X</button>';
       html += '</div>';
     }
 
@@ -270,7 +287,13 @@ function _doMagSearch(){
             'onchange="saveMagRow(' + i + ',\'specs\',this.value)">';
     html += '<div class="mag-card-footer-actions">';
     html += '<button type="button" onclick="openEditProdotto(' + i + ')" style="flex:1;padding:8px;border-radius:7px;border:1px solid var(--accent)44;background:transparent;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;">✏️ Modifica articolo</button>';
-    html += '<button type="button" class="mag-del-btn mag-del-btn--footer" onclick=\'magDeleteArticolo(' + i + ',' + codMJson + ')\' title="Elimina articolo">🗑</button>';
+    var footDelClick = (hasChrono && chronoMode === 'modified')
+      ? 'magRemoveFromModifiedChronoView(' + i + ')'
+      : 'magDeleteArticolo(' + i + ',' + codMJson + ')';
+    var footDelTitle = (hasChrono && chronoMode === 'modified')
+      ? 'Nascondi dalla lista modificati (non elimina dal database)'
+      : 'Elimina articolo dal database';
+    html += '<button type="button" class="mag-del-btn mag-del-btn--footer" onclick=\'' + footDelClick + '\' title="' + esc(footDelTitle) + '">🗑</button>';
     html += '</div>';
     html += '</div>'; // fine card
   });

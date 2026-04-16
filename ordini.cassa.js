@@ -35,7 +35,7 @@ function openCassa(gi){
     bodyH+='</div>';
     bodyH+='<div style="text-align:right;flex-shrink:0;">';
     bodyH+='<div style="font-size:16px;font-weight:900;color:var(--accent);">- '+sub+'</div>';
-    bodyH+='<div style="font-size:11px;color:var(--muted);">'+q+' '+(it.unit||'pz')+' - -'+esc(it.prezzoUnit)+'</div>';
+    bodyH+='<div class="cassa-qty-line"><span class="cassa-qty-pill">'+q+' '+esc(it.unit||'pz')+'</span><span class="cassa-unit-price">× €'+esc(it.prezzoUnit)+'</span></div>';
     bodyH+='</div>';
     bodyH+='</div>';
   });
