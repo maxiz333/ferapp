@@ -369,6 +369,7 @@ function _scheduleDbSystemMaintenance(){
     _applySharedValue('shared/movimenti', window.AppKeys.MOVIMENTI, 'movimenti', []);
     _applySharedValue('shared/clienti', window.AppKeys.CLIENTI, 'clienti', {});
     _applySharedValue('shared/fatture', window.AppKeys.FATTURE, 'fatture', []);
+    _applySharedValue('shared/anagrafica_clienti', window.AppKeys.ANAGRAFICA_CLIENTI, 'anagraficaClienti', []);
     _applySharedValue('shared/ordini_fornitori', window.AppKeys.ORDFORNITORI, 'ordFornitori', []);
     _applySharedValue('shared/forni_colore', window.AppKeys.FORNI_COLORE, 'forniColore', {});
     _applySharedValue('shared/ord_forn_storico', window.AppKeys.ORD_FORN_STORICO, 'ordFornStorico', []);

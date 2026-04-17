@@ -4,6 +4,7 @@
 function aggiornaOrdine(cartId){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.ordId)return;
+  if(typeof ensureFatturaState === 'function') ensureFatturaState(cart);
   var ord=ordini.find(function(o){return o.id===cart.ordId;});
   if(!ord){
     // Ordine eliminato: scollega il carrello
@@ -65,6 +66,12 @@ function aggiornaOrdine(cartId){
   }
   ord.totale=ordTotaleSenzaCongelati(ord).toFixed(2);
   ord.scontoGlobale=cart.scontoGlobale||null;
+  ord.fatturaRichiesta=!!cart.fatturaRichiesta;
+  ord.fatturaCliente=cart.fatturaCliente?JSON.parse(JSON.stringify(cart.fatturaCliente)):null;
+  ord.salvaFatturaInRubrica=!!cart.salvaFatturaInRubrica;
+  if(ord.fatturaRichiesta && ord.salvaFatturaInRubrica && ord.fatturaCliente && typeof upsertClienteAnagrafica==='function'){
+    upsertClienteAnagrafica(ord.fatturaCliente);
+  }
   saveOrdini();
   // Rimetti il carrello come inviato
   cart.stato='inviato';
@@ -84,6 +91,9 @@ function annullaModifica(cartId){
     if(ord){
       cart.items=JSON.parse(JSON.stringify(ord.items));
       cart.nota=ord.nota||'';
+      cart.fatturaRichiesta=!!ord.fatturaRichiesta;
+      cart.fatturaCliente=ord.fatturaCliente?JSON.parse(JSON.stringify(ord.fatturaCliente)):null;
+      cart.salvaFatturaInRubrica=!!ord.salvaFatturaInRubrica;
       cart.stato='inviato';
       cart.locked=true;
     } else {

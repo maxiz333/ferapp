@@ -17,6 +17,7 @@
     AUTH_SESSION: 'cp4_auth_session',
     APIKEY_FOTO: 'cp4_foto_apikey',
     FATTURE: 'cp4_fatture',
+    ANAGRAFICA_CLIENTI: 'cp4_anagrafica_clienti',
     ORDFORNITORI: 'cp4_ordfornitori',
     ORDINI_CESTINO: 'cp4_ordini_cestino',
     DDT_NUM: 'cp4_ddt_num',

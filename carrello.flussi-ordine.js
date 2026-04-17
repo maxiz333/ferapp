@@ -187,6 +187,7 @@ function avvisaUfficio(cartId){
 // Aggiorna la bozza con gli articoli correnti del carrello (i congelati restano in coda)
 function _aggiornaBozzaOrdine(cart){
   if(!cart||!cart.bozzaOrdId)return;
+  if(typeof ensureFatturaState === 'function') ensureFatturaState(cart);
   var bozza=ordini.find(function(o){return o.id===cart.bozzaOrdId;});
   if(!bozza||bozza.stato!=='bozza')return;
   function _canonItems(arr){
@@ -224,6 +225,9 @@ function _aggiornaBozzaOrdine(cart){
   bozza.items=nextItems;
   bozza.nomeCliente=nextNome;
   bozza.nota=nextNota;
+  bozza.fatturaRichiesta=!!cart.fatturaRichiesta;
+  bozza.fatturaCliente=cart.fatturaCliente?JSON.parse(JSON.stringify(cart.fatturaCliente)):null;
+  bozza.salvaFatturaInRubrica=!!cart.salvaFatturaInRubrica;
   bozza.totale=ordTotaleSenzaCongelati(bozza).toFixed(2);
   bozza.modificato=true;
   bozza.modificatoAt=new Date().toLocaleString('it-IT');
@@ -234,6 +238,7 @@ function _aggiornaBozzaOrdine(cart){
 /** Sync tab Ordini mentre il carrello è in modifica (stesso schema bozza + righe congelate). Mantiene cart.ordId ↔ ord.id. */
 function _aggiornaOrdineDaCarrelloModifica(cart){
   if(!cart||!cart.ordId||cart.stato!=='modifica') return;
+  if(typeof ensureFatturaState === 'function') ensureFatturaState(cart);
   var ord=ordini.find(function(o){ return o.id===cart.ordId; });
   if(!ord) return;
   function _canonItems(arr){
@@ -272,6 +277,9 @@ function _aggiornaOrdineDaCarrelloModifica(cart){
   ord.items=nextItems;
   ord.nomeCliente=nextNome;
   ord.nota=nextNota;
+  ord.fatturaRichiesta=!!cart.fatturaRichiesta;
+  ord.fatturaCliente=cart.fatturaCliente?JSON.parse(JSON.stringify(cart.fatturaCliente)):null;
+  ord.salvaFatturaInRubrica=!!cart.salvaFatturaInRubrica;
   ord.scontoGlobale=cart.scontoGlobale||null;
   ord.totale=ordTotaleSenzaCongelati(ord).toFixed(2);
   saveOrdini();
@@ -289,6 +297,7 @@ function _rimuoviBozzaOrdine(cart){
 function inviaOrdine(cartId){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!(cart.items||[]).length){showToastGen('red','-- Carrello vuoto!');return;}
+  if(typeof ensureFatturaState === 'function') ensureFatturaState(cart);
   // Rimuovi bozza se presente
   _rimuoviBozzaOrdine(cart);
   var tot=(cart.items||[]).reduce(function(s,it){return s+(_prezzoEffettivo(it)*parseFloat(it.qty||0));},0);
@@ -329,8 +338,14 @@ function inviaOrdine(cartId){
     totale:tot.toFixed(2),
     stato:'nuovo',
     scontoGlobale:cart.scontoGlobale||null,
-    commesso:cart.commesso||''
+    commesso:cart.commesso||'',
+    fatturaRichiesta:!!cart.fatturaRichiesta,
+    fatturaCliente:cart.fatturaCliente?JSON.parse(JSON.stringify(cart.fatturaCliente)):null,
+    salvaFatturaInRubrica:!!cart.salvaFatturaInRubrica
   };
+  if(ord.fatturaRichiesta && ord.salvaFatturaInRubrica && ord.fatturaCliente && typeof upsertClienteAnagrafica==='function'){
+    upsertClienteAnagrafica(ord.fatturaCliente);
+  }
   ordini.unshift(ord);
   saveOrdini();
 

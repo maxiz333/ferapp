@@ -18,6 +18,7 @@ function _fbSharedPathForKey(k){
   map[AK.MOVIMENTI] = 'shared/movimenti';
   map[AK.CLIENTI] = 'shared/clienti';
   map[AK.FATTURE] = 'shared/fatture';
+  map[AK.ANAGRAFICA_CLIENTI] = 'shared/anagrafica_clienti';
   map[AK.ORDFORNITORI] = 'shared/ordini_fornitori';
   map[AK.FORNI_COLORE] = 'shared/forni_colore';
   map[AK.ORD_FORN_STORICO] = 'shared/ord_forn_storico';

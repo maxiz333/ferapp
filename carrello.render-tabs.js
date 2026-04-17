@@ -88,6 +88,7 @@ function renderCartTabs(){
   }
   var cart = carrelli.find(function(c){ return c.id === activeCartId; });
   if(!cart) return;
+  if(typeof ensureFatturaState === 'function') ensureFatturaState(cart);
 
   var h = '';
 
@@ -133,8 +134,16 @@ function renderCartTabs(){
     h += '<button onclick="cartUnlock(\'' + cart.id + '\')" class="ct-btn-yellow" style="flex:1">✏️ Sblocca e modifica</button>';
     h += '<button onclick="goTab(\'to\')" class="ct-btn-solid" style="padding:10px 16px">📋 Ordini</button>';
     h += '</div>';
-    h += '<div style="display:flex;gap:6px;margin-top:8px">';
-    h += '<button onclick="deleteCart(\'' + cart.id + '\')" class="ct-btn-ghost" style="flex:1;font-size:12px;color:#555">🗑️ Elimina carrello</button>';
+    h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;height:38px;">';
+    h += '<button onclick="deleteCart(\'' + cart.id + '\')" title="Elimina carrello" aria-label="Elimina carrello" ';
+    h += 'style="height:38px;min-width:44px;padding:0 12px;border-radius:10px;border:1px solid #2a2a2a;background:transparent;color:#666;cursor:pointer;font-size:18px;line-height:1;">🗑️</button>';
+    if(cart.fatturaRichiesta){
+      h += '<button onclick="ctPreviewStampaFattura(\'' + cart.id + '\')" title="Anteprima stampa fattura" ';
+      h += 'style="height:38px;padding:0 14px;border-radius:10px;border:none;background:var(--accent);color:#111;font-size:12px;font-weight:900;cursor:pointer;">🖨️ Stampa Fattura</button>';
+    } else {
+      h += '<button onclick="ctPreviewStampaProforma(\'' + cart.id + '\')" title="Anteprima stampa scontrino/proforma" ';
+      h += 'style="height:38px;padding:0 14px;border-radius:10px;border:1px solid #2f2f2f;background:#1b1b1b;color:#ddd;font-size:12px;font-weight:800;cursor:pointer;">🧾 Stampa Proforma</button>';
+    }
     h += '</div></div>';
     body.innerHTML = h;
     return;
@@ -469,6 +478,8 @@ function renderCartTabs(){
          '📢<span>UFFICIO</span></button>';
   }
   h += '<button class="ct-fbtn ct-fbtn--riepilogo" onclick="openRiepilogoOrdine(\'' + cart.id + '\')">👀<span>RIEPILOGO</span></button>';
+  h += '<button class="ct-fbtn ct-fbtn--avvisa" onclick="ctOpenFatturaClienteModal(\'' + cart.id + '\')" title="Ricerca anagrafica clienti e dati fattura">';
+  h += '🧾<span>' + (cart.fatturaRichiesta ? 'FATTURA ON' : 'FATTURA') + '</span></button>';
   if(cart.stato === 'modifica'){
     h += '<button class="ct-fbtn ct-fbtn--danger" onclick="eliminaCarrelloModifica(\'' + cart.id + '\')" title="Elimina carrello">🗑️<span>ELIMINA</span></button>';
     h += '<button class="ct-fbtn ct-fbtn--cassa" id="ctf-cassa-' + cart.id + '" ' +

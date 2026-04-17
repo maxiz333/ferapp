@@ -22,7 +22,10 @@ function confirmNewCart(){
     dataCreazione:Date.now(),
     creatoAtISO:new Date().toISOString(),
     items:[],
-    scontoGlobale:sconto||null});
+    scontoGlobale:sconto||null,
+    fatturaRichiesta:false,
+    fatturaCliente:null,
+    salvaFatturaInRubrica:false});
   activeCartId=id;
   saveCarrelli();
   goTab('tc');
