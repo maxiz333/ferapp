@@ -220,6 +220,24 @@ function ctSalvaNuovoFornitore(){
   if(typeof showToastGen === 'function') showToastGen('green', 'Fornitore salvato');
 }
 
+/** Carrello attivo o nel cestino (dopo "Elimina carrello" gli articoli da ordinare restano qui). */
+function _daoResolveCart(cartId){
+  var c = (typeof carrelli !== 'undefined' && carrelli) ? carrelli.find(function(x){ return x.id === cartId; }) : null;
+  if(c) return { cart: c, inCestino: false };
+  var cc = typeof carrelliCestino !== 'undefined' ? carrelliCestino : [];
+  c = cc.find(function(x){ return x.id === cartId; });
+  if(c) return { cart: c, inCestino: true };
+  return null;
+}
+function _daoPersistCartRef(res){
+  if(!res || !res.cart) return;
+  if(res.inCestino){
+    if(typeof lsSet === 'function' && typeof CART_CK !== 'undefined') lsSet(CART_CK, carrelliCestino);
+  } else if(typeof saveCarrelli === 'function'){
+    saveCarrelli();
+  }
+}
+
 var _daoOrdQtyTimer = null;
 function daoSetDaOrdQtyInput(cartId, idx, el){
   clearTimeout(_daoOrdQtyTimer);
@@ -231,8 +249,9 @@ function daoSetDaOrdQtyCommit(cartId, idx, el){
 }
 
 function daoSetDaOrdQty(cartId, idx, val){
-  var cart = carrelli.find(function(c){ return c.id === cartId; });
-  if(!cart || !cart.items[idx]) return;
+  var res = _daoResolveCart(cartId);
+  if(!res || !res.cart.items[idx]) return;
+  var cart = res.cart;
   var it = cart.items[idx];
   if(!it.daOrdinare) return;
   var allowDec = (typeof itemUnitAllowsDecimalQty === 'function') ? itemUnitAllowsDecimalQty(it.unit) : false;
@@ -245,25 +264,29 @@ function daoSetDaOrdQty(cartId, idx, val){
   }
   if(typeof _cartRicalcolaPrezzoVendita === 'function') _cartRicalcolaPrezzoVendita(it);
   if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(cart);
-  if(typeof saveCarrelli === 'function') saveCarrelli();
+  _daoPersistCartRef(res);
   if(typeof renderCartTabs === 'function') renderCartTabs();
   if(typeof renderOrdFor === 'function') renderOrdFor();
   if(typeof renderDaOrdinareView === 'function') renderDaOrdinareView();
 }
 
-/** Articoli "da ordinare" raggruppati per colore (con cartId + idx per azioni). */
+/** Articoli "da ordinare" raggruppati per colore (con cartId + idx per azioni). Include carrelli nel cestino. */
 function daoCollectDaOrdinareByColor(){
   var byColor = {};
-  carrelli.forEach(function(cart){
-    (cart.items||[]).forEach(function(it, idx){
-      if(!it.daOrdinare) return;
-      if(!it._ordColore || it._ordColore === '#888888') return;
-      var col = ctNormalizeHex(it._ordColore) || it._ordColore;
-      if(!col || col === '#888888') return;
-      if(!byColor[col]) byColor[col] = [];
-      byColor[col].push({ it: it, cartNome: cart.nome||'', cartId: cart.id, idx: idx });
+  function scanList(list){
+    (list||[]).forEach(function(cart){
+      (cart.items||[]).forEach(function(it, idx){
+        if(!it.daOrdinare) return;
+        if(!it._ordColore || it._ordColore === '#888888') return;
+        var col = ctNormalizeHex(it._ordColore) || it._ordColore;
+        if(!col || col === '#888888') return;
+        if(!byColor[col]) byColor[col] = [];
+        byColor[col].push({ it: it, cartNome: cart.nome||'', cartId: cart.id, idx: idx });
+      });
     });
-  });
+  }
+  scanList(typeof carrelli !== 'undefined' ? carrelli : []);
+  scanList(typeof carrelliCestino !== 'undefined' ? carrelliCestino : []);
   return byColor;
 }
 
@@ -273,14 +296,16 @@ function daoPropagaNomeFornitoreSuArticoli(colore, nome){
   function matchCol(c){
     return ctNormalizeHex(c) === cNorm || c === colore || c === cNorm;
   }
-  carrelli.forEach(function(cart){
+  function scanCartItems(cart){
     (cart.items||[]).forEach(function(it){
       if(it.daOrdinare && matchCol(it._ordColore)){
         if(n) it._ordFornitoreNome = n;
         else delete it._ordFornitoreNome;
       }
     });
-  });
+  }
+  (typeof carrelli !== 'undefined' ? carrelli : []).forEach(scanCartItems);
+  (typeof carrelliCestino !== 'undefined' ? carrelliCestino : []).forEach(scanCartItems);
   if(typeof ordini !== 'undefined' && ordini){
     ordini.forEach(function(ord){
       (ord.items||[]).forEach(function(it){
@@ -291,18 +316,22 @@ function daoPropagaNomeFornitoreSuArticoli(colore, nome){
       });
     });
   }
+  if(typeof lsSet === 'function' && typeof CART_CK !== 'undefined' && typeof carrelliCestino !== 'undefined'){
+    lsSet(CART_CK, carrelliCestino);
+  }
 }
 
 /** Toglie marcatore "da ordinare" (speculare carrello ↔ ordine collegato). */
 function daoRipulisciVoceDaOrdinare(cartId, idx){
-  var cart = carrelli.find(function(c){ return c.id === cartId; });
-  if(!cart || !cart.items[idx]) return;
+  var res = _daoResolveCart(cartId);
+  if(!res || !res.cart.items[idx]) return;
+  var cart = res.cart;
   var it = cart.items[idx];
   it.daOrdinare = false;
   delete it._ordColore;
   delete it._ordFornitoreNome;
   if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(cart);
-  if(typeof saveCarrelli === 'function') saveCarrelli();
+  _daoPersistCartRef(res);
   if(typeof renderCartTabs === 'function') renderCartTabs();
   if(typeof renderOrdFor === 'function') renderOrdFor();
   if(typeof renderDaOrdinareView === 'function') renderDaOrdinareView();
@@ -361,19 +390,18 @@ function daoArchiviaColoreGruppo(colore){
       };
     })
   };
-  var affected = {};
+  var touchedActive = false;
+  var touchedCestino = false;
   entries.forEach(function(e){
-    var cart = carrelli.find(function(c){ return c.id === e.cartId; });
-    if(!cart || !cart.items[e.idx]) return;
-    var it = cart.items[e.idx];
+    var res = _daoResolveCart(e.cartId);
+    if(!res || !res.cart.items[e.idx]) return;
+    var it = res.cart.items[e.idx];
     it.daOrdinare = false;
     delete it._ordColore;
     delete it._ordFornitoreNome;
-    affected[e.cartId] = cart;
-  });
-  Object.keys(affected).forEach(function(cid){
-    var c = affected[cid];
-    if(c && typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(c);
+    if(res.inCestino) touchedCestino = true;
+    else touchedActive = true;
+    if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(res.cart);
   });
   var recent = daoGetStoricoRecent();
   recent.unshift(batch);
@@ -381,7 +409,8 @@ function daoArchiviaColoreGruppo(colore){
   recent = daoPruneStoricoToCold(recent);
   lsSet(ORD_FORN_STOR_K, recent);
   if(typeof window !== 'undefined') window.ordFornStorico = recent;
-  if(typeof saveCarrelli === 'function') saveCarrelli();
+  if(touchedActive && typeof saveCarrelli === 'function') saveCarrelli();
+  if(touchedCestino && typeof lsSet === 'function' && typeof CART_CK !== 'undefined') lsSet(CART_CK, carrelliCestino);
   if(typeof saveOrdini === 'function') saveOrdini();
   if(typeof renderCartTabs === 'function') renderCartTabs();
   if(typeof renderOrdFor === 'function') renderOrdFor();

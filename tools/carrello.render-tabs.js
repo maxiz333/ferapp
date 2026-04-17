@@ -136,6 +136,7 @@ function renderCartTabs(){
     h += '<div style="display:flex;gap:6px;margin-top:8px">';
     h += '<button onclick="deleteCart(\'' + cart.id + '\')" class="ct-btn-ghost" style="flex:1;font-size:12px;color:#555">🗑️ Elimina carrello</button>';
     h += '</div></div>';
+    h += '<div class="ct-inviato-esauriti-banner" role="note">C\'è qualche articolo esaurito?</div>';
     body.innerHTML = h;
     return;
   }
@@ -444,6 +445,9 @@ function renderCartTabs(){
   h += '<div class="ct-footer-tot"><span class="ct-footer-sym">€</span>' + tot2Fin.toFixed(2) + '</div>';
   h += '<div class="ct-footer-btns">';
   h += '<button class="ct-fbtn ct-fbtn--danger" onclick="eliminaOrdineCarrello(\'' + cart.id + '\')">🗑️<span>Elimina ordine</span></button>';
+  h += '<button class="ct-fbtn ct-fbtn--fattura' + (cart.fatturaRichiesta ? ' ct-fbtn--fattura-on' : '') + '" onclick="ctOpenFatturaClienteModal(\'' + cart.id + '\')" title="Ricerca anagrafica clienti e dati fattura">';
+  h += '🧾<span>' + (cart.fatturaRichiesta ? 'FATTURA ON' : 'FATTURA') + '</span></button>';
+  h += '<button class="ct-fbtn ct-fbtn--riepilogo" onclick="openRiepilogoOrdine(\'' + cart.id + '\')">👀<span>RIEPILOGO</span></button>';
   // Tasto Avvisa Ufficio — solo prima bozza; con bozza attiva la sync carrello↔ufficio è automatica (saveCarrelli)
   if(cart.stato !== 'modifica' && cart.stato !== 'inviato' && !cart.bozzaOrdId){
     h += '<button class="ct-fbtn ct-fbtn--avvisa" ' +
@@ -451,7 +455,6 @@ function renderCartTabs(){
          'onclick="avvisaUfficio(\'' + cart.id + '\')">' +
          '📢<span>UFFICIO</span></button>';
   }
-  h += '<button class="ct-fbtn ct-fbtn--riepilogo" onclick="openRiepilogoOrdine(\'' + cart.id + '\')">👀<span>RIEPILOGO</span></button>';
   if(cart.stato === 'modifica'){
     h += '<button class="ct-fbtn ct-fbtn--danger" onclick="eliminaCarrelloModifica(\'' + cart.id + '\')" title="Elimina carrello">🗑️<span>ELIMINA</span></button>';
     h += '<button class="ct-fbtn ct-fbtn--cassa" id="ctf-cassa-' + cart.id + '" ' +
