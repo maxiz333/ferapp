@@ -68,6 +68,7 @@ function ctTuttoRotolo(cartId, idx){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
   if(!cart || !cart.items[idx]) return;
   var it = cart.items[idx];
+  if(it._stornoReso) return;
 
   if(it._tuttoRotolo){
     var restoreTr = it._prezzoOriginale || listinoPrezzoString(it);
@@ -102,6 +103,7 @@ function ctApriColori(cartId, idx){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
   if(!cart || !cart.items[idx]) return;
   var it = cart.items[idx];
+  if(it._stornoReso) return;
 
   var slots = typeof ctHexSlotsOrdineFornitore === 'function'
     ? ctHexSlotsOrdineFornitore()
@@ -151,6 +153,7 @@ function ctSetColore(cartId, idx, colore){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
   if(!cart || !cart.items[idx]) return;
   var it = cart.items[idx];
+  if(it._stornoReso) return;
   var cNorm = (colore && typeof ctNormalizeHex === 'function') ? ctNormalizeHex(colore) : (colore || '');
   if(colore && typeof ctNormalizeHex === 'function' && !cNorm){
     if(typeof showToastGen === 'function') showToastGen('yellow', 'Colore non valido');
@@ -183,6 +186,7 @@ function ctSetCodF(cartId, idx, val){
   _ctCodFTimers[cartId + '_' + idx] = setTimeout(function(){
     var cart = carrelli.find(function(c){ return c.id === cartId; });
     if(!cart || !cart.items[idx]) return;
+    if(cart.items[idx]._stornoReso) return;
     cart.items[idx].codF = val.trim();
     saveCarrelli(); // salva su localStorage + Firebase
     // NON chiama renderCartTabs() per non perdere il focus sull'input

@@ -66,6 +66,7 @@ function cartAddItem(rowIdx){
 function cartDelta(cartId,idx,delta){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
+  if(cart.items[idx]._stornoReso) return;
   var itQty = cart.items[idx];
   if(typeof itemIsMqUm === 'function' && itemIsMqUm(itQty.unit)){
     delete itQty.h_superficie;
@@ -94,6 +95,7 @@ function cartDelta(cartId,idx,delta){
 function cartSetQty(cartId,idx,val){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
+  if(cart.items[idx]._stornoReso) return;
   var itQty = cart.items[idx];
   if(typeof itemIsMqUm === 'function' && itemIsMqUm(itQty.unit)){
     delete itQty.h_superficie;
@@ -128,6 +130,7 @@ function cartStripStaleRotoloInteroNota(it){
 function cartSetPrezzo(cartId,idx,val){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
+  if(cart.items[idx]._stornoReso) return;
   var it=cart.items[idx];
   var oldP=String(it.prezzoUnit||'');
   if(String(val||'')===oldP) return;
@@ -163,6 +166,7 @@ function cartSetPrezzo(cartId,idx,val){
 function cartSetUnit(cartId,idx,val){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
+  if(cart.items[idx]._stornoReso) return;
   var it=cart.items[idx];
   it.unit=(typeof normalizeUmValue === 'function') ? normalizeUmValue(val) : val;
   if(typeof itemIsMqUm === 'function' && !itemIsMqUm(it.unit)){
@@ -255,6 +259,7 @@ function _cartRicalcolaPrezzoVendita(it){
 function cartCycleScampolo(cartId,idx){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
+  if(cart.items[idx]._stornoReso) return;
   var it=cart.items[idx];
   var prevLab=_cartLabelModalita(it);
   if(!it.scampolo && !it.fineRotolo && !it._tuttoRotolo && !it._scaglionato){
@@ -304,6 +309,7 @@ function cartCycleScampolo(cartId,idx){
 function cartSetScontoScampolo(cartId,idx,val){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
+  if(cart.items[idx]._stornoReso) return;
   var it=cart.items[idx];
   var oldSc=it._scontoApplicato;
   it._scontoApplicato=parseFloat(val)||0;
@@ -335,6 +341,10 @@ function _applicaScontoScampolo(it){
 }
 
 function itemFormatPrezzoLineStr(lineNum){
+  if(lineNum == null || !isFinite(lineNum)) return '0';
+  if(lineNum < 0){
+    return '-' + itemFormatPrezzoLineStr(Math.abs(lineNum));
+  }
   if(lineNum >= 0.01){
     return lineNum.toFixed(2).replace('.', ',');
   }
@@ -389,6 +399,7 @@ var _cartMqHlTimers = {};
 function cartSetMqSuperficie(cartId, idx, which, rawVal){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
   if(!cart || !cart.items[idx]) return;
+  if(cart.items[idx]._stornoReso) return;
   var it = cart.items[idx];
   if(typeof itemIsMqUm !== 'function' || !itemIsMqUm(it.unit)) return;
   if(which === 'h') it.h_superficie = rawVal;
@@ -412,6 +423,7 @@ function cartSetMqSuperficie(cartId, idx, which, rawVal){
 function cartInputPrezzoUnitaBase(cartId, idx, el){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
   if(!cart || !cart.items[idx]) return;
+  if(cart.items[idx]._stornoReso) return;
   var it = cart.items[idx];
   it._prezzoUnitaBase = el.value;
   if(parsePriceIT(el.value) > 0){
@@ -546,6 +558,7 @@ function cartHideNota(idx){
 function cartToggleDaOrdinare(cartId,idx){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
+  if(cart.items[idx]._stornoReso) return;
   var it=cart.items[idx];
   it.daOrdinare=!it.daOrdinare;
   if(it.daOrdinare){
@@ -649,6 +662,7 @@ function cartRemoveItem(cartId,idx){
 function cartDuplicaItem(cartId,idx){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
+  if(cart.items[idx]._stornoReso) return;
   var orig=cart.items[idx];
   var copy=JSON.parse(JSON.stringify(orig));
   copy.nota=copy.nota?(copy.nota+' (copia)'):'(copia)';
@@ -801,6 +815,7 @@ function _cartApplicaScaglione(it){
 function cartToggleScaglioni(cartId,idx){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
+  if(cart.items[idx]._stornoReso) return;
   var it=cart.items[idx];
   it._scaglioniAperti=!it._scaglioniAperti;
   if(!it.hasScaglioni)it.hasScaglioni=true;
@@ -815,6 +830,7 @@ function cartToggleScaglioni(cartId,idx){
 function cartUpdScag(cartId,itemIdx,sgIdx,field,val){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[itemIdx])return;
+  if(cart.items[itemIdx]._stornoReso) return;
   var it=cart.items[itemIdx];
   if(!it.scaglioni||!it.scaglioni[sgIdx])return;
   var sg=it.scaglioni[sgIdx];
@@ -834,6 +850,7 @@ function cartUpdScag(cartId,itemIdx,sgIdx,field,val){
 function cartAddScag(cartId,itemIdx){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[itemIdx])return;
+  if(cart.items[itemIdx]._stornoReso) return;
   if(!cart.items[itemIdx].scaglioni)cart.items[itemIdx].scaglioni=[];
   cart.items[itemIdx].scaglioni.push({qtaMin:'',sconto:'',prezzo:''});
   saveCarrelli();renderCartTabs();
@@ -842,6 +859,7 @@ function cartAddScag(cartId,itemIdx){
 function cartRmvScag(cartId,itemIdx,sgIdx){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[itemIdx])return;
+  if(cart.items[itemIdx]._stornoReso) return;
   var it=cart.items[itemIdx];
   it.scaglioni.splice(sgIdx,1);
   // Assicurati che ci sia sempre almeno una riga vuota se il pannello - aperto
@@ -850,4 +868,69 @@ function cartRmvScag(cartId,itemIdx,sgIdx){
   }
   _cartApplicaScaglione(it);
   saveCarrelli();renderCartTabs();
+}
+
+/**
+ * Reso merce su ordine già inviato: aggiunge riga STORNO RESO (€ negativi) senza toccare la riga originale.
+ * Solo con carrello in stato "modifica" collegato a ord.ordId.
+ */
+function cartApplicaReso(cartId, idx){
+  var cart = carrelli.find(function(c){ return c.id === cartId; });
+  if(!cart || cart.stato !== 'modifica' || !cart.ordId) return;
+  var it = cart.items[idx];
+  if(!it || it._stornoReso) return;
+  var nome = (typeof ordineItemNomePerReso === 'function') ? ordineItemNomePerReso(it) : String(it.desc || 'articolo');
+  var pu = (typeof ordItemLineUnitSelling === 'function') ? ordItemLineUnitSelling(it) : parsePriceIT(it.prezzoUnit);
+  var q = parseFloat(it.qty || 0);
+  if(!isFinite(q) || q <= 0){
+    if(typeof showToastGen === 'function') showToastGen('orange', 'Quantità non valida per il reso');
+    return;
+  }
+  if(!isFinite(pu) || pu <= 0){
+    if(typeof showToastGen === 'function') showToastGen('orange', 'Prezzo non valido per il reso');
+    return;
+  }
+  var msg = 'Registrare reso (storno) per "' + nome + '" — qtà ' + q + ', importo riga stimato €' + (-Math.abs(pu) * q).toFixed(2) + '?';
+  var run = function(){ _cartApplicaResoDo(cartId, idx); };
+  if(typeof showConfirm === 'function') showConfirm(msg, run);
+  else if(window.confirm(msg)) run();
+}
+
+function _cartApplicaResoDo(cartId, idx){
+  var cart = carrelli.find(function(c){ return c.id === cartId; });
+  if(!cart || cart.stato !== 'modifica' || !cart.ordId) return;
+  var it = cart.items[idx];
+  if(!it || it._stornoReso) return;
+  var ord = typeof ordini !== 'undefined' ? ordini.find(function(o){ return o.id === cart.ordId; }) : null;
+  if(!ord){
+    if(typeof showToastGen === 'function') showToastGen('red', 'Ordine non trovato');
+    return;
+  }
+  var nome = ordineItemNomePerReso(it);
+  var pu = ordItemLineUnitSelling(it);
+  var q = parseFloat(it.qty || 0);
+  if(!isFinite(q) || q <= 0 || !isFinite(pu) || pu <= 0) return;
+  var negStr = (typeof ordineFormatPrezzoUnitNegativoDaVendita === 'function')
+    ? ordineFormatPrezzoUnitNegativoDaVendita(pu)
+    : itemFormatPrezzoLineStr(-Math.abs(pu));
+  var um = (typeof normalizeUmValue === 'function') ? normalizeUmValue(it.unit || 'pz') : (it.unit || 'pz');
+  var storno = {
+    desc: 'STORNO RESO: ' + nome,
+    rowIdx: it.rowIdx,
+    codF: it.codF || '',
+    codM: it.codM || '',
+    qty: q,
+    unit: um,
+    prezzoUnit: negStr,
+    nota: '',
+    _stornoReso: true
+  };
+  cart.items.splice(idx + 1, 0, storno);
+  ordineAppendCommentoReso(ord, nome);
+  cart.nota = ord.nota || '';
+  if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(cart);
+  if(typeof saveCarrelli === 'function') saveCarrelli();
+  else if(typeof lsSet !== 'undefined' && typeof CARTK !== 'undefined'){ lsSet(CARTK, carrelli); }
+  if(typeof renderOrdini === 'function') renderOrdini();
+  if(typeof showToastGen === 'function') showToastGen('green', 'Storno reso registrato');
 }

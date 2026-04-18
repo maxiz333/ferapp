@@ -111,3 +111,68 @@ function annullaModifica(cartId){
   renderCartTabs();
   showToastGen('green','- Modifiche annullate');
 }
+
+/** Reso merce dalla lista ordini: storno negativo + nota (stesso documento). */
+function ordApplicaResoDaTab(gi, ii){
+  var ord = ordini[gi];
+  if(!ord) return;
+  if(ord.stato === 'bozza'){
+    if(typeof showToastGen === 'function') showToastGen('orange', 'Il reso si registra sugli ordini inviati, non sulle bozze');
+    return;
+  }
+  var it = ord.items[ii];
+  if(!it || ordItemCongelato(it) || ordItemStornoReso(it)) return;
+  var nome = ordineItemNomePerReso(it);
+  var pu = ordItemLineUnitSelling(it);
+  var q = parseFloat(it.qty || 0);
+  if(!isFinite(q) || q <= 0){
+    if(typeof showToastGen === 'function') showToastGen('orange', 'Quantità non valida');
+    return;
+  }
+  if(!isFinite(pu) || pu <= 0){
+    if(typeof showToastGen === 'function') showToastGen('orange', 'Prezzo non valido');
+    return;
+  }
+  var msg = 'Registrare reso (storno) per "' + nome + '" — qtà ' + q + ', importo stimato €' + (-Math.abs(pu) * q).toFixed(2) + '?';
+  var run = function(){
+    var ord2 = ordini[gi];
+    if(!ord2) return;
+    var src = ord2.items[ii];
+    if(!src || ordItemCongelato(src) || ordItemStornoReso(src)) return;
+    var nome2 = ordineItemNomePerReso(src);
+    var pu2 = ordItemLineUnitSelling(src);
+    var q2 = parseFloat(src.qty || 0);
+    if(!isFinite(q2) || q2 <= 0 || !isFinite(pu2) || pu2 <= 0) return;
+    var negStr = ordineFormatPrezzoUnitNegativoDaVendita(pu2);
+    var um = (typeof normalizeUmValue === 'function') ? normalizeUmValue(src.unit || 'pz') : (src.unit || 'pz');
+    var storno = {
+      desc: 'STORNO RESO: ' + nome2,
+      rowIdx: src.rowIdx,
+      codF: src.codF || '',
+      codM: src.codM || '',
+      qty: q2,
+      unit: um,
+      prezzoUnit: negStr,
+      nota: '',
+      _stornoReso: true
+    };
+    ord2.items.splice(ii + 1, 0, storno);
+    ordineAppendCommentoReso(ord2, nome2);
+    ord2.totale = ordTotaleSenzaCongelati(ord2).toFixed(2);
+    ord2.modificato = true;
+    ord2.modificatoAt = new Date().toLocaleString('it-IT');
+    ord2.modificatoAtISO = new Date().toISOString();
+    var linked = typeof carrelli !== 'undefined' ? carrelli.find(function(c){ return c.ordId === ord2.id && c.stato === 'modifica'; }) : null;
+    if(linked){
+      linked.items = ordItemsSoloAttiviDeep(ord2.items);
+      linked.nota = ord2.nota || '';
+    }
+    if(typeof saveOrdini === 'function') saveOrdini();
+    if(typeof saveCarrelli === 'function') saveCarrelli();
+    if(typeof renderOrdini === 'function') renderOrdini();
+    if(typeof renderCartTabs === 'function') renderCartTabs();
+    if(typeof showToastGen === 'function') showToastGen('green', 'Storno reso registrato');
+  };
+  if(typeof showConfirm === 'function') showConfirm(msg, run);
+  else if(window.confirm(msg)) run();
+}

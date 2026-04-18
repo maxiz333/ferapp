@@ -207,7 +207,8 @@ function _aggiornaBozzaOrdine(cart){
         l_superficie:String(it&&it.l_superficie!=null?it.l_superficie:''),
         daOrdinare:!!(it&&it.daOrdinare),
         _ordColore:String(it&&it._ordColore||''),
-        _ordFornitoreNome:String(it&&it._ordFornitoreNome||'')
+        _ordFornitoreNome:String(it&&it._ordFornitoreNome||''),
+        _stornoReso:!!(it&&it._stornoReso)
       };
     }));
   }
@@ -258,7 +259,8 @@ function _aggiornaOrdineDaCarrelloModifica(cart){
         l_superficie:String(it&&it.l_superficie!=null?it.l_superficie:''),
         daOrdinare:!!(it&&it.daOrdinare),
         _ordColore:String(it&&it._ordColore||''),
-        _ordFornitoreNome:String(it&&it._ordFornitoreNome||'')
+        _ordFornitoreNome:String(it&&it._ordFornitoreNome||''),
+        _stornoReso:!!(it&&it._stornoReso)
       };
     }));
   }
@@ -412,6 +414,7 @@ function ctEditClienteName(cartId){
 function cartSetScaglioneQta(cartId, idx, val){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
   if(!cart || !cart.items[idx]) return;
+  if(cart.items[idx]._stornoReso) return;
   cart.items[idx]._scaglioneQta = parseInt(val) || 10;
   saveCarrelli(); renderCartTabs();
 }

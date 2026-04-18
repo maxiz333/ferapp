@@ -216,6 +216,7 @@ function renderCartTabs(){
       var promoG       = (typeof isPromoGItem === 'function') ? isPromoGItem(it) : false;
       var scOn         = isSc || isFR;
       var isTuttoRotolo = it._tuttoRotolo || false;
+      var isStorno     = !!it._stornoReso;
 
       // Prezzo scontato calcolato al volo
       var scAttivo     = it._scontoApplicato || 0;
@@ -227,6 +228,7 @@ function renderCartTabs(){
         scApplica = true;
       }
       var sub          = (pVendita * q).toFixed(2);
+      var hasScontoRow = !isStorno && pListino > pVendita + 0.005;
 
       // Cod. Magazzino — 7 cifre se numerico
       var codM7 = it.codM
@@ -236,7 +238,8 @@ function renderCartTabs(){
 
       // Bordo card
       var cardStyle = '';
-      if(isTuttoRotolo)    cardStyle = 'border-color:#e53e3e;box-shadow:0 0 0 2px #e53e3e55';
+      if(isStorno)         cardStyle = 'border-color:#c05621;box-shadow:0 0 0 2px rgba(221,107,32,.5);background:rgba(154,52,18,.12)';
+      else if(isTuttoRotolo)    cardStyle = 'border-color:#e53e3e;box-shadow:0 0 0 2px #e53e3e55';
       else if(it._ordColore) cardStyle = 'border-color:' + it._ordColore + ';box-shadow:0 0 0 1px ' + it._ordColore + '44';
 
       var cardClass = 'ct-card' +
@@ -249,20 +252,44 @@ function renderCartTabs(){
       // ── RIGA GRIGLIA: stessa struttura ord-grid 50%|15%|15%|20% ──────
       h += '<div class="ord-grid ord-grid-row' + (displayPos%2===0 ? ' ord-grid-even' : ' ord-grid-odd') + '">';
 
+      var units = (typeof UM_STANDARD !== 'undefined' && UM_STANDARD && UM_STANDARD.length) ? UM_STANDARD : ['pz','kg','MQ','mt','conf'];
+      var curUnit = (typeof normalizeUmValue === 'function') ? normalizeUmValue(it.unit || 'pz') : (it.unit || 'pz');
+
       // Colonna prodotto: nome + codici
       h += '<div class="ord-gc-desc">';
       h += '<div class="ord-item-name">' + esc(it.desc || '—') + '</div>';
+      if(isStorno){
+        h += '<div style="font-size:9px;font-weight:800;color:#fc8181;margin:4px 0 2px;letter-spacing:.25px;">STORNO RESO</div>';
+      }
       var codes = '';
       codes += '<div class="ord-item-codes-line">';
       if(codM7) codes += '<span class="ord-code-mag">' + esc(codM7) + '</span>';
-      codes += '<span class="ord-code-forn ord-code-forn--inp"><span class="ord-code-forn-lbl">f.</span>';
-      codes += '<input class="ct-codf-inp" value="' + esc(codF) + '" placeholder="—" ' +
-               'oninput="ctSetCodF(\'' + cart.id + '\',' + idx + ',this.value)" ' +
-               'onclick="event.stopPropagation();this.select()" ' +
-               'onkeydown="if(event.key===\'Enter\')this.blur()">';
-      codes += '</span></div>';
+      if(!isStorno){
+        codes += '<span class="ord-code-forn ord-code-forn--inp"><span class="ord-code-forn-lbl">f.</span>';
+        codes += '<input class="ct-codf-inp" value="' + esc(codF) + '" placeholder="—" ' +
+                 'oninput="ctSetCodF(\'' + cart.id + '\',' + idx + ',this.value)" ' +
+                 'onclick="event.stopPropagation();this.select()" ' +
+                 'onkeydown="if(event.key===\'Enter\')this.blur()">';
+        codes += '</span>';
+      } else {
+        codes += '<span class="ord-code-forn"><span class="ord-code-forn-lbl">f.</span> ' + esc(codF || '—') + '</span>';
+      }
+      codes += '</div>';
       h += '<div class="ord-item-codes">' + codes + '</div>';
       h += '</div>';
+
+      if(isStorno){
+        h += '<div class="ord-gc-qty ct-grid-qty" style="align-self:center">';
+        h += '<span style="font-size:15px;font-weight:800;color:#e2e8f0">' + esc((typeof itemFormatQtyDisplay === 'function') ? itemFormatQtyDisplay(q, it.unit) : String(q)) + '</span>';
+        h += '<span style="font-size:11px;color:#a0aec0;margin-left:6px">' + esc(curUnit) + '</span>';
+        h += '</div>';
+        h += '<div class="ord-gc-price" id="prz-' + idx + '">';
+        h += '<span style="color:#fc8181;font-weight:800;font-size:14px">€' + esc(it.prezzoUnit || '') + '</span>';
+        h += '</div>';
+        h += '<div class="ord-gc-sub" id="cart-sub-' + idx + '">';
+        h += '<div class="ord-gc-sub-val" style="color:#f56565;font-weight:800">€' + sub + '</div>';
+        h += '</div>';
+      } else {
 
       // Colonna quantità — stepper interattivo
       h += '<div class="ord-gc-qty ct-grid-qty">';
@@ -271,8 +298,6 @@ function renderCartTabs(){
       h += '<button type="button" class="ct-qty-val" id="cart-qty-val-' + idx + '" onclick="openQtyNumpad(\'' + cart.id + '\',' + idx + ')">' + esc((typeof itemFormatQtyDisplay === 'function') ? itemFormatQtyDisplay(q, it.unit) : String(q)) + '</button>';
       h += '<button class="ct-qty-btn" onclick="cartDelta(\'' + cart.id + '\',' + idx + ',1)">＋</button>';
       h += '</div>';
-      var units = (typeof UM_STANDARD !== 'undefined' && UM_STANDARD && UM_STANDARD.length) ? UM_STANDARD : ['pz','kg','MQ','mt','conf'];
-      var curUnit = (typeof normalizeUmValue === 'function') ? normalizeUmValue(it.unit || 'pz') : (it.unit || 'pz');
       h += '<select class="ct-um-select ct-um--mini" onchange="cartSetUnit(\'' + cart.id + '\',' + idx + ',this.value)">';
       units.forEach(function(u){
         h += '<option value="' + u + '"' + (u === curUnit ? ' selected' : '') + '>' + u + '</option>';
@@ -317,7 +342,7 @@ function renderCartTabs(){
       h += '</div>';
 
       // Colonna prezzo — listino/sconto convertito + input €/UM riga
-      var hasSconto = pListino > pVendita + 0.005;
+      var hasSconto = hasScontoRow;
       h += '<div class="ord-gc-price" id="prz-' + idx + '">';
       h += '<div id="cart-prz-strip-' + idx + '"' + (hasSconto ? '' : ' style="display:none"') + '">';
       if(hasSconto){
@@ -346,10 +371,22 @@ function renderCartTabs(){
       }
       h += '</div>';
 
+      } // fine !isStorno
+
       h += '</div>'; // fine ord-grid row
 
-      // ── ICONBAR: Forbici+% | Note | Ordina | Cestino ─────────────────────
+      // ── ICONBAR: Forbici+% | Note | Ordina | Cestino | Reso (modifica) ───────────
       h += '<div class="ct-iconbar">';
+
+      if(isStorno){
+        h += '<button class="ct-icon-btn ct-icon-btn--del" ' +
+             'onclick="cartRemoveItem(\'' + cart.id + '\',' + idx + ')" title="Rimuovi storno">';
+        h += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+             '<polyline points="3 6 5 6 21 6"/>' +
+             '<path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>' +
+             '<path d="M9 6V4h6v2"/></svg></button>';
+        h += '</div>';
+      } else {
 
       // FORBICI (tap=scampolo, doppio tap=rotolo) + input % inline
       var isScag = it._scaglionato || false;
@@ -419,7 +456,13 @@ function renderCartTabs(){
            '<path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>' +
            '<path d="M9 6V4h6v2"/></svg></button>';
 
-      h += '</div>'; // fine ct-iconbar
+      if(cart.stato === 'modifica'){
+        h += '<button type="button" class="ord-abtn ord-abtn--del" style="min-width:36px;height:34px;padding:0 10px;font-weight:900;font-size:16px;color:#e53e3e;border-radius:8px;line-height:1;" ';
+        h += 'onclick="event.stopPropagation();cartApplicaReso(\'' + cart.id + '\',' + idx + ')" title="Reso merce (storno)">R</button>';
+      }
+
+      h += '</div>'; // fine ct-iconbar (non storno)
+      }
 
       // ── PANNELLI A COMPARSA ───────────────────────────────────────────────
       var pNoId = 'ctp-no-' + idx;

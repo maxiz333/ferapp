@@ -102,6 +102,14 @@
 }
 .ord-grid-row--congelato .ord-gc-qty,
 .ord-grid-row--congelato .ord-gc-sub { color: #666; }
+
+/* Storno reso (importo negativo, distinto dal congelato) */
+.ord-grid-row--reso {
+  background: rgba(154, 52, 18, 0.14) !important;
+}
+.ord-grid-row--reso .ord-gc-price,
+.ord-grid-row--reso .ord-gc-sub { color: #f56565; }
+
 .ord-congelato-badge {
   display: inline-block;
   margin-top: 4px;

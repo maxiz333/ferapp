@@ -50,6 +50,7 @@ function _editOrdNormalizeItemsForCompare(items){
       _scaglionato:!!(it&&it._scaglionato),
       _scaglioneQta:Number(parseFloat(it&&it._scaglioneQta||0).toFixed(4)),
       congelato:!!ordItemCongelato(it),
+      _stornoReso:!!(it&&it._stornoReso),
       scaglioni:JSON.stringify(it&&it.scaglioni||[])
     };
   });
@@ -162,16 +163,18 @@ function renderEditOrdine(){
   ordineIndiciItemsDisplay(items).forEach(function(idx){
     var it=items[idx];
     var isFz=ordItemCongelato(it);
+    var isSr=typeof ordItemStornoReso==='function'&&ordItemStornoReso(it);
     var p=ordItemLineUnitSelling(it);
     var q=parseFloat(it.qty||0);
     var sub=isFz?'0.00':(p*q).toFixed(2);
     var isSc=it.scampolo||false;
     var isFR=it.fineRotolo||false;
-    h+='<div style="padding:8px;border:1px solid '+(isFz?'#3d3d48':'#2a2a2a')+';border-radius:8px;margin-bottom:6px;background:'+(isFz?'#1a1a20':'#1a1a1a')+';opacity:'+(isFz?'0.92':'1')+';">';
+    h+='<div style="padding:8px;border:1px solid '+(isFz?'#3d3d48':(isSr?'#9c4221':'#2a2a2a'))+';border-radius:8px;margin-bottom:6px;background:'+(isFz?'#1a1a20':(isSr?'#2d1810':'#1a1a1a'))+';opacity:'+(isFz?'0.92':'1')+';">';
     if(isFz) h+='<div style="font-size:9px;font-weight:800;color:#9ca3af;margin-bottom:6px;letter-spacing:.3px;">Rimosso dal banco</div>';
-    h+='<div style="font-size:12px;font-weight:700;color:'+(isFz?'#a8a8b0':'var(--text)')+';margin-bottom:4px;">'+esc(it.desc)+'</div>';
+    else if(isSr) h+='<div style="font-size:9px;font-weight:800;color:#fc8181;margin-bottom:6px;letter-spacing:.3px;">STORNO RESO</div>';
+    h+='<div style="font-size:12px;font-weight:700;color:'+(isFz?'#a8a8b0':(isSr?'#feb2b2':'var(--text)'))+';margin-bottom:4px;">'+esc(it.desc)+'</div>';
     h+='<div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">';
-    if(!isFz){
+    if(!isFz&&!isSr){
       h+='<button onclick="_editOrdDelta('+idx+',-1)" style="width:28px;height:28px;border-radius:6px;border:none;background:#2a2a2a;color:var(--text);font-size:16px;font-weight:bold;cursor:pointer;">-</button>';
       h+='<span style="min-width:32px;text-align:center;font-size:14px;font-weight:900;color:var(--accent);">'+q+'</span>';
       h+='<button onclick="_editOrdDelta('+idx+',1)" style="width:28px;height:28px;border-radius:6px;border:none;background:#2a2a2a;color:var(--text);font-size:16px;font-weight:bold;cursor:pointer;">+</button>';
@@ -179,10 +182,14 @@ function renderEditOrdine(){
       h+='<span style="min-width:32px;text-align:center;font-size:13px;color:#888;">'+q+' '+esc(it.unit||'pz')+'</span>';
     }
     h+='<span style="font-size:10px;color:#555;">-</span>';
-    h+='<input type="text" value="'+esc(it.prezzoUnit)+'" style="width:60px;padding:4px 6px;border:1px solid #333;border-radius:5px;background:#111;color:var(--accent);font-size:12px;font-weight:700;text-align:right;" onfocus="_editOrdPrezzoOnFocus('+idx+',this.value)" onblur="_editOrdPrezzoOnBlur('+idx+',this.value)">';
-    h+='<span id="edit-ord-sub-'+idx+'" style="font-size:13px;font-weight:900;color:'+(isFz?'#666':'var(--accent)')+';margin-left:auto;">'+(isFz?'—':'-'+sub)+'</span>';
+    if(!isSr){
+      h+='<input type="text" value="'+esc(it.prezzoUnit)+'" style="width:60px;padding:4px 6px;border:1px solid #333;border-radius:5px;background:#111;color:var(--accent);font-size:12px;font-weight:700;text-align:right;" onfocus="_editOrdPrezzoOnFocus('+idx+',this.value)" onblur="_editOrdPrezzoOnBlur('+idx+',this.value)">';
+    } else {
+      h+='<span style="width:60px;padding:4px 6px;font-size:12px;font-weight:800;color:#fc8181;text-align:right;">'+esc(it.prezzoUnit||'')+'</span>';
+    }
+    h+='<span id="edit-ord-sub-'+idx+'" style="font-size:13px;font-weight:900;color:'+(isFz?'#666':(isSr?'#f56565':'var(--accent)'))+';margin-left:auto;">'+(isFz?'—':(isSr?('€'+sub):('-'+sub)))+'</span>';
     h+='</div>';
-    if(!isFz && itemUsesPrezzoPerBaseUm(it.unit)){
+    if(!isFz && !isSr && itemUsesPrezzoPerBaseUm(it.unit)){
       var bdEd=itemBaseUmScontoDisplay(it);
       h+='<div class="ct-pb-inline" style="margin:6px 0 4px;">';
       h+='<span class="ct-pb-tag">Base</span>';
@@ -197,7 +204,7 @@ function renderEditOrdine(){
       }
       h+='</div>';
     }
-    if(!isFz){
+    if(!isFz && !isSr){
       var scLabel=isSc?'--':isFR?'-':'--';
       var scBrd=isSc?'var(--accent)':isFR?'#f6ad55':'#2a2a2a';
       var scBg=isSc?'var(--accent)':isFR?'rgba(246,173,85,.15)':'transparent';
@@ -223,6 +230,7 @@ function renderEditOrdine(){
 }
 function _editOrdDelta(idx,d){
   if(ordItemCongelato(_editOrdItems[idx])) return;
+  if(ordItemStornoReso(_editOrdItems[idx])) return;
   var ord=ordini[_editOrdIdx];
   var it=_editOrdItems[idx];
   var oldQ=parseFloat(it.qty||0);
@@ -235,6 +243,7 @@ function _editOrdDelta(idx,d){
 function _editOrdPrezzo(idx,val){
   var ord=ordini[_editOrdIdx];
   var it=_editOrdItems[idx];
+  if(ordItemStornoReso(it)) return;
   var oldP=String(it.prezzoUnit||'');
   if(_editOrdPrezzoComparableValue(oldP)===_editOrdPrezzoComparableValue(val)) return;
   _editOrdItems[idx].prezzoUnit=val;
@@ -259,7 +268,7 @@ function _editOrdRefreshTotaleOnly(){
 function _editOrdPrezzoUnitaBase(idx,val){
   if(_editOrdIdx===null||_editOrdIdx<0) return;
   var it=_editOrdItems[idx];
-  if(!it||ordItemCongelato(it)) return;
+  if(!it||ordItemCongelato(it)||ordItemStornoReso(it)) return;
   it._prezzoUnitaBase=val;
   if(parsePriceIT(val)>0){
     itemApplyPrezzoUnitaBase(it);
@@ -282,7 +291,7 @@ function _editOrdRemove(idx){
 }
 function _editOrdCycleScampolo(idx){
   var it=_editOrdItems[idx];
-  if(ordItemCongelato(it)) return;
+  if(ordItemCongelato(it)||ordItemStornoReso(it)) return;
   var ord=ordini[_editOrdIdx];
   var prevLab=typeof _cartLabelModalita==='function'?_cartLabelModalita(it):'listino';
   if(!it.scampolo&&!it.fineRotolo){
@@ -318,7 +327,7 @@ function _editOrdCycleScampolo(idx){
 }
 function _editOrdSconto(idx,val){
   var it=_editOrdItems[idx];
-  if(ordItemCongelato(it)) return;
+  if(ordItemCongelato(it)||ordItemStornoReso(it)) return;
   var ord=ordini[_editOrdIdx];
   var oldSc=it._scontoApplicato;
   it._scontoApplicato=parseFloat(val)||0;

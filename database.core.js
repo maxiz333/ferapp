@@ -388,9 +388,52 @@ function ensurePrezzoOriginaleDaListino(it, fillPrezzoUnit){
   return true;
 }
 
+/** Riga storno reso (importo negativo, storico in documento). */
+function ordItemStornoReso(it){
+  return !!(it && it._stornoReso);
+}
+
+/** Nome prodotto per descrizione reso / commento (senza prefisso STORNO). */
+function ordineItemNomePerReso(it){
+  var d = String(it && it.desc || '').trim();
+  return d.replace(/^STORNO RESO:\s*/i, '').trim() || 'articolo';
+}
+
+/** Inserisce una riga negli articoli attivi, prima delle righe congelate. */
+function ordInsertActiveItemBeforeFrozen(ord, item){
+  if(!ord) return;
+  var items = ord.items = ord.items || [];
+  var ins = items.length;
+  for(var i = 0; i < items.length; i++){
+    if(ordItemCongelato(items[i])){
+      ins = i;
+      break;
+    }
+  }
+  items.splice(ins, 0, item);
+}
+
+/** Aggiunge nota ordine + voce cronologia per un reso. */
+function ordineAppendCommentoReso(ord, nomeProd){
+  if(!ord) return;
+  var dataStr = new Date().toLocaleDateString('it-IT');
+  var line = 'Reso effettuato per ' + String(nomeProd || 'articolo') + ' il ' + dataStr + '.';
+  var cur = String(ord.nota || '').trim();
+  ord.nota = cur ? (cur + '\n' + line) : line;
+  ordineAppendStorico(ord, line);
+}
+
+/** Prezzo unitario negativo da salvare su riga storno (formato IT). */
+function ordineFormatPrezzoUnitNegativoDaVendita(puVendita){
+  var n = -Math.abs(Number(puVendita));
+  if(!isFinite(n)) return '0';
+  return n.toFixed(2).replace('.', ',');
+}
+
 /** €/unità mostrato in totale riga ordine: usa prezzoUnit se valido, altrimenti listino + forbice */
 function ordItemLineUnitSelling(it){
   var u = parsePriceIT(it.prezzoUnit);
+  if(u < 0) return u;
   if(u > 0) return u;
   var p = listinoPrezzoNum(it);
   if(p <= 0) return 0;

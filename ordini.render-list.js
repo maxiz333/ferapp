@@ -146,6 +146,7 @@ function renderOrdini(){
       indiciDisplay.forEach(function(ii, stripe){
         var it=ord.items[ii];
         var isFz=ordItemCongelato(it);
+        var isSr=typeof ordItemStornoReso==='function'&&ordItemStornoReso(it);
         var pu=parsePriceIT(it.prezzoUnit);
         var q=parseFloat(it.qty||0);
         var curUnitOrd=(typeof normalizeUmValue==='function')?normalizeUmValue(it.unit||'pz'):(it.unit||'pz');
@@ -160,20 +161,21 @@ function renderOrdini(){
         var hasSconto=false;
         var scOn=it.scampolo||it.fineRotolo||it._scaglionato||false;
         var scagAtt=it._scaglioneAttivo||null;
-        if(scagAtt && it._prezzoBase){
+        if(!isSr && scagAtt && it._prezzoBase){
           prezOrigNum=parsePriceIT(it._prezzoBase);
           hasSconto=prezOrigNum>prezFinNum+0.005;
-        } else if((scOn||(it._scontoApplicato&&it._scontoApplicato>0))&&it._prezzoOriginale){
+        } else if(!isSr && (scOn||(it._scontoApplicato&&it._scontoApplicato>0))&&it._prezzoOriginale){
           prezOrigNum=parsePriceIT(it._prezzoOriginale);
           hasSconto=prezOrigNum>prezFinNum+0.005;
         }
 
-        h+='<div class="ord-grid ord-grid-row'+(stripe%2===0?' ord-grid-even':' ord-grid-odd')+(isFz?' ord-grid-row--congelato':'')+'">';
+        h+='<div class="ord-grid ord-grid-row'+(stripe%2===0?' ord-grid-even':' ord-grid-odd')+(isFz?' ord-grid-row--congelato':'')+(isSr?' ord-grid-row--reso':'')+'">';
 
         // Colonna prodotto: nome + codici sotto (codF editabile con dblclick)
         h+='<div class="ord-gc-desc">';
         h+='<div class="ord-item-name" onclick="openSchedaFromOrdine('+gi+','+ii+')" style="cursor:pointer;">'+esc(it.desc||'\u2014')+'</div>';
         if(isFz) h+='<div class="ord-congelato-badge">Rimosso dal banco</div>';
+        else if(isSr) h+='<div class="ord-reso-badge" style="font-size:9px;font-weight:800;color:#fc8181;margin-top:4px;letter-spacing:.2px;">STORNO RESO</div>';
         var codes='';
         codes+='<div class="ord-item-codes-line">';
         if(it.codM) codes+='<span class="ord-code-mag">'+esc(it.codM)+'</span>';
@@ -185,14 +187,14 @@ function renderOrdini(){
         h+='</div>';
 
         // Quantità + unità + (opz.) H×L per MQ + prezzo base compatto
-        h+='<div class="ord-gc-qty'+(_canEdit&&!isFz&&!mqOrdRow?' ord-editable':'')+'"'+(_canEdit&&!isFz&&!mqOrdRow?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'qty\')" title="Tap per modificare"':'')+' style="display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;">';
+        h+='<div class="ord-gc-qty'+(_canEdit&&!isFz&&!isSr&&!mqOrdRow?' ord-editable':'')+'"'+(_canEdit&&!isFz&&!isSr&&!mqOrdRow?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'qty\')" title="Tap per modificare"':'')+' style="display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;">';
         h+='<div style="display:flex;align-items:center;flex-wrap:wrap;gap:2px;">';
-        if(_canEdit&&!isFz&&mqOrdRow){
+        if(_canEdit&&!isFz&&!isSr&&mqOrdRow){
           h+='<span class="ord-qty-disp" id="ord-qty-disp-'+ord.id+'-'+ii+'" onclick="event.stopPropagation();ordInlineEdit(this,'+gi+','+ii+',\'qty\')" title="Tap per quantità manuale (azzera H×L)" style="cursor:pointer;font-weight:700;">'+esc(qDispStr)+'</span>';
         } else {
           h+=qDispStr;
         }
-        if(_canEdit&&!isFz){
+        if(_canEdit&&!isFz&&!isSr){
           h+='<select class="ord-unit-select" onclick="event.stopPropagation()" onchange="ordSetUnit('+gi+','+ii+',this.value)">';
           var units=(typeof UM_STANDARD!=='undefined'&&UM_STANDARD&&UM_STANDARD.length)?UM_STANDARD:['pz','kg','MQ','mt','conf'];
           var curUnit=(typeof normalizeUmValue==='function')?normalizeUmValue(it.unit||'pz'):(it.unit||'pz');
@@ -203,7 +205,7 @@ function renderOrdini(){
         }
         h+='</div>';
         if(mqOrdRow){
-          if(_canEdit&&!isFz){
+          if(_canEdit&&!isFz&&!isSr){
             var hSupO=it.h_superficie!=null?String(it.h_superficie):'';
             var lSupO=it.l_superficie!=null?String(it.l_superficie):'';
             h+='<div class="ct-mq-hl ord-mq-hl" onclick="event.stopPropagation()">';
@@ -229,7 +231,7 @@ function renderOrdini(){
             h+='</div>';
           }
         }
-        if(itemUsesPrezzoPerBaseUm(it.unit) && !isFz){
+        if(itemUsesPrezzoPerBaseUm(it.unit) && !isFz && !isSr){
           var bdO=itemBaseUmScontoDisplay(it);
           var suffO=itemPrezzoBaseUmSuffix(it.unit);
           if(_canEdit){
@@ -256,10 +258,12 @@ function renderOrdini(){
         h+='</div>';
 
         // Prezzo unitario — listino/sconto convertito (tap = edit)
-        h+='<div class="ord-gc-price'+(_canEdit?' ord-editable':'')+'"'+(_canEdit?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'price\')" title="Tap per modificare"':'')+'>';
+        h+='<div class="ord-gc-price'+(_canEdit&&!isSr?' ord-editable':'')+'"'+(_canEdit&&!isSr?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'price\')" title="Tap per modificare"':'')+'>';
         h+='<div id="ord-prz-strip-'+ord.id+'-'+ii+'">';
         if(isFz){
           h+='<span style="color:#888;">€'+formatPrezzoUnitDisplay(pu)+'</span>';
+        } else if(isSr){
+          h+='<span class="ct-prz-single" style="color:#fc8181;font-weight:800">€'+esc(it.prezzoUnit||'')+'</span>';
         } else if(hasSconto){
           h+=htmlPrezzoUnitScontoRiga(prezOrigNum, pu);
         } else {
@@ -274,6 +278,8 @@ function renderOrdini(){
         h+='<div class="ord-gc-sub" id="ord-sub-'+ord.id+'-'+ii+'">';
         if(isFz){
           h+='<span style="font-size:12px;color:#666;font-weight:700;">—</span>';
+        } else if(isSr){
+          h+='<span style="font-size:13px;font-weight:900;color:#f56565">€'+sub+'</span>';
         } else if(hasSconto){
           h+=htmlTotaleScontoRiga(prezOrigNum * q, parseFloat(sub));
         } else {
@@ -287,7 +293,7 @@ function renderOrdini(){
         var hasNota2 = !!(it.nota && it.nota.trim());
         var sc2 = it._scontoApplicato||0;
         var actClass = it._scaglionato ? 'ord-actions-scaglionato' : (it._tuttoRotolo||it.fineRotolo ? 'ord-actions-rotolo' : (it.scampolo ? 'ord-actions-scampolo' : ''));
-        if(_canEdit&&!isFz){
+        if(_canEdit&&!isFz&&!isSr){
           h+='<div class="ord-item-actions '+ actClass +'" style="display:flex;gap:4px;align-items:center;padding:2px 8px;">';
           // Forbici — ciclo: OFF→SCA→ROT→SCAG→OFF
           var forbLbl2 = '';
@@ -315,6 +321,9 @@ function renderOrdini(){
           // Nota articolo
           h+='<button class="ord-mini-btn'+(hasNota2?' ord-mini-on':'')+'" onclick="ordEditNota('+gi+','+ii+')" title="Nota" style="margin-left:auto">📝</button>';
           h+='<span class="ord-item-del" onclick="event.stopPropagation();ordDelItem(this,'+gi+','+ii+')" title="Rimuovi articolo">×</span>';
+          if(!isBozza){
+            h+='<button type="button" class="ord-abtn ord-abtn--del" style="min-width:30px;height:28px;padding:0 8px;font-weight:900;font-size:14px;color:#e53e3e;margin-left:2px;" onclick="event.stopPropagation();ordApplicaResoDaTab('+gi+','+ii+')" title="Reso merce">R</button>';
+          }
           h+='</div>';
         } else if(_canEdit&&isFz){
           h+='<div class="ord-item-actions" style="display:flex;gap:4px;align-items:center;padding:2px 8px;justify-content:flex-end;">';
