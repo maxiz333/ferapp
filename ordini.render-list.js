@@ -196,7 +196,7 @@ function renderOrdini(){
         }
         if(_canEdit&&!isFz&&!isSr){
           h+='<select class="ord-unit-select" onclick="event.stopPropagation()" onchange="ordSetUnit('+gi+','+ii+',this.value)">';
-          var units=(typeof UM_STANDARD!=='undefined'&&UM_STANDARD&&UM_STANDARD.length)?UM_STANDARD:['pz','kg','MQ','mt','conf'];
+          var units=(typeof UM_STANDARD!=='undefined'&&UM_STANDARD&&UM_STANDARD.length)?UM_STANDARD:['pz','kg','MQ','mt','conf','CT','RT','FG'];
           var curUnit=(typeof normalizeUmValue==='function')?normalizeUmValue(it.unit||'pz'):(it.unit||'pz');
           units.forEach(function(u){ h+='<option value="'+u+'"'+(u===curUnit?' selected':'')+'>'+u+'</option>'; });
           h+='</select>';

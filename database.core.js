@@ -120,7 +120,7 @@ var SCONTO_SCAMPOLO_DEFAULT_PCT = 30;
 var SCONTO_SCAGLIONI_DEFAULT_PCT = 5;
 
 // UM standard applicazione (unica fonte per tutte le tendine).
-var UM_STANDARD = ['pz', 'kg', 'MQ', 'mt', 'conf'];
+var UM_STANDARD = ['pz', 'kg', 'MQ', 'mt', 'conf', 'CT', 'RT', 'FG'];
 
 /** Normalizza UM legacy/varianti alla forma standard condivisa. */
 function normalizeUmValue(unit){
@@ -133,6 +133,9 @@ function normalizeUmValue(unit){
   if(u === 'lt' || u === 'l' || u === 'litro' || u === 'litri') return 'conf';
   if(u === 'rot' || u === 'sc' || u === 'cf' || u === 'confez' || u === 'confezione' || u === 'confezioni') return 'conf';
   if(u === 'conf' || u === 'cf' || u === 'confezione' || u === 'confezioni') return 'conf';
+  if(u === 'ct' || u === 'cart' || u === 'cartone' || u === 'cartoni') return 'CT';
+  if(u === 'rt' || u === 'rotolo' || u === 'rotoli') return 'RT';
+  if(u === 'fg') return 'FG';
   return 'pz';
 }
 

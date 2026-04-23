@@ -131,7 +131,7 @@ function _odRenderItems(ord){
     h+='</div>';
     // Unit-
     h+='<select onchange="odUpd('+i+',\'unit\',this.value)" style="background:#111;border:1px solid #2a2a2a;border-radius:6px;color:var(--text);font-size:11px;padding:4px 4px;outline:none;font-family:inherit;flex-shrink:0;">';
-    var umList=(typeof UM_STANDARD!=='undefined'&&UM_STANDARD&&UM_STANDARD.length)?UM_STANDARD:['pz','kg','MQ','mt','conf'];
+    var umList=(typeof UM_STANDARD!=='undefined'&&UM_STANDARD&&UM_STANDARD.length)?UM_STANDARD:['pz','kg','MQ','mt','conf','CT','RT','FG'];
     umList.forEach(function(u){ h+='<option value="'+u+'"'+(unit===u?' selected':'')+'>'+u+'</option>'; });
     h+='</select>';
     if(unit==='MQ'){

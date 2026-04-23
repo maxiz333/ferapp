@@ -5,8 +5,8 @@ function openRiepilogoOrdine(cartId){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
   if(!cart || !(cart.items||[]).length){ showToastGen('yellow','Carrello vuoto'); return; }
 
-  var _vistoId = cart.bozzaOrdId || (cart.stato === 'modifica' ? cart.ordId : null);
-  if(_vistoId && typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(_vistoId);
+  // Non chiamare ordineSegnaVistoSeUfficio qui: il riepilogo dal carrello non deve segnare "visto".
+  // Il visto resta su apertura da Tab Ordini, notifiche, ecc. (vedi openOrdDetail, notifiche, lock…)
 
   // Inizializza checks se non esistono
   var key = cartId;

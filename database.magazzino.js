@@ -718,7 +718,7 @@ function renderMagazzino(){
         'style="width:58px;padding:4px 6px;border:1px solid var(--border);border-radius:5px;background:#111;color:var(--text);font-size:13px;font-weight:700;text-align:center;" '+
         'onchange="saveQta('+i+',this.value)" oninput="saveQta('+i+',this.value)">';
       html+='<select style="width:52px;padding:4px 4px;border:1px solid var(--border);border-radius:5px;background:#111;color:var(--accent);font-size:11px;margin-left:3px;" onchange="saveMagRow('+i+',\'unit\',this.value)">';
-      var umList=(typeof UM_STANDARD!=='undefined'&&UM_STANDARD&&UM_STANDARD.length)?UM_STANDARD:['pz','kg','MQ','mt','conf'];
+      var umList=(typeof UM_STANDARD!=='undefined'&&UM_STANDARD&&UM_STANDARD.length)?UM_STANDARD:['pz','kg','MQ','mt','conf','CT','RT','FG'];
       umList.forEach(function(u){
         html+='<option value="'+u+'"'+(unit===u?' selected':'')+'>'+u+'</option>';
       });

@@ -135,8 +135,11 @@ function renderCartTabs(){
     h += '</div>';
     h += '<div style="display:flex;gap:6px;margin-top:8px">';
     h += '<button onclick="deleteCart(\'' + cart.id + '\')" class="ct-btn-ghost" style="flex:1;font-size:12px;color:#555">🗑️ Elimina carrello</button>';
-    h += '</div></div>';
-    h += '<div class="ct-inviato-esauriti-banner" role="note">C\'è qualche articolo esaurito?</div>';
+    h += '</div>';
+    if((cart.items||[]).length > 0){
+      h += '<div class="ct-inviato-esauriti-banner" role="note">C\'è qualche articolo esaurito?</div>';
+    }
+    h += '</div>';
     body.innerHTML = h;
     return;
   }
@@ -444,7 +447,6 @@ function renderCartTabs(){
   h += '<div class="ct-footer">';
   h += '<div class="ct-footer-tot"><span class="ct-footer-sym">€</span>' + tot2Fin.toFixed(2) + '</div>';
   h += '<div class="ct-footer-btns">';
-  h += '<button class="ct-fbtn ct-fbtn--danger" onclick="eliminaOrdineCarrello(\'' + cart.id + '\')">🗑️<span>Elimina ordine</span></button>';
   h += '<button class="ct-fbtn ct-fbtn--fattura' + (cart.fatturaRichiesta ? ' ct-fbtn--fattura-on' : '') + '" onclick="ctOpenFatturaClienteModal(\'' + cart.id + '\')" title="Ricerca anagrafica clienti e dati fattura">';
   h += '🧾<span>' + (cart.fatturaRichiesta ? 'FATTURA ON' : 'FATTURA') + '</span></button>';
   h += '<button class="ct-fbtn ct-fbtn--riepilogo" onclick="openRiepilogoOrdine(\'' + cart.id + '\')">👀<span>RIEPILOGO</span></button>';
@@ -456,15 +458,16 @@ function renderCartTabs(){
          '📢<span>UFFICIO</span></button>';
   }
   if(cart.stato === 'modifica'){
-    h += '<button class="ct-fbtn ct-fbtn--danger" onclick="eliminaCarrelloModifica(\'' + cart.id + '\')" title="Elimina carrello">🗑️<span>ELIMINA</span></button>';
     h += '<button class="ct-fbtn ct-fbtn--cassa" id="ctf-cassa-' + cart.id + '" ' +
          'onclick="ctCassaSingleClick(this,\'aggiornaOrdine(\\x27' + cart.id + '\\x27)\')">' +
          '✏️<span>AGGIORNA</span></button>';
+    h += '<button class="ct-fbtn ct-fbtn--danger" onclick="eliminaCarrelloModifica(\'' + cart.id + '\')" title="Elimina carrello">🗑️<span>ELIMINA</span></button>';
   } else {
     h += '<button class="ct-fbtn ct-fbtn--cassa" id="ctf-cassa-' + cart.id + '" ' +
          (!(cart.items||[]).length ? 'disabled ' : '') +
          'onclick="ctCassaSingleClick(this,\'inviaOrdine(\\x27' + cart.id + '\\x27)\')">' +
          '🛍️<span>CONFERMA</span></button>';
+    h += '<button class="ct-fbtn ct-fbtn--danger" onclick="eliminaOrdineCarrello(\'' + cart.id + '\')">🗑️<span>ELIMINA</span></button>';
   }
   h += '</div>';
   h += '</div>';

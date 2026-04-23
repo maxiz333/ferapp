@@ -144,8 +144,11 @@ function renderCartTabs(){
       h += '<button onclick="ctPreviewStampaProforma(\'' + cart.id + '\')" title="Anteprima stampa scontrino/proforma" ';
       h += 'style="height:38px;padding:0 14px;border-radius:10px;border:1px solid #2f2f2f;background:#1b1b1b;color:#ddd;font-size:12px;font-weight:800;cursor:pointer;">🧾 Stampa Proforma</button>';
     }
-    h += '</div></div>';
-    h += '<div class="ct-inviato-esauriti-banner" role="note">C\'è qualche articolo esaurito?</div>';
+    h += '</div>';
+    if((cart.items||[]).length > 0){
+      h += '<div class="ct-inviato-esauriti-banner" role="note">C\'è qualche articolo esaurito?</div>';
+    }
+    h += '</div>';
     body.innerHTML = h;
     return;
   }
@@ -252,7 +255,7 @@ function renderCartTabs(){
       // ── RIGA GRIGLIA: stessa struttura ord-grid 50%|15%|15%|20% ──────
       h += '<div class="ord-grid ord-grid-row' + (displayPos%2===0 ? ' ord-grid-even' : ' ord-grid-odd') + '">';
 
-      var units = (typeof UM_STANDARD !== 'undefined' && UM_STANDARD && UM_STANDARD.length) ? UM_STANDARD : ['pz','kg','MQ','mt','conf'];
+      var units = (typeof UM_STANDARD !== 'undefined' && UM_STANDARD && UM_STANDARD.length) ? UM_STANDARD : ['pz','kg','MQ','mt','conf','CT','RT','FG'];
       var curUnit = (typeof normalizeUmValue === 'function') ? normalizeUmValue(it.unit || 'pz') : (it.unit || 'pz');
 
       // Colonna prodotto: nome + codici
@@ -513,7 +516,6 @@ function renderCartTabs(){
   h += '<div class="ct-footer">';
   h += '<div class="ct-footer-tot"><span class="ct-footer-sym">€</span>' + tot2Fin.toFixed(2) + '</div>';
   h += '<div class="ct-footer-btns">';
-  h += '<button class="ct-fbtn ct-fbtn--danger" onclick="eliminaOrdineCarrello(\'' + cart.id + '\')">🗑️<span>Elimina ordine</span></button>';
   h += '<button class="ct-fbtn ct-fbtn--fattura' + (cart.fatturaRichiesta ? ' ct-fbtn--fattura-on' : '') + '" onclick="ctOpenFatturaClienteModal(\'' + cart.id + '\')" title="Ricerca anagrafica clienti e dati fattura">';
   h += '🧾<span>' + (cart.fatturaRichiesta ? 'FATTURA ON' : 'FATTURA') + '</span></button>';
   h += '<button class="ct-fbtn ct-fbtn--riepilogo" onclick="openRiepilogoOrdine(\'' + cart.id + '\')">👀<span>RIEPILOGO</span></button>';
@@ -525,15 +527,16 @@ function renderCartTabs(){
          '📢<span>UFFICIO</span></button>';
   }
   if(cart.stato === 'modifica'){
-    h += '<button class="ct-fbtn ct-fbtn--danger" onclick="eliminaCarrelloModifica(\'' + cart.id + '\')" title="Elimina carrello">🗑️<span>ELIMINA</span></button>';
     h += '<button class="ct-fbtn ct-fbtn--cassa" id="ctf-cassa-' + cart.id + '" ' +
          'onclick="ctCassaSingleClick(this,\'aggiornaOrdine(\\x27' + cart.id + '\\x27)\')">' +
          '✏️<span>AGGIORNA</span></button>';
+    h += '<button class="ct-fbtn ct-fbtn--danger" onclick="eliminaCarrelloModifica(\'' + cart.id + '\')" title="Elimina carrello">🗑️<span>ELIMINA</span></button>';
   } else {
     h += '<button class="ct-fbtn ct-fbtn--cassa" id="ctf-cassa-' + cart.id + '" ' +
          (!(cart.items||[]).length ? 'disabled ' : '') +
          'onclick="ctCassaSingleClick(this,\'inviaOrdine(\\x27' + cart.id + '\\x27)\')">' +
          '🛍️<span>CONFERMA</span></button>';
+    h += '<button class="ct-fbtn ct-fbtn--danger" onclick="eliminaOrdineCarrello(\'' + cart.id + '\')">🗑️<span>ELIMINA</span></button>';
   }
   h += '</div>';
   h += '</div>';
