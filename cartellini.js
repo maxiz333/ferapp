@@ -181,6 +181,7 @@ var CT = {
     h += '<th style="padding:6px 2px;text-align:center;color:var(--accent);font-size:10px;width:54px;">€ Nuovo</th>';
     h += '<th style="padding:6px 2px;text-align:center;color:#888;font-size:10px;width:32px;">Dim</th>';
     h += '<th style="padding:6px 2px;text-align:center;color:#888;font-size:10px;width:40px;">Col</th>';
+    h += '<th style="padding:6px 2px;text-align:center;color:#888;font-size:10px;width:36px;" title="Mostra nome articolo sul cartellino">Nome</th>';
     h += '<th style="padding:6px 0;width:48px;"></th>';
     h += '</tr></thead><tbody>';
 
@@ -257,6 +258,18 @@ var CT = {
         h += '</select>';
       } else {
         h += '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:'+c.dot+';"></span>';
+      }
+      h += '</td>';
+
+      // Visibilità nome articolo sul cartellino (default: ON). Solo UI di stampa, non altera dati.
+      var showNameOn = (r.showName !== false);
+      h += '<td style="padding:2px;text-align:center;">';
+      if(!isFatti){
+        h += '<input type="checkbox"'+(showNameOn?' checked':'')+' onchange="ct_setShowName('+realIdx+',this.checked)" '
+          +  'title="Mostra/nascondi il nome articolo sul cartellino" '
+          +  'style="width:14px;height:14px;cursor:pointer;accent-color:var(--accent);vertical-align:middle;">';
+      } else {
+        h += '<span style="color:'+(showNameOn?'#38a169':'#555')+';font-size:11px;">'+(showNameOn?'✓':'✕')+'</span>';
       }
       h += '</td>';
 
@@ -364,6 +377,33 @@ function ct_setSize(i, val){
   if(!ctRows[i]) return;
   ctRows[i].size = val;
   CT.save();
+}
+
+// Mostra/nascondi il NOME ARTICOLO sul cartellino stampato.
+// È un flag SOLO di rendering: salvato per persistenza/sync, non altera prezzi/codici/qty/desc.
+// Default: visibile (showName !== false ⇒ true). Se false ⇒ il <div class="tnm"> esce con display:none.
+function ct_setShowName(i, val){
+  // Indice difensivo: CT.render() passa già il realIdx (posizione reale in ctRows[],
+  // non quella filtrata della tab "Da fare / Fatti"), MA una sync Firebase tra render e click
+  // potrebbe rimescolare ctRows. Validiamo: numero, intero, in-range e oggetto valido.
+  i = parseInt(i, 10);
+  if(isNaN(i) || i < 0 || !ctRows || i >= ctRows.length) return;
+  var row = ctRows[i];
+  if(!row || typeof row !== 'object') return;
+  row.showName = !!val;
+  CT.save();
+  // Se l'anteprima cartellini è aperta, rigenera l'HTML in tempo reale (senza chiudere/riaprire).
+  var pov = document.getElementById('pov');
+  if(pov && pov.classList.contains('open') && typeof buildTagsHTML === 'function'){
+    var printable = ctRows.filter(function(rr){ return rr && !rr.fatto; });
+    var html = buildTagsHTML(printable, false);
+    var pc = document.getElementById('pc');
+    if(pc) pc.innerHTML = html;
+    var pa = document.getElementById('print-area');
+    if(pa) pa.innerHTML = html;
+    var pat1 = document.getElementById('print-area-t1');
+    if(pat1) pat1.innerHTML = html;
+  }
 }
 
 function ct_findDbIdxByCartellino(ct){

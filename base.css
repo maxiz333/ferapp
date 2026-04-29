@@ -125,8 +125,11 @@ select{padding:3px 4px;border:1px solid var(--border);border-radius:3px;font-siz
 .tpa{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:.5mm;}
 .top2{font-family:'Oswald',Arial,sans-serif;font-size:10pt;color:var(--muted);text-decoration:line-through;line-height:1;} .tag-large .top2{font-size:12pt;}
 .tpr{font-family:'Oswald',Arial,sans-serif;font-size:26pt;font-weight:700;color:#000;line-height:1;} .tag-large .tpr{font-size:32pt;}
-.tf2{display:flex;justify-content:space-between;align-items:flex-end;flex-shrink:0;}
+.tf2{display:flex;flex-direction:column;align-items:stretch;flex-shrink:0;gap:.2mm;}
+.tf2-codes{display:flex;justify-content:space-between;align-items:flex-end;width:100%;flex-shrink:0;}
 .tcf,.tcm{font-size:6pt;color:#333;} .tag-large .tcf,.tag-large .tcm{font-size:6.5pt;}
+.tnm{font-family:'Oswald',Arial,sans-serif;font-size:5pt;font-weight:500;color:#444;line-height:1.05;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin-top:.2mm;}
+.tag-large .tnm{font-size:5.5pt;}
 /* Forme cartellino */
 .tag-shape-rounded{border-radius:4mm!important;}
 .tag-shape-pill{border-radius:12mm!important;}

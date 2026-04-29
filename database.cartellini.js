@@ -378,7 +378,10 @@ function makeTag(r,idx){
   var oldH=showBarrato&&r.prezzoOld?'<span class="top2">&euro;&nbsp;'+r.prezzoOld+'</span>':'';
   var clickAttr=(idx!==undefined)?'onclick="quickEditPrice('+idx+')" title="Tocca per modificare il prezzo" style="cursor:pointer;"':'';
   var promoStyle=r.giornalino?'--promo-color:'+g.nastro+';':'';
-  return '<div class="'+cls+cp+'" style="'+promoStyle+'"><div class="th2"><span class="td2">'+r.data+'</span></div><div class="tpa">'+oldH+'<span class="tpr" '+clickAttr+'>&euro;&nbsp;'+r.prezzo+'</span></div><div class="tf2"><span class="tcf">'+r.codF+'</span><span class="tcm">'+r.codM+'</span></div></div>';
+  // Nome articolo: visibile per default (showName !== false), nascosto via display:none se la checkbox è deselezionata
+  var nomeHidden = (r.showName === false) ? 'style="display:none;"' : '';
+  var nomeH = '<div class="tnm" '+nomeHidden+'>'+esc(r.desc||'')+'</div>';
+  return '<div class="'+cls+cp+'" style="'+promoStyle+'"><div class="th2"><span class="td2">'+r.data+'</span></div><div class="tpa">'+oldH+'<span class="tpr" '+clickAttr+'>&euro;&nbsp;'+r.prezzo+'</span></div><div class="tf2"><div class="tf2-codes"><span class="tcf">'+r.codF+'</span><span class="tcm">'+r.codM+'</span></div>'+nomeH+'</div></div>';
 }
 function buildTagsHTML(data,withIdx){
   var active=data.filter(function(r,i){return !removed.has(String(i));});
