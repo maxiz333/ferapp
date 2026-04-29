@@ -1915,6 +1915,15 @@ button[touch-action="manipulation"],
 }
 .ct-fbtn:disabled { opacity: .35; cursor: not-allowed; }
 .ct-fbtn--danger    { background: rgba(229,62,62,.15); border: 1px solid rgba(229,62,62,.4); color: #fc8181; }
+/* ELIMINA: rettangolo verticale stretto per risparmiare spazio sulla bottom bar mobile */
+.ct-fbtn.ct-fbtn--danger {
+  width: 35px !important;
+  min-width: 35px !important;
+  max-width: 35px !important;
+  padding: 5px 0 !important;
+  overflow: hidden;
+}
+.ct-fbtn.ct-fbtn--danger > span { display: none; }
 .ct-fbtn--riepilogo { background: rgba(255,215,0,.1);  border: 1px solid rgba(255,215,0,.35); color: var(--ct-yellow); }
 .ct-fbtn--cassa     { background: linear-gradient(135deg, var(--ct-yellow2), var(--ct-yellow)); color: #111; font-weight: 900; }
 .ct-fbtn--avvisa    { background: rgba(99,179,237,.12); border: 1px solid rgba(99,179,237,.4); color: #63b3ed; }

@@ -517,14 +517,14 @@ function renderCartTabs(){
   h += '<div class="ct-footer-tot"><span class="ct-footer-sym">€</span>' + tot2Fin.toFixed(2) + '</div>';
   h += '<div class="ct-footer-btns">';
   h += '<button class="ct-fbtn ct-fbtn--fattura' + (cart.fatturaRichiesta ? ' ct-fbtn--fattura-on' : '') + '" onclick="ctOpenFatturaClienteModal(\'' + cart.id + '\')" title="Ricerca anagrafica clienti e dati fattura">';
-  h += '🧾<span>' + (cart.fatturaRichiesta ? 'FATTURA ON' : 'FATTURA') + '</span></button>';
-  h += '<button class="ct-fbtn ct-fbtn--riepilogo" onclick="openRiepilogoOrdine(\'' + cart.id + '\')">👀<span>RIEPILOGO</span></button>';
+  h += '🧾<span>' + (cart.fatturaRichiesta ? 'FAT. ON' : 'FAT.') + '</span></button>';
+  h += '<button class="ct-fbtn ct-fbtn--riepilogo" onclick="openRiepilogoOrdine(\'' + cart.id + '\')">👀<span>RIEP.</span></button>';
   // Tasto Avvisa Ufficio — solo prima bozza; con bozza attiva la sync carrello↔ufficio è automatica (saveCarrelli)
   if(cart.stato !== 'modifica' && cart.stato !== 'inviato' && !cart.bozzaOrdId){
     h += '<button class="ct-fbtn ct-fbtn--avvisa" ' +
          (!(cart.items||[]).length ? 'disabled ' : '') +
          'onclick="avvisaUfficio(\'' + cart.id + '\')">' +
-         '📢<span>UFFICIO</span></button>';
+         '📢<span>UFF.</span></button>';
   }
   if(cart.stato === 'modifica'){
     h += '<button class="ct-fbtn ct-fbtn--cassa" id="ctf-cassa-' + cart.id + '" ' +
