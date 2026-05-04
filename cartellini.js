@@ -194,7 +194,7 @@ var CT = {
 
       // Prodotto
       h += '<td style="padding:6px 4px;">';
-      h += '<div style="font-size:12px;font-weight:700;color:#e8e8e8;line-height:1.2;">'+esc(r.desc||'—')+'</div>';
+      h += '<div class="ct-prod-name" onclick="this.classList.toggle(\'ct-expanded\')" style="font-size:12px;font-weight:700;color:#e8e8e8;line-height:1.2;">'+esc(r.desc||'—')+'</div>';
       if(r.codM) h += '<div style="font-size:9px;color:var(--accent);margin-top:1px;">'+esc(r.codM)+'</div>';
       if(r.fatto) h += '<div style="font-size:9px;color:#38a169;margin-top:1px;">✅ '+esc(r.fattoData||'')+'</div>';
       h += '</td>';

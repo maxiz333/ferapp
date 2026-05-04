@@ -657,6 +657,25 @@ body.light-mode .cassa-mode-item { border-color: #eee; }
     table-layout:auto;
   }
 
+  /* ── Larghezze colonne ricalibrate per device mobile ──
+     Restringe le colonne fisse (Cod.F, prezzi, Dim, Col, Nome, Azioni)
+     in modo che TUTTE entrino nello schermo del telefono e resti più
+     spazio possibile al nome del prodotto (prima colonna). */
+  #ct-list table th:nth-child(2),
+  #ct-list table td:nth-child(2){ width:44px !important; }   /* Cod.F   */
+  #ct-list table th:nth-child(3),
+  #ct-list table td:nth-child(3){ width:38px !important; }   /* € Vec   */
+  #ct-list table th:nth-child(4),
+  #ct-list table td:nth-child(4){ width:46px !important; }   /* € Nuovo */
+  #ct-list table th:nth-child(5),
+  #ct-list table td:nth-child(5){ width:26px !important; }   /* Dim     */
+  #ct-list table th:nth-child(6),
+  #ct-list table td:nth-child(6){ width:32px !important; }   /* Col     */
+  #ct-list table th:nth-child(7),
+  #ct-list table td:nth-child(7){ width:22px !important; }   /* Nome ✓  */
+  #ct-list table th:nth-child(8),
+  #ct-list table td:nth-child(8){ width:40px !important; }   /* Azioni  */
+
   /* Compatta lo spazio (gap) fra le ultime due colonne:
      Nome (checkbox) e Azioni (✓ / ↩ / ✕). */
   #ct-list table td:nth-last-child(-n+2),
@@ -695,5 +714,22 @@ body.light-mode .cassa-mode-item { border-color: #eee; }
     overflow:hidden;
     text-overflow:ellipsis;
     max-width:100%;
+  }
+
+  /* ── Tap sul nome troncato → mostra completo (toggle) ──
+     L'utente può toccare i "..." (o qualunque punto del nome)
+     per espandere il testo su più righe. Un secondo tap richiude.
+     Non interferisce con input, select o pulsanti vicini perché
+     l'onclick è solo sulla <div class="ct-prod-name">. */
+  #ct-list table td:first-child > div.ct-prod-name{
+    cursor:pointer;
+    -webkit-tap-highlight-color:rgba(255,193,7,.15);
+  }
+  #ct-list table td:first-child > div.ct-prod-name.ct-expanded{
+    white-space:normal !important;
+    overflow:visible !important;
+    text-overflow:clip !important;
+    word-break:break-word;
+    overflow-wrap:anywhere;
   }
 }
