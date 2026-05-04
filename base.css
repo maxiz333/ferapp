@@ -623,3 +623,77 @@ body.light-mode .cassa-mode-footer { background: #fff; }
 body.light-mode .cassa-mode-card { background: #fff; border-color: #e0e0e0; }
 body.light-mode .cassa-mode-card:active { background: #f0f0f0; }
 body.light-mode .cassa-mode-item { border-color: #eee; }
+
+/* ════════════════════════════════════════════════════════════════════
+   CARTELLINI — Ottimizzazione layout mobile (riferimento image_86.png)
+   Solo regole CSS additive: nessun impatto su logica calcoli, sync DB
+   o pulsanti del footer/barra inferiore.
+   ════════════════════════════════════════════════════════════════════ */
+@media (max-width:768px){
+
+  /* ── Wrapper: il riquadro nero che contiene anteprima + tabella ── */
+  #t1-panel{
+    width:98vw;
+    max-width:98vw;
+    margin-left:auto !important;
+    margin-right:auto !important;
+    padding-left:4px !important;
+    padding-right:4px !important;
+    box-sizing:border-box;
+    overflow-x:hidden;
+  }
+
+  /* Riduci anche il padding laterale dei contenitori interni
+     (lista cartellini + blocco import CSV) per recuperare spazio
+     senza alterare il padding verticale. */
+  #t1-panel #ct-list{
+    padding-left:4px !important;
+    padding-right:4px !important;
+  }
+
+  /* ── Tabella prodotti: 100% larghezza, layout fluido ── */
+  #ct-list table{
+    width:100% !important;
+    table-layout:auto;
+  }
+
+  /* Compatta lo spazio (gap) fra le ultime due colonne:
+     Nome (checkbox) e Azioni (✓ / ↩ / ✕). */
+  #ct-list table td:nth-last-child(-n+2),
+  #ct-list table th:nth-last-child(-n+2){
+    padding-left:1px !important;
+    padding-right:1px !important;
+  }
+
+  /* Piccolo buffer di 5px sulla destra dell'ultima colonna delle
+     azioni: stacca le icone dal bordo del "vetro" del wrapper. */
+  #ct-list table td:last-child,
+  #ct-list table th:last-child{
+    padding-right:5px !important;
+  }
+
+  /* ── Tipografia ridotta su mobile ── */
+  /* Nome prodotto: 11px (era 12px) */
+  #ct-list table td:first-child > div:first-child{
+    font-size:11px !important;
+  }
+  /* Codice articolo + eventuale data "fatto": 9px */
+  #ct-list table td:first-child > div:nth-child(n+2){
+    font-size:9px !important;
+  }
+
+  /* ── Ellipsis sulle celle di testo lunghe ──
+     Trucco per `table-layout:auto`: max-width:0 + overflow:hidden
+     sul td costringe il browser a comprimere la prima colonna,
+     poi il div interno applica nowrap + ellipsis. */
+  #ct-list table td:first-child{
+    max-width:0;
+    overflow:hidden;
+  }
+  #ct-list table td:first-child > div{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:100%;
+  }
+}
