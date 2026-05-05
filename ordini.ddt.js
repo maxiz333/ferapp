@@ -173,11 +173,12 @@ function stampaDDT(cartId){
     + '#ddt-doc .annotazioni{border:1.5px solid #000;border-top:none;padding:3px 6px;min-height:20px;font-size:7.5px;}'
     + '#ddt-doc .copia{border:1.5px solid #000;border-top:none;text-align:center;font-size:8.5px;font-weight:bold;padding:3px;letter-spacing:1px;}'
 
-    // Stili specifici per la stampa: nasconde la barra strumenti
+    // Stili specifici per la stampa: nasconde la barra strumenti e il banner debug
     + '@media print{'
     +   '@page{size:A4;margin:0;}'
     +   'body{background:#fff !important;margin:0 !important;padding:0 !important;}'
     +   '#ddt-print-bar{display:none !important;}'
+    +   '#ddt-debug-banner{display:none !important;}'
     +   '#ddt-print-overlay{position:static !important;background:#fff !important;overflow:visible !important;}'
     +   '#ddt-doc .page{margin:0 auto;box-shadow:none;}'
     + '}';
@@ -309,10 +310,11 @@ function stampaDDT(cartId){
   }
   ov.innerHTML = ''
     + '<div id="ddt-print-bar" style="padding:8px;background:#333;display:flex;gap:8px;align-items:center;position:sticky;top:0;z-index:1;">'
-    +   '<button onclick="window.print()" style="padding:10px 24px;border-radius:8px;border:none;background:#3182ce;color:#fff;font-size:14px;font-weight:800;cursor:pointer;">-- Stampa DDT</button>'
-    +   '<button onclick="chiudiDDT()" style="padding:10px 18px;border-radius:8px;border:1px solid #555;background:transparent;color:#fff;font-size:13px;cursor:pointer;">- Chiudi</button>'
+    +   '<button onclick="window.print()" style="padding:10px 24px;border-radius:8px;border:none;background:#3182ce;color:#fff;font-size:14px;font-weight:800;cursor:pointer;">🖨️ Stampa DDT</button>'
+    +   '<button onclick="chiudiDDT()" style="padding:10px 18px;border-radius:8px;border:1px solid #555;background:transparent;color:#fff;font-size:13px;cursor:pointer;">✖ Chiudi</button>'
     +   '<span style="color:#aaa;font-size:12px;margin-left:8px;">DDT N.' + ddtNum + ' - ' + _ddtEsc(nomeCliente || '—') + '</span>'
     + '</div>'
+    + '<div id="ddt-debug-banner" style="background:#16a34a;color:#fff;text-align:center;font-weight:900;font-size:18px;padding:10px;letter-spacing:2px;">✅ NUOVO TEMPLATE DDT ATTIVO</div>'
     + '<div style="padding:15px 0;">' + html + '</div>';
   ov.style.display = 'block';
   document.body.style.overflow = 'hidden';

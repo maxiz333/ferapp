@@ -141,8 +141,8 @@ function renderCartTabs(){
       h += '<button onclick="ctPreviewStampaFattura(\'' + cart.id + '\')" title="Anteprima stampa fattura" ';
       h += 'style="height:38px;padding:0 14px;border-radius:10px;border:none;background:var(--accent);color:#111;font-size:12px;font-weight:900;cursor:pointer;">🖨️ Stampa Fattura</button>';
     } else {
-      h += '<button onclick="ctPreviewStampaProforma(\'' + cart.id + '\')" title="Anteprima stampa scontrino/proforma" ';
-      h += 'style="height:38px;padding:0 14px;border-radius:10px;border:1px solid #2f2f2f;background:#1b1b1b;color:#ddd;font-size:12px;font-weight:800;cursor:pointer;">🧾 Stampa Proforma</button>';
+      h += '<button onclick="stampaDDT(\'' + cart.id + '\')" title="Anteprima stampa DDT (Documento di Trasporto)" ';
+      h += 'style="height:38px;padding:0 14px;border-radius:10px;border:1px solid #2f2f2f;background:#1b1b1b;color:#ddd;font-size:12px;font-weight:800;cursor:pointer;">🖨️ Stampa DDT</button>';
     }
     h += '</div>';
     if((cart.items||[]).length > 0){
