@@ -260,13 +260,29 @@ function renderCartTabs(){
 
       // Colonna prodotto: nome + codici
       h += '<div class="ord-gc-desc">';
-      h += '<div class="ord-item-name">' + esc(it.desc || '—') + '</div>';
+      var _progNum = idx + 1; // posizione 1-based nel carrello (insertion order)
+      h += '<div class="ord-item-name"><span class="ct-card-num" aria-hidden="true">' + _progNum + '.</span> ' + esc(it.desc || '—') + '</div>';
       if(isStorno){
         h += '<div style="font-size:9px;font-weight:800;color:#fc8181;margin:4px 0 2px;letter-spacing:.25px;">STORNO RESO</div>';
       }
       var codes = '';
       codes += '<div class="ord-item-codes-line">';
-      if(codM7) codes += '<span class="ord-code-mag">' + esc(codM7) + '</span>';
+      if(codM7){
+        codes += '<span class="ord-code-mag ord-code-mag--toggle" ' +
+                 'role="button" tabindex="0" ' +
+                 'title="Mostra/nascondi azioni" ' +
+                 'onclick="event.stopPropagation();ctToggleIconbar(\'' + cart.id + '\',' + idx + ',event)" ' +
+                 'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();ctToggleIconbar(\'' + cart.id + '\',' + idx + ',event);}">' +
+                 esc(codM7) + '</span>';
+      } else {
+        // Fallback: nessun codice magazzino → piccolo trigger "···" sempre tappabile
+        codes += '<span class="ord-code-mag ord-code-mag--toggle ord-code-mag--ph" ' +
+                 'role="button" tabindex="0" ' +
+                 'title="Mostra/nascondi azioni" ' +
+                 'onclick="event.stopPropagation();ctToggleIconbar(\'' + cart.id + '\',' + idx + ',event)" ' +
+                 'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();ctToggleIconbar(\'' + cart.id + '\',' + idx + ',event);}">' +
+                 '···</span>';
+      }
       if(!isStorno){
         codes += '<span class="ord-code-forn ord-code-forn--inp"><span class="ord-code-forn-lbl">f.</span>';
         codes += '<input class="ct-codf-inp" value="' + esc(codF) + '" placeholder="—" ' +
@@ -379,7 +395,12 @@ function renderCartTabs(){
       h += '</div>'; // fine ord-grid row
 
       // ── ICONBAR: Forbici+% | Note | Ordina | Cestino | Reso (modifica) ───────────
-      h += '<div class="ct-iconbar">';
+      // Nascosta di default (toggle dal codice magazzino sopra). Stato volatile
+      // in _ctIconbarState (non persistito, non tocca i dati di calcolo).
+      var _ibKey = cart.id + '-' + idx;
+      var _ibOpen = (typeof _ctIconbarState !== 'undefined') && _ctIconbarState[_ibKey];
+      h += '<div class="ct-iconbar" id="ct-iconbar-' + cart.id + '-' + idx + '"' +
+           (_ibOpen ? '' : ' style="display:none"') + '>';
 
       if(isStorno){
         h += '<button class="ct-icon-btn ct-icon-btn--del" ' +

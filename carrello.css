@@ -2843,3 +2843,58 @@ body.light-mode .ct-mq-inp:focus {
   z-index: 0;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+   CARRELLO — Toggle iconbar dal codice magazzino + numero progressivo riga
+   (Modifica chirurgica: solo presentazione, nessuna logica di calcolo.)
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* Numero progressivo davanti al nome prodotto */
+#tc .ct-card .ord-item-name .ct-card-num {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 215, 0, 0.55);
+  letter-spacing: 0.2px;
+  margin-right: 4px;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  pointer-events: none;
+  vertical-align: baseline;
+}
+
+/* Codice magazzino come toggle iconbar: cursor + feedback tap */
+#tc .ct-card .ord-code-mag.ord-code-mag--toggle {
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.12s, box-shadow 0.12s, transform 0.08s;
+}
+/* Variante "placeholder" se non c'è codice magazzino: solo "···" cliccabile */
+#tc .ct-card .ord-code-mag.ord-code-mag--ph {
+  letter-spacing: 1px;
+  opacity: 0.65;
+}
+#tc .ct-card .ord-code-mag.ord-code-mag--toggle:hover {
+  filter: brightness(1.1);
+}
+#tc .ct-card .ord-code-mag.ord-code-mag--toggle:active {
+  transform: scale(0.96);
+  filter: brightness(0.9);
+}
+#tc .ct-card .ord-code-mag.ord-code-mag--toggle:focus-visible {
+  outline: 2px solid var(--ct-yellow, #f5c400);
+  outline-offset: 1px;
+}
+
+/* Mobile: padding leggermente maggiore per garantire un'area di tap comoda
+   senza alterare la disposizione verticale (font/dimensioni invariati) */
+@media (max-width: 768px) {
+  #tc .ct-card .ord-code-mag.ord-code-mag--toggle {
+    padding: 4px 8px;
+    line-height: 1.6;
+  }
+  #tc .ct-card .ord-item-name .ct-card-num {
+    font-size: 10px;
+  }
+}
+

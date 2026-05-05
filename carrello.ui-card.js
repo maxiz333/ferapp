@@ -5,6 +5,23 @@
 // Chiave localStorage per nomi fornitori per colore
 var CT_FORN_KEY = window.AppKeys.FORNI_COLORE;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ICONBAR A COMPARSA (FORBICI/% / NOTE / ORDINA / CESTINO)
+// Nascosta di default; toggle al click sul codice magazzino della riga.
+// Stato volatile in JS (non persistito), non tocca nessun calcolo/dato.
+// ─────────────────────────────────────────────────────────────────────────────
+var _ctIconbarState = {}; // chiave: cartId+'-'+idx → true se aperta
+function ctToggleIconbar(cartId, idx, ev){
+  if(ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+  var key = cartId + '-' + idx;
+  var willOpen = !_ctIconbarState[key];
+  _ctIconbarState[key] = willOpen;
+  var bar = document.getElementById('ct-iconbar-' + cartId + '-' + idx);
+  if(bar){
+    bar.style.display = willOpen ? '' : 'none';
+  }
+}
+
 // ctTogglePanel: mostra/nasconde pannello a comparsa (sconto|nota)
 // Stato salvato in _ctPanelState (JS puro, non nei dati carrello/Firebase)
 var _ctPanelState = {}; // chiave: cartId+'-'+idx → 'sconto'|'nota'|null
