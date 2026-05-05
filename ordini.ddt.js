@@ -86,9 +86,9 @@ function stampaDDT(cartId){
     var unit = it.unit || 'pz';
 
     var descBase = _ddtEsc(it.desc || '');
-    if(it.specs) descBase += ' <span style="color:#444;font-size:7px;">(' + _ddtEsc(it.specs) + ')</span>';
+    if(it.specs) descBase += ' <span style="color:#000;font-size:7.5px;font-weight:600;">(' + _ddtEsc(it.specs) + ')</span>';
     var pbDdt = itemRigaNotaPrezzoBasePlain(it);
-    if(pbDdt) descBase += ' <span style="color:#444;font-size:7px;">' + _ddtEsc(pbDdt) + '</span>';
+    if(pbDdt) descBase += ' <span style="color:#000;font-size:7.5px;font-weight:600;">' + _ddtEsc(pbDdt) + '</span>';
 
     righeHTML += ''
       + '<tr>'
@@ -112,8 +112,11 @@ function stampaDDT(cartId){
   // ----------------------------------------------------------------
   var docCss = ''
     + '#ddt-doc *{margin:0;padding:0;box-sizing:border-box;}'
-    + '#ddt-doc{font-family:Arial,sans-serif;font-size:10px;color:#000;background:#fff;}'
+    + '#ddt-doc{font-family:Arial,sans-serif;font-size:10px;color:#000 !important;background:#fff;}'
     + '#ddt-doc .page{width:210mm;min-height:297mm;background:#fff;margin:0 auto;padding:7mm 7mm 6mm 7mm;}'
+    // Reset regole globali base.css (th/td gialli/grigi) ─ tutto NERO su BIANCO
+    + '#ddt-doc table,#ddt-doc th,#ddt-doc td{color:#000 !important;background:transparent !important;border-color:#000 !important;cursor:default !important;text-transform:none;white-space:normal;}'
+    + '#ddt-doc tr:nth-child(even) td{background:transparent !important;}'
 
     + '#ddt-doc .fl{display:inline-block;border-bottom:1px solid #000;height:12px;}'
     + '#ddt-doc .fl-xs{min-width:20px;}'
@@ -147,8 +150,10 @@ function stampaDDT(cartId){
     + '#ddt-doc .cb{width:8px;height:8px;border:1px solid #000;display:inline-block;flex-shrink:0;text-align:center;line-height:7px;font-size:8px;font-weight:900;}'
 
     + '#ddt-doc .art-table{width:100%;border-collapse:collapse;border:1.5px solid #000;border-top:none;table-layout:fixed;}'
-    + '#ddt-doc .art-table th{border:1px solid #000;padding:3px 3px;font-size:7.5px;font-weight:bold;text-align:center;background:#ebebeb;text-transform:uppercase;line-height:1.3;}'
-    + '#ddt-doc .art-table td{border:1px solid #000;padding:0 3px;height:15px;font-size:8px;vertical-align:middle;overflow:hidden;}'
+    + '#ddt-doc .art-table th{border:1px solid #000 !important;padding:3px 3px;font-size:7.5px;font-weight:900 !important;text-align:center;background:#ebebeb !important;color:#000 !important;text-transform:uppercase;line-height:1.3;letter-spacing:0;}'
+    + '#ddt-doc .art-table td{border:1px solid #000 !important;padding:1px 3px;height:15px;font-size:8.5px;font-weight:600 !important;color:#000 !important;background:#fff !important;vertical-align:middle;overflow:hidden;}'
+    + '#ddt-doc .art-table td.c-desc{font-weight:700 !important;}'
+    + '#ddt-doc .art-table td.c-prz,#ddt-doc .art-table td.c-tot{font-weight:700 !important;}'
     + '#ddt-doc .art-table td.c-cod{width:17%;}'
     + '#ddt-doc .art-table td.c-desc{width:42%;}'
     + '#ddt-doc .art-table td.c-um{width:6%;text-align:center;}'
