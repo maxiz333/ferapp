@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>DDT - Ferramenta Rattazzi</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+@page { size: A4; margin: 0; }
+
+body {
+  font-family: Arial, sans-serif;
+  font-size: 9px;
+  background: #888;
+  padding: 15px;
+  color: #0d2060;
+}
+
+.page {
+  width: 210mm;
+  min-height: 297mm;
+  background: white;
+  margin: 0 auto;
+  padding: 5mm 5mm 4mm 5mm;
+  position: relative;
+}
+
+@media print {
+  body { background: white; padding: 0; margin: 0; }
+  .page { width: 210mm; min-height: 297mm; padding: 5mm 5mm 4mm 5mm; margin: 0; border: none; }
+}
+
+/* Colore blu documento */
+.blu { color: #0d2060; }
+
+/* ── WRAPPER principale (esclude striscia laterale) ── */
+.main-wrap {
+  border: 1.5px solid #0d2060;
+  width: calc(100% - 14px);
+}
+
+/* ── STRISCIA LATERALE ── */
+.side-strip {
+  position: absolute;
+  right: 5mm;
+  top: 5mm;
+  width: 13px;
+  border: 1.5px solid #0d2060;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 5.5px;
+  padding: 4px 1px;
+  letter-spacing: 0.3px;
+  color: #0d2060;
+  background: white;
+  bottom: 4mm;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  line-height: 1.2;
+}
+
+/* ── RIGA 1: CEDENTE label ── */
+.cedente-label {
+  border-bottom: 1.5px solid #0d2060;
+  display: flex;
+}
+.cedente-label-left {
+  flex: 0 0 45%;
+  border-right: 1.5px solid #0d2060;
+  padding: 2px 5px;
+  font-size: 7px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.cedente-label-right {
+  flex: 1;
+  padding: 2px 8px;
+}
+
+/* ── RIGA 2: LOGO | DESTINATARIO ── */
+.hdr-main {
+  display: flex;
+  border-bottom: 1.5px solid #0d2060;
+}
+
+/* Logo area */
+.hdr-logo {
+  flex: 0 0 45%;
+  border-right: 1.5px solid #0d2060;
+  padding: 4px 6px 5px 6px;
+}
+.logo-svg-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-bottom: 3px;
+}
+.logo-srl {
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  color: #0d2060;
+  align-self: flex-end;
+  margin-bottom: 3px;
+}
+.logo-addr {
+  font-size: 7px;
+  line-height: 1.7;
+  color: #0d2060;
+  margin-top: 3px;
+  text-align: center;
+}
+.logo-addr-small {
+  font-size: 6.5px;
+  line-height: 1.6;
+  color: #0d2060;
+  text-align: center;
+  margin-top: 2px;
+}
+
+/* Destinatario area */
+.hdr-dest {
+  flex: 1;
+  padding: 3px 8px 3px 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Titolo documento */
+.doc-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #0d2060;
+  margin-bottom: 1px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.doc-title-num {
+  border-bottom: 1px solid #0d2060;
+  min-width: 60px;
+  display: inline-block;
+  height: 14px;
+}
+.doc-title-del {
+  font-size: 13px;
+  font-weight: bold;
+}
+.doc-title-date {
+  border-bottom: 1px solid #0d2060;
+  min-width: 70px;
+  display: inline-block;
+  height: 14px;
+}
+.doc-dpr {
+  font-size: 6.5px;
+  color: #0d2060;
+  margin-bottom: 4px;
+}
+
+.dest-field {
+  display: flex;
+  align-items: flex-end;
+  margin-bottom: 3px;
+  font-size: 8px;
+}
+.dest-field-label {
+  font-size: 8px;
+  color: #0d2060;
+  white-space: nowrap;
+  min-width: 55px;
+}
+.dest-field-line {
+  border-bottom: 1px solid #0d2060;
+  flex: 1;
+  height: 11px;
+}
+
+/* Riga con sottocampi (Comune / Via / n.) */
+.dest-subrow {
+  display: flex;
+  gap: 0;
+  margin-bottom: 3px;
+  padding-left: 0;
+}
+.dest-subcell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.dest-subcell-label {
+  font-size: 6px;
+  color: #0d2060;
+  margin-bottom: 1px;
+}
+.dest-subcell-line {
+  border-bottom: 1px solid #0d2060;
+  height: 10px;
+  margin-right: 4px;
+}
+.dest-subcell.via { flex: 1.2; }
+.dest-subcell.num { flex: 0 0 22px; }
+
+.dest-pagamento {
+  display: flex;
+  align-items: flex-end;
+  margin-top: 1px;
+}
+
+/* ── RIGA TRASPORTO ── */
+.trasporto {
+  display: flex;
+  border-bottom: 1.5px solid #0d2060;
+  font-size: 7.5px;
+  color: #0d2060;
+}
+.tr-cell {
+  padding: 3px 5px 4px 5px;
+  border-right: 1.5px solid #0d2060;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.tr-cell:last-child { border-right: none; }
+.tr-title { font-size: 7px; font-weight: normal; }
+.cb-row { display: flex; gap: 8px; align-items: center; font-size: 7.5px; }
+.cb-item { display: flex; align-items: center; gap: 2px; }
+.cb { width: 7px; height: 7px; border: 1px solid #0d2060; display: inline-block; flex-shrink: 0; }
+
+/* ── TABELLA ARTICOLI ── */
+.art-table {
+  width: 100%;
+  border-collapse: collapse;
+  border-bottom: 1.5px solid #0d2060;
+  table-layout: fixed;
+}
+.art-table th {
+  border: 1px solid #0d2060;
+  border-top: none;
+  padding: 2px 3px;
+  font-size: 7.5px;
+  font-weight: bold;
+  text-align: center;
+  color: #0d2060;
+  text-transform: none;
+  line-height: 1.3;
+}
+.art-table td {
+  border-right: 1px solid #0d2060;
+  border-bottom: 1px dotted #9aaccc;
+  padding: 0 3px;
+  height: 14px;
+  font-size: 8px;
+  vertical-align: middle;
+  color: #0d2060;
+}
+.art-table td:last-child { border-right: none; }
+.art-table tr:last-child td { border-bottom: none; }
+
+.c-cod  { width: 13%; }
+.c-desc { width: 40%; }
+.c-um   { width: 5%;  text-align: center; }
+.c-qta  { width: 8%;  text-align: center; }
+.c-prz  { width: 10%; text-align: right; }
+.c-tot  { width: 12%; text-align: right; }
+.c-extra { width: 12%; text-align: right; }
+
+/* ── FOOTER ── */
+.footer-vettore {
+  display: flex;
+  border-bottom: 1.5px solid #0d2060;
+  font-size: 7.5px;
+  color: #0d2060;
+  min-height: 28px;
+  align-items: flex-start;
+  padding: 3px 5px;
+  gap: 10px;
+}
+.footer-vettore-label { font-size: 7.5px; white-space: nowrap; }
+.footer-vettore-line { border-bottom: 1px solid #0d2060; flex: 1; height: 16px; align-self: flex-end; }
+
+.footer-colli {
+  display: flex;
+  border-bottom: 1.5px solid #0d2060;
+  font-size: 7.5px;
+  color: #0d2060;
+  min-height: 22px;
+  align-items: center;
+}
+.footer-colli-left {
+  flex: 1;
+  padding: 3px 5px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+.colli-item {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+.colli-line {
+  border-bottom: 1px solid #0d2060;
+  width: 40px;
+  height: 14px;
+}
+.footer-firma-vettore {
+  flex: 0 0 40%;
+  border-left: 1.5px solid #0d2060;
+  padding: 3px 5px;
+  font-size: 7.5px;
+  color: #0d2060;
+}
+
+.footer-firme {
+  display: flex;
+  border-bottom: 1.5px solid #0d2060;
+  font-size: 7.5px;
+  color: #0d2060;
+  min-height: 24px;
+}
+.footer-firme-cell {
+  flex: 1;
+  padding: 3px 5px;
+  border-right: 1.5px solid #0d2060;
+}
+.footer-firme-cell:last-child { border-right: none; }
+
+.footer-annotazioni {
+  padding: 3px 5px;
+  font-size: 7.5px;
+  color: #0d2060;
+  min-height: 20px;
+  border-bottom: 1.5px solid #0d2060;
+}
+
+.footer-copia {
+  text-align: left;
+  font-size: 8.5px;
+  font-weight: bold;
+  padding: 3px 5px;
+  color: #0d2060;
+  letter-spacing: 0.5px;
+}
+</style>
+</head>
+<body>
+<div class="page">
+<div class="main-wrap">
+
+  <!-- RIGA 1: label CEDENTE -->
+  <div class="cedente-label">
+    <div class="cedente-label-left">Cedente</div>
+    <div class="cedente-label-right"></div>
+  </div>
+
+  <!-- RIGA 2: LOGO | DESTINATARIO -->
+  <div class="hdr-main">
+
+    <!-- LOGO + INDIRIZZO -->
+    <div class="hdr-logo">
+      <div class="logo-svg-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" width="215" height="44" viewBox="0 0 215 44">
+          <defs>
+            <style>
+              .txt-outer { font-family: 'Arial Black', Arial, sans-serif; font-size: 38px; font-weight: 900; }
+            </style>
+          </defs>
+          <text class="txt-outer" x="2" y="38"
+            fill="#0d1960" stroke="#0d1960" stroke-width="9"
+            stroke-linejoin="round" paint-order="stroke fill">RATTAZZI</text>
+          <text class="txt-outer" x="2" y="38"
+            fill="white" stroke="white" stroke-width="5"
+            stroke-linejoin="round" paint-order="stroke fill">RATTAZZI</text>
+          <text class="txt-outer" x="2" y="38"
+            fill="white" stroke="#0d1960" stroke-width="1.5"
+            stroke-linejoin="round" paint-order="stroke fill">RATTAZZI</text>
+        </svg>
+        <span style="font-size:9px; font-weight:bold; letter-spacing:1.5px; color:#0d2060; align-self:flex-end; margin-bottom:4px;">S.R.L.</span>
+      </div>
+      <div style="text-align:center; color:#0d2060;">
+        <div style="font-size:7px; line-height:1.7;">
+          Via Ettore Piazza, 10<br>
+          28064 CARPIGNANO SESIA (NO)<br>
+          Tel. 0321.825.145 - Fax 0321.826.917
+        </div>
+        <div style="font-size:6.5px; line-height:1.6; margin-top:2px;">
+          Cap. Soc. € 116.000 i.v.<br>
+          Cod Fisc. e P.IVA 00029360039<br>
+          Reg. Imprese Novara 00029360039<br>
+          R.E.A. n. 89056
+        </div>
+      </div>
+    </div>
+
+    <!-- DESTINATARIO -->
+    <div class="hdr-dest">
+      <div class="doc-title">
+        <span>Documento di trasporto N.</span>
+        <span class="doc-title-num"></span>
+        <span class="doc-title-del">del</span>
+        <span class="doc-title-date"></span>
+      </div>
+      <div class="doc-dpr">(D.P.R. 472/96)</div>
+
+      <div class="dest-field">
+        <span class="dest-field-label">SPETTLe</span>
+      </div>
+      <div class="dest-field">
+        <span class="dest-field-label">Ditta</span>
+        <span class="dest-field-line"></span>
+      </div>
+      <div class="dest-field" style="align-items:flex-start; margin-bottom:1px;">
+        <span class="dest-field-label" style="padding-top:1px;">Residenza<br>o domicilio</span>
+        <span class="dest-field-line" style="margin-top:9px;"></span>
+      </div>
+      <div class="dest-subrow" style="padding-left:55px; margin-bottom:2px;">
+        <div class="dest-subcell"><span class="dest-subcell-label">Comune</span></div>
+        <div class="dest-subcell via"><span class="dest-subcell-label">Via</span></div>
+        <div class="dest-subcell num"><span class="dest-subcell-label">n.</span></div>
+      </div>
+      <div class="dest-field" style="align-items:flex-start; margin-bottom:1px; margin-top:1px;">
+        <span class="dest-field-label" style="padding-top:1px;">Luogo di<br>destinazione</span>
+        <span class="dest-field-line" style="margin-top:9px;"></span>
+      </div>
+      <div class="dest-subrow" style="padding-left:55px; margin-bottom:2px;">
+        <div class="dest-subcell"><span class="dest-subcell-label">Comune</span></div>
+        <div class="dest-subcell via"><span class="dest-subcell-label">Via</span></div>
+        <div class="dest-subcell num"><span class="dest-subcell-label">n.</span></div>
+      </div>
+      <div class="dest-field" style="margin-top:3px;">
+        <span class="dest-field-label">Pagamento</span>
+        <span class="dest-field-line"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGA TRASPORTO -->
+  <div class="trasporto">
+    <div class="tr-cell" style="flex:1.8;">
+      <span class="tr-title">Trasporto a cura del</span>
+      <div class="cb-row">
+        <div class="cb-item"><span class="cb"></span> Cedente</div>
+        <div class="cb-item"><span class="cb"></span> Cessionario</div>
+        <div class="cb-item"><span class="cb"></span> Vettore</div>
+      </div>
+    </div>
+    <div class="tr-cell" style="flex:1.4;">
+      <span class="tr-title">Causale del trasporto</span>
+      <div class="cb-row">
+        <div class="cb-item"><span class="cb"></span> Vendita</div>
+      </div>
+    </div>
+    <div class="tr-cell" style="flex:1.6; border-right:none;">
+      <span class="tr-title">Inizio del trasporto o consegna</span>
+      <div class="cb-row">
+        <span>Data</span>
+        <span style="border-bottom:1px solid #0d2060; min-width:55px; height:11px; display:inline-block;"></span>
+        <span>Ora</span>
+        <span style="border-bottom:1px solid #0d2060; min-width:35px; height:11px; display:inline-block;"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABELLA ARTICOLI -->
+  <table class="art-table">
+    <thead>
+      <tr>
+        <th class="c-cod">Codici</th>
+        <th class="c-desc">Descrizione</th>
+        <th class="c-um">U.M.</th>
+        <th class="c-qta">Quantità</th>
+        <th class="c-prz">Prezzo unit.</th>
+        <th class="c-tot">Totale imponibile €</th>
+        <th class="c-extra">Prezzo vendita</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table>
+
+  <!-- FOOTER: Codice cliente | Vettore -->
+  <div style="display:flex; border-bottom:1.5px solid #0d2060; font-size:7.5px; color:#0d2060; min-height:28px;">
+    <div style="flex:0 0 35%; border-right:1.5px solid #0d2060; padding:3px 5px; display:flex; flex-direction:column; gap:4px;">
+      <span>Codice cliente</span>
+      <span style="border-bottom:1px solid #0d2060; height:12px; display:block;"></span>
+    </div>
+    <div style="flex:1; padding:3px 5px; display:flex; align-items:flex-start; gap:6px;">
+      <span style="white-space:nowrap;">Vettore</span>
+      <span style="border-bottom:1px solid #0d2060; flex:1; height:16px; align-self:flex-end;"></span>
+    </div>
+  </div>
+
+  <!-- FOOTER: N.Colli / Kg / Firma Vettore -->
+  <div class="footer-colli">
+    <div class="footer-colli-left">
+      <div class="colli-item">
+        <span>N. Colli</span>
+        <span class="colli-line"></span>
+      </div>
+      <div class="colli-item">
+        <span>Kg</span>
+        <span class="colli-line"></span>
+      </div>
+    </div>
+    <div class="footer-firma-vettore">Firma Vettore</div>
+  </div>
+
+  <!-- FOOTER: Firma cessionario / Firma conducente -->
+  <div class="footer-firme">
+    <div class="footer-firme-cell">Firma cessionario</div>
+    <div class="footer-firme-cell">Firma conducente</div>
+  </div>
+
+  <!-- ANNOTAZIONI -->
+  <div class="footer-annotazioni">Annotazioni</div>
+
+  <!-- COPIA -->
+  <div class="footer-copia">Copia per Cedente</div>
+
+</div>
+
+<!-- STRISCIA LATERALE -->
+<div class="side-strip">
+  UNITÀ DI MISURA – PZ = pezzi &nbsp; MQ = metri quadri &nbsp; MT = metri lineari &nbsp; KG = chilogrammi &nbsp; RT = rotoli &nbsp; PA = paia &nbsp; LT = litri &nbsp; CF = confezioni &nbsp; BL = blister &nbsp; SC = scatole &nbsp; CT = centinaia &nbsp; MG = migliaia
+</div>
+
+</div>
+</body>
+</html>
