@@ -152,6 +152,7 @@ function confermaOrdineAFornitori(){
 function avvisaUfficio(cartId){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||(!(cart.items||[]).length)){showToastGen('red','Aggiungi almeno un articolo prima');return;}
+  if(typeof ensureFatturaState === 'function') ensureFatturaState(cart);
 
   if(cart.bozzaOrdId){
     // Bozza già attiva: aggiorna
@@ -174,7 +175,14 @@ function avvisaUfficio(cartId){
     totale:'0',
     stato:'bozza',
     commesso:cart.commesso||'',
-    visto:false
+    visto:false,
+    // Propaga subito lo stato fattura: il badge "FATTURA" deve essere visibile
+    // anche prima del salvataggio definitivo dell'ordine.
+    fatturaRichiesta:!!cart.fatturaRichiesta,
+    fatturaCliente:cart.fatturaCliente?JSON.parse(JSON.stringify(cart.fatturaCliente)):null,
+    salvaFatturaInRubrica:!!cart.salvaFatturaInRubrica,
+    tipo:cart.tipo||(cart.fatturaRichiesta?'fattura':''),
+    numeroFattura:cart.numeroFattura||''
   };
   ordini.unshift(bozza);
   saveOrdini();
@@ -220,7 +228,11 @@ function _aggiornaBozzaOrdine(cart){
   var nextItemsCanon=_canonItems(nextItems);
   var prevNome=String(bozza.nomeCliente||'—');
   var prevNota=String(bozza.nota||'');
-  if(prevItemsCanon===nextItemsCanon && prevNome===String(nextNome) && prevNota===String(nextNota)){
+  // Anche un semplice flip del flag fattura (senza cambi articoli) deve
+  // forzare il refresh: badge & numeroFattura devono apparire subito in tab Ordini.
+  var prevFatt = !!bozza.fatturaRichiesta + '|' + (bozza.tipo||'') + '|' + (bozza.numeroFattura||'') + '|' + JSON.stringify(bozza.fatturaCliente||null);
+  var nextFatt = !!cart.fatturaRichiesta  + '|' + (cart.tipo||'')  + '|' + (cart.numeroFattura||'')  + '|' + JSON.stringify(cart.fatturaCliente||null);
+  if(prevItemsCanon===nextItemsCanon && prevNome===String(nextNome) && prevNota===String(nextNota) && prevFatt===nextFatt){
     return;
   }
   bozza.items=nextItems;
@@ -229,6 +241,8 @@ function _aggiornaBozzaOrdine(cart){
   bozza.fatturaRichiesta=!!cart.fatturaRichiesta;
   bozza.fatturaCliente=cart.fatturaCliente?JSON.parse(JSON.stringify(cart.fatturaCliente)):null;
   bozza.salvaFatturaInRubrica=!!cart.salvaFatturaInRubrica;
+  bozza.tipo=cart.tipo||(cart.fatturaRichiesta?'fattura':'');
+  bozza.numeroFattura=cart.numeroFattura||'';
   bozza.totale=ordTotaleSenzaCongelati(bozza).toFixed(2);
   bozza.modificato=true;
   bozza.modificatoAt=new Date().toLocaleString('it-IT');
@@ -270,10 +284,14 @@ function _aggiornaOrdineDaCarrelloModifica(cart){
   var nextNota=cart.nota||'';
   var prevItemsCanon=_canonItems(ord.items||[]);
   var nextItemsCanon=_canonItems(nextItems);
+  // Tracking stato fattura per forzare resync anche se gli articoli non cambiano.
+  var prevFatt = !!ord.fatturaRichiesta + '|' + (ord.tipo||'') + '|' + (ord.numeroFattura||'') + '|' + JSON.stringify(ord.fatturaCliente||null);
+  var nextFatt = !!cart.fatturaRichiesta + '|' + (cart.tipo||'') + '|' + (cart.numeroFattura||'') + '|' + JSON.stringify(cart.fatturaCliente||null);
   if(prevItemsCanon===nextItemsCanon &&
     String(ord.nomeCliente||'—')===String(nextNome) &&
     String(ord.nota||'')===String(nextNota) &&
-    String(ord.scontoGlobale||'')===String(cart.scontoGlobale||'')){
+    String(ord.scontoGlobale||'')===String(cart.scontoGlobale||'') &&
+    prevFatt===nextFatt){
     return;
   }
   ord.items=nextItems;
@@ -282,6 +300,8 @@ function _aggiornaOrdineDaCarrelloModifica(cart){
   ord.fatturaRichiesta=!!cart.fatturaRichiesta;
   ord.fatturaCliente=cart.fatturaCliente?JSON.parse(JSON.stringify(cart.fatturaCliente)):null;
   ord.salvaFatturaInRubrica=!!cart.salvaFatturaInRubrica;
+  ord.tipo=cart.tipo||(cart.fatturaRichiesta?'fattura':'');
+  ord.numeroFattura=cart.numeroFattura||'';
   ord.scontoGlobale=cart.scontoGlobale||null;
   ord.totale=ordTotaleSenzaCongelati(ord).toFixed(2);
   saveOrdini();
@@ -343,7 +363,9 @@ function inviaOrdine(cartId){
     commesso:cart.commesso||'',
     fatturaRichiesta:!!cart.fatturaRichiesta,
     fatturaCliente:cart.fatturaCliente?JSON.parse(JSON.stringify(cart.fatturaCliente)):null,
-    salvaFatturaInRubrica:!!cart.salvaFatturaInRubrica
+    salvaFatturaInRubrica:!!cart.salvaFatturaInRubrica,
+    tipo:cart.tipo||(cart.fatturaRichiesta?'fattura':''),
+    numeroFattura:cart.numeroFattura||''
   };
   if(ord.fatturaRichiesta && ord.salvaFatturaInRubrica && ord.fatturaCliente && typeof upsertClienteAnagrafica==='function'){
     upsertClienteAnagrafica(ord.fatturaCliente);

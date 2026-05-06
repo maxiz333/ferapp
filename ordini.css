@@ -395,6 +395,32 @@ body.light-mode .ord-code-forn   { background:#fde8e8; }
 body.light-mode .ord-card--bozza { background: #eff8ff !important; border-color: #3182ce55 !important; }
 body.light-mode .ord-card-stato--bozza { background: #dbeafe; color: #1d4ed8; }
 
+/* Badge FATTURA — testo rosso acceso, bordo giallo, grassetto.
+   Stile uniforme su tutte le bande stato (nuovo/lavorazione/in arrivo/bozza/...). */
+.ord-fattura-badge {
+  display: inline-block;
+  background: #0e0e0e;
+  border: 2px solid #ffd400;
+  color: #ff2d2d;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .6px;
+  vertical-align: middle;
+  margin-left: 6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: 0 0 1px rgba(255, 0, 0, .35);
+  box-shadow: 0 0 0 1px rgba(255, 212, 0, .25), 0 0 6px rgba(255, 212, 0, .25);
+}
+body.light-mode .ord-fattura-badge {
+  background: #fffceb;
+  color: #d40000;
+  border-color: #d4a300;
+  box-shadow: 0 0 0 1px rgba(212, 163, 0, .25);
+}
+
 /* ── Card ex-bozza — ordine promosso da bozza a nuovo ── */
 .ord-card--exbozza {
   border-color: #e53e3e55 !important;

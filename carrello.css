@@ -903,6 +903,31 @@ button[touch-action="manipulation"],
   flex-shrink: 0;
 }
 .ct-sconto-badge { background: rgba(255,215,0,.15); color: var(--ct-yellow); padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+/* Badge FATTURA nel carrello (sticky bar + sezione "Ordine inviato"):
+   testo rosso acceso, bordo giallo, grassetto — stesso stile dell'ord-fattura-badge. */
+.ct-fattura-badge {
+  display: inline-block;
+  background: #0e0e0e;
+  border: 2px solid #ffd400;
+  color: #ff2d2d;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .6px;
+  vertical-align: middle;
+  margin-left: 6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: 0 0 1px rgba(255, 0, 0, .35);
+  box-shadow: 0 0 0 1px rgba(255, 212, 0, .25), 0 0 6px rgba(255, 212, 0, .25);
+}
+body.light-mode .ct-fattura-badge {
+  background: #fffceb;
+  color: #d40000;
+  border-color: #d4a300;
+  box-shadow: 0 0 0 1px rgba(212, 163, 0, .25);
+}
 .ct-sticky-n     { font-size: 12px; color: var(--ct-muted); font-weight: 600; flex-shrink: 0; }
 .ct-btn-sconto {
   padding: 6px 10px; border-radius: 8px;

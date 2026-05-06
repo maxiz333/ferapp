@@ -177,6 +177,25 @@ body {
   height: 11px;
 }
 
+/* Riga combinata: label-sezione a sinistra + subcells a destra (data sopra, label sotto) */
+.dest-field-row {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 3px;
+  font-size: 8px;
+}
+.dest-field-row > .dest-field-label {
+  flex: 0 0 auto;
+  min-width: 55px;
+  padding-top: 1px;
+  padding-right: 4px;
+}
+.dest-field-row > .dest-subrow {
+  flex: 1;
+  margin-bottom: 0;
+  padding-left: 0;
+}
+
 /* Riga con sottocampi (Comune / Via / n.) */
 .dest-subrow {
   display: flex;
@@ -192,15 +211,24 @@ body {
 .dest-subcell-label {
   font-size: 6px;
   color: #0d2060;
-  margin-bottom: 1px;
+  margin-top: 1px;
 }
+/* La data dell'utente va dentro questa span: sopra label, con sottolineatura blu. */
 .dest-subcell-line {
   border-bottom: 1px solid #0d2060;
-  height: 10px;
+  min-height: 11px;
   margin-right: 4px;
+  font-size: 8px;
+  color: #0d2060;
+  padding: 0 1px;
+  outline: none;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
 }
 .dest-subcell.via { flex: 1.2; }
-.dest-subcell.num { flex: 0 0 22px; }
+.dest-subcell.num { flex: 0 0 28px; }
+.dest-subcell.num .dest-subcell-line { text-align: right; padding-right: 2px; }
 
 .dest-pagamento {
   display: flex;
@@ -302,8 +330,18 @@ body {
 }
 .colli-line {
   border-bottom: 1px solid #0d2060;
-  width: 40px;
+  min-width: 40px;
+  display: inline-block;
   height: 14px;
+  outline: none;
+  font-size: 7.5px;
+  color: #0d2060;
+  padding: 0 2px;
+}
+
+[contenteditable="true"]:focus {
+  outline: 1px dashed rgba(13, 32, 96, 0.4);
+  outline-offset: 1px;
 }
 .footer-firma-vettore {
   flex: 0 0 40%;
@@ -398,9 +436,9 @@ body {
     <div class="hdr-dest">
       <div class="doc-title">
         <span>Documento di trasporto N.</span>
-        <span class="doc-title-num"></span>
+        <span class="doc-title-num" contenteditable="true"></span>
         <span class="doc-title-del">del</span>
-        <span class="doc-title-date"></span>
+        <span class="doc-title-date" contenteditable="true"></span>
       </div>
       <div class="doc-dpr">(D.P.R. 472/96)</div>
 
@@ -409,29 +447,50 @@ body {
       </div>
       <div class="dest-field">
         <span class="dest-field-label">Ditta</span>
-        <span class="dest-field-line"></span>
+        <span class="dest-field-line" contenteditable="true"></span>
       </div>
-      <div class="dest-field" style="align-items:flex-start; margin-bottom:1px;">
-        <span class="dest-field-label" style="padding-top:1px;">Residenza<br>o domicilio</span>
-        <span class="dest-field-line" style="margin-top:9px;"></span>
+
+      <!-- Residenza: label + subcells (data sopra, etichetta sotto) -->
+      <div class="dest-field-row">
+        <span class="dest-field-label">Residenza<br>o domicilio</span>
+        <div class="dest-subrow">
+          <div class="dest-subcell">
+            <span class="dest-subcell-line" contenteditable="true"></span>
+            <span class="dest-subcell-label">Comune</span>
+          </div>
+          <div class="dest-subcell via">
+            <span class="dest-subcell-line" contenteditable="true"></span>
+            <span class="dest-subcell-label">Via</span>
+          </div>
+          <div class="dest-subcell num">
+            <span class="dest-subcell-line" contenteditable="true"></span>
+            <span class="dest-subcell-label">n.</span>
+          </div>
+        </div>
       </div>
-      <div class="dest-subrow" style="padding-left:55px; margin-bottom:2px;">
-        <div class="dest-subcell"><span class="dest-subcell-label">Comune</span></div>
-        <div class="dest-subcell via"><span class="dest-subcell-label">Via</span></div>
-        <div class="dest-subcell num"><span class="dest-subcell-label">n.</span></div>
+
+      <!-- Luogo di destinazione: stessa struttura -->
+      <div class="dest-field-row" style="margin-top:1px;">
+        <span class="dest-field-label">Luogo di<br>destinazione</span>
+        <div class="dest-subrow">
+          <div class="dest-subcell">
+            <span class="dest-subcell-line" contenteditable="true"></span>
+            <span class="dest-subcell-label">Comune</span>
+          </div>
+          <div class="dest-subcell via">
+            <span class="dest-subcell-line" contenteditable="true"></span>
+            <span class="dest-subcell-label">Via</span>
+          </div>
+          <div class="dest-subcell num">
+            <span class="dest-subcell-line" contenteditable="true"></span>
+            <span class="dest-subcell-label">n.</span>
+          </div>
+        </div>
       </div>
-      <div class="dest-field" style="align-items:flex-start; margin-bottom:1px; margin-top:1px;">
-        <span class="dest-field-label" style="padding-top:1px;">Luogo di<br>destinazione</span>
-        <span class="dest-field-line" style="margin-top:9px;"></span>
-      </div>
-      <div class="dest-subrow" style="padding-left:55px; margin-bottom:2px;">
-        <div class="dest-subcell"><span class="dest-subcell-label">Comune</span></div>
-        <div class="dest-subcell via"><span class="dest-subcell-label">Via</span></div>
-        <div class="dest-subcell num"><span class="dest-subcell-label">n.</span></div>
-      </div>
+
       <div class="dest-field" style="margin-top:3px;">
         <span class="dest-field-label">Pagamento</span>
-        <span class="dest-field-line"></span>
+        <span class="dest-field-line" contenteditable="true"></span>
       </div>
     </div>
   </div>
@@ -456,9 +515,9 @@ body {
       <span class="tr-title">Inizio del trasporto o consegna</span>
       <div class="cb-row">
         <span>Data</span>
-        <span style="border-bottom:1px solid #0d2060; min-width:55px; height:11px; display:inline-block;"></span>
+        <span class="fld-data-trasporto" contenteditable="true" style="border-bottom:1px solid #0d2060; min-width:55px; height:11px; display:inline-block; outline:none;"></span>
         <span>Ora</span>
-        <span style="border-bottom:1px solid #0d2060; min-width:35px; height:11px; display:inline-block;"></span>
+        <span class="fld-ora-trasporto" contenteditable="true" style="border-bottom:1px solid #0d2060; min-width:35px; height:11px; display:inline-block; outline:none;"></span>
       </div>
     </div>
   </div>
@@ -509,11 +568,11 @@ body {
   <div style="display:flex; border-bottom:1.5px solid #0d2060; font-size:7.5px; color:#0d2060; min-height:28px;">
     <div style="flex:0 0 35%; border-right:1.5px solid #0d2060; padding:3px 5px; display:flex; flex-direction:column; gap:4px;">
       <span>Codice cliente</span>
-      <span style="border-bottom:1px solid #0d2060; height:12px; display:block;"></span>
+      <span class="fld-codice-cliente" contenteditable="true" style="border-bottom:1px solid #0d2060; height:12px; display:block; outline:none;"></span>
     </div>
-    <div style="flex:1; padding:3px 5px; display:flex; align-items:flex-start; gap:6px;">
+    <div style="flex:1; padding:3px 5px; display:flex; flex-direction:column; gap:4px;">
       <span style="white-space:nowrap;">Vettore</span>
-      <span style="border-bottom:1px solid #0d2060; flex:1; height:16px; align-self:flex-end;"></span>
+      <span class="fld-vettore" contenteditable="true" style="border-bottom:1px solid #0d2060; height:12px; display:block; outline:none;"></span>
     </div>
   </div>
 
@@ -522,27 +581,27 @@ body {
     <div class="footer-colli-left">
       <div class="colli-item">
         <span>N. Colli</span>
-        <span class="colli-line"></span>
+        <span class="colli-line fld-colli" contenteditable="true"></span>
       </div>
       <div class="colli-item">
         <span>Kg</span>
-        <span class="colli-line"></span>
+        <span class="colli-line fld-kg" contenteditable="true"></span>
       </div>
     </div>
-    <div class="footer-firma-vettore">Firma Vettore</div>
+    <div class="footer-firma-vettore" contenteditable="true">Firma Vettore</div>
   </div>
 
   <!-- FOOTER: Firma cessionario / Firma conducente -->
   <div class="footer-firme">
-    <div class="footer-firme-cell">Firma cessionario</div>
-    <div class="footer-firme-cell">Firma conducente</div>
+    <div class="footer-firme-cell" contenteditable="true">Firma cessionario</div>
+    <div class="footer-firme-cell" contenteditable="true">Firma conducente</div>
   </div>
 
   <!-- ANNOTAZIONI -->
-  <div class="footer-annotazioni">Annotazioni</div>
+  <div class="footer-annotazioni" contenteditable="true">Annotazioni</div>
 
   <!-- COPIA -->
-  <div class="footer-copia">Copia per Cedente</div>
+  <div class="footer-copia" contenteditable="true">Copia per Cedente</div>
 
 </div>
 

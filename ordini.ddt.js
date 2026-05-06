@@ -76,14 +76,39 @@ function stampaDDTPrint(){
   setTimeout(function(){ w.print(); }, 180);
 }
 
-function stampaDDT(cartId){
-  var cart = carrelli.find(function(c){ return c.id === cartId; });
+function stampaDDT(cartIdOrOrdId){
+  // 1) Prova come cartId (carrello attivo/inviato).
+  var cart = (carrelli||[]).find(function(c){ return c && c.id === cartIdOrOrdId; });
+  // 2) Fallback: ordine inviato dalla tab Ordini (anche dopo che il carrello è stato chiuso).
+  if(!cart){
+    var ord = (typeof ordini !== 'undefined' ? ordini : []).find(function(o){ return o && o.id === cartIdOrOrdId; });
+    if(ord){
+      cart = {
+        id: ord.id,
+        ordId: ord.id,
+        nome: ord.nomeCliente || '',
+        items: ord.items || [],
+        nota: ord.nota || '',
+        fatturaRichiesta: !!ord.fatturaRichiesta,
+        fatturaCliente: ord.fatturaCliente || null,
+        tipo: ord.tipo || '',
+        numeroFattura: ord.numeroFattura || '',
+        scontoGlobale: ord.scontoGlobale || null
+      };
+    }
+  }
   if(!cart || !(cart.items||[]).length){
     showToastGen('red','-- Carrello vuoto!');
     return;
   }
 
-  var ddtNum = getNextDDTNum();
+  // Per le fatture: riusa il numero fattura già archiviato (non incrementare il contatore DDT).
+  var ddtNum;
+  if(cart.tipo === 'fattura' && cart.numeroFattura){
+    ddtNum = cart.numeroFattura;
+  } else {
+    ddtNum = getNextDDTNum();
+  }
   var oggi = new Date();
   var dataStr = String(oggi.getDate()).padStart(2,'0') + '/' + String(oggi.getMonth()+1).padStart(2,'0') + '/' + oggi.getFullYear();
   var oraStr = String(oggi.getHours()).padStart(2,'0') + ':' + String(oggi.getMinutes()).padStart(2,'0');
@@ -123,6 +148,38 @@ function stampaDDT(cartId){
       prezzoVend: _ddtFmtImp(puLordo)
     });
   });
+  // Estrae il numero civico finale (es. "VIA ZANOIA 4" → via="VIA ZANOIA", civico="4").
+  function _ddtParseIndirizzo(s){
+    s = String(s || '').trim();
+    if(!s) return { via: '', civico: '' };
+    var m = s.match(/^(.*?)\s+(\d[\w\/\.\-]*)\s*$/);
+    if(m) return { via: m[1].trim(), civico: m[2].trim() };
+    return { via: s, civico: '' };
+  }
+
+  function _ddtSetSubrowData(row, comuneStr, via, civico){
+    if(!row) return;
+    var doc = row.ownerDocument;
+    var subs = row.querySelectorAll('.dest-subcell');
+    function ensure(sub){
+      if(!sub) return null;
+      var l = sub.querySelector('.dest-subcell-line');
+      if(!l){
+        l = doc.createElement('span');
+        l.className = 'dest-subcell-line';
+        l.setAttribute('contenteditable', 'true');
+        sub.insertBefore(l, sub.firstChild);
+      }
+      return l;
+    }
+    var l0 = ensure(subs[0]);
+    var l1 = ensure(subs[1]);
+    var l2 = ensure(subs[2]);
+    if(l0) l0.textContent = comuneStr || '';
+    if(l1) l1.textContent = via || '';
+    if(l2) l2.textContent = civico || '';
+  }
+
   function _ddtPopulateTemplate(doc){
     if(!doc) return false;
     var numEl = doc.querySelector('.doc-title-num');
@@ -130,18 +187,52 @@ function stampaDDT(cartId){
     if(numEl) numEl.textContent = ddtNum;
     if(dateEl) dateEl.textContent = dataStr;
 
-    var dittaLine = doc.querySelector('.hdr-dest .dest-field:nth-of-type(2) .dest-field-line');
-    var resLine = doc.querySelector('.hdr-dest .dest-field:nth-of-type(3) .dest-field-line');
-    var destLine = doc.querySelector('.hdr-dest .dest-field:nth-of-type(4) .dest-field-line');
-    var pagLine = doc.querySelector('.hdr-dest .dest-field:nth-of-type(5) .dest-field-line');
+    // Ricava le parti strutturate del cliente (preferendo cart.fatturaCliente).
+    var fc = (cart && cart.fatturaCliente && typeof cart.fatturaCliente === 'object') ? cart.fatturaCliente : null;
+    var citta = fc && fc.citta ? String(fc.citta).trim() : '';
+    var prov  = fc && fc.provincia ? String(fc.provincia).trim() : '';
+    var indirizzoSrc = fc && fc.indirizzo ? String(fc.indirizzo).trim() : (cart && cart.indirizzo ? String(cart.indirizzo).trim() : '');
+    var parsed = _ddtParseIndirizzo(indirizzoSrc);
+    var comuneStr = citta + (prov ? ' (' + prov + ')' : '');
+    var indirizzoLine = parsed.via;
+    var civico = parsed.civico;
+
+    // Ditta = prima .dest-field-line (l'unica nella sezione header destinatario insieme a Pagamento).
+    var fields = doc.querySelectorAll('.hdr-dest .dest-field');
+    var dittaLine = null, pagLine = null;
+    for(var k = 0; k < fields.length; k++){
+      var line = fields[k].querySelector('.dest-field-line');
+      if(!line) continue;
+      if(!dittaLine) dittaLine = line;
+      else { pagLine = line; break; }
+    }
     if(dittaLine) dittaLine.textContent = nomeCliente;
-    if(resLine) resLine.textContent = indirizzo;
-    if(destLine) destLine.textContent = indirizzo;
     if(pagLine) pagLine.textContent = piva ? ('P.IVA/C.F. ' + piva) : '';
 
-    var trDataOra = doc.querySelectorAll('.trasporto .tr-cell:nth-child(3) .cb-row span[style*="border-bottom"]');
-    if(trDataOra[0]) trDataOra[0].textContent = dataStr;
-    if(trDataOra[1]) trDataOra[1].textContent = oraStr;
+    // Subrow Residenza / Luogo: data sopra le label Comune/Via/n.
+    var rows = doc.querySelectorAll('.hdr-dest .dest-field-row');
+    _ddtSetSubrowData(rows[0], comuneStr, indirizzoLine, civico);
+    _ddtSetSubrowData(rows[1], comuneStr, indirizzoLine, civico);
+
+    // Codice cliente (footer DDT): IdAnagrafica salvato dentro fatturaCliente.
+    // Persistito sia nel carrello che nell'ordine Firebase, quindi sopravvive
+    // alla chiusura della sessione.
+    var codCli = doc.querySelector('.fld-codice-cliente');
+    if(codCli){
+      var idA = fc && fc.idAnagrafica ? String(fc.idAnagrafica) : '';
+      if(idA) codCli.textContent = idA;
+    }
+
+    var trData = doc.querySelector('.fld-data-trasporto');
+    var trOra  = doc.querySelector('.fld-ora-trasporto');
+    if(trData) trData.textContent = dataStr;
+    if(trOra)  trOra.textContent = oraStr;
+    // Fallback per template legacy senza classi `.fld-*`.
+    if(!trData || !trOra){
+      var trDataOra = doc.querySelectorAll('.trasporto .tr-cell:nth-child(3) .cb-row span[style*="border-bottom"]');
+      if(!trData && trDataOra[0]) trDataOra[0].textContent = dataStr;
+      if(!trOra  && trDataOra[1]) trDataOra[1].textContent = oraStr;
+    }
 
     var tbody = doc.querySelector('.art-table tbody');
     if(tbody){

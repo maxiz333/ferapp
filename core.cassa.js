@@ -101,10 +101,15 @@ function _cassaModeRender(){
     var sc = (ord.promozione && statoNorm==='nuovo') ? '#e53e3e' : (SC_C[statoNorm]||'#555');
     var sl = (ord.promozione && statoNorm==='nuovo') ? 'ORDINE IN ARRIVO' : (SL_C[statoNorm]||'');
 
+    var _csIsFatt = !!(ord.tipo === 'fattura' || ord.fatturaRichiesta);
     h += '<div class="cassa-mode-card" onclick="_cassaModeApri('+gi+')" style="border-left:5px solid '+sc+';">';
     h += '<div style="display:flex;justify-content:space-between;align-items:center;">';
     h += '<div>';
-    h += '<div style="font-size:17px;font-weight:900;color:var(--text);">'+esc(ord.nomeCliente||'—')+'</div>';
+    h += '<div style="font-size:17px;font-weight:900;color:var(--text);">'+esc(ord.nomeCliente||'—');
+    if(_csIsFatt){
+      h += ' <span class="ord-fattura-badge" title="Documento fatturato'+(ord.numeroFattura?(' N. '+esc(ord.numeroFattura)):'')+'">🧾 FATTURA'+(ord.numeroFattura?(' N.'+esc(ord.numeroFattura)):'')+'</span>';
+    }
+    h += '</div>';
     h += '<div style="font-size:11px;color:#666;margin-top:2px;">' + sl;
     if(ord.numero) h += ' #'+ord.numero;
     h += ' · '+nArt+' art. · '+esc(ord.data||'')+' '+esc(ord.ora||'')+'</div>';

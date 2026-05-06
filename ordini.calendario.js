@@ -77,6 +77,10 @@ function renderOrdiniByDate(){
     h+='<div class="ord-card" style="border-top:4px solid '+sc+';margin-bottom:14px;">';
     h+='<div class="ord-card-stato" style="background:'+sc+';color:'+(ost==='nuovo'?'#111':'#fff')+'">'+SL[ost]+(ord.modificato?' <span style="background:#553c9a;color:#e9d8fd;font-size:10px;padding:1px 7px;border-radius:8px;letter-spacing:.5px;font-weight:700;vertical-align:middle;">MODIFICATO</span>':'');
     if(ord.numero) h+=' — #'+ord.numero;
+    var _calIsFatt = !!(ord.tipo === 'fattura' || ord.fatturaRichiesta);
+    if(_calIsFatt){
+      h+=' <span class="ord-fattura-badge" title="Documento fatturato'+(ord.numeroFattura?(' N. '+esc(ord.numeroFattura)):'')+'">🧾 FATTURA'+(ord.numeroFattura?(' N.'+esc(ord.numeroFattura)):'')+'</span>';
+    }
     h+='</div>';
     h+='<div class="ord-card-cliente">';
     h+='<div class="ord-cliente-nome">'+esc(ord.nomeCliente||'—')+'</div>';

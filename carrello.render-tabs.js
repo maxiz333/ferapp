@@ -117,8 +117,10 @@ function renderCartTabs(){
     h += '<div class="ct-inviato-box">';
     h += '<div class="ct-inviato-top">';
     h += '<span style="font-size:22px">✅</span>';
+    var _ctIsFatt = !!(cart.fatturaRichiesta || cart.tipo === 'fattura');
+    var _ctFatBadge = _ctIsFatt ? ' <span class="ct-fattura-badge" title="Documento fatturato' + (cart.numeroFattura ? ' N. ' + esc(cart.numeroFattura) : '') + '">🧾 FATTURA' + (cart.numeroFattura ? ' N.' + esc(cart.numeroFattura) : '') + '</span>' : '';
     h += '<div style="flex:1"><div class="ct-inviato-label">Ordine inviato alla cassa' + _ctHtmlOrdineVistoBadge(cart) + '</div>';
-    h += '<div class="ct-inviato-nome" onclick="ctEditClienteName(\''+cart.id+'\')" style="cursor:pointer;" title="Tap per modificare">' + esc(cart.nome) + '</div></div>';
+    h += '<div class="ct-inviato-nome" onclick="ctEditClienteName(\''+cart.id+'\')" style="cursor:pointer;" title="Tap per modificare">' + esc(cart.nome) + _ctFatBadge + '</div></div>';
     h += '<div class="ct-price-big">€ ' + totInv.toFixed(2) + '</div>';
     h += '</div>';
     var _invItems = (cart.items||[]).slice().reverse();
@@ -137,9 +139,9 @@ function renderCartTabs(){
     h += '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;height:38px;">';
     h += '<button onclick="deleteCart(\'' + cart.id + '\')" title="Elimina carrello" aria-label="Elimina carrello" ';
     h += 'style="height:38px;min-width:44px;padding:0 12px;border-radius:10px;border:1px solid #2a2a2a;background:transparent;color:#666;cursor:pointer;font-size:18px;line-height:1;">🗑️</button>';
-    if(cart.fatturaRichiesta){
-      h += '<button onclick="stampaDDT(\'' + cart.id + '\')" title="Anteprima stampa DDT (con dati fattura cliente)" ';
-      h += 'style="height:38px;padding:0 14px;border-radius:10px;border:none;background:var(--accent);color:#111;font-size:12px;font-weight:900;cursor:pointer;">🖨️ Stampa DDT</button>';
+    if(_ctIsFatt){
+      h += '<button onclick="stampaDDT(\'' + cart.id + '\')" title="Stampa bolla cartacea della fattura' + (cart.numeroFattura ? ' N. ' + esc(cart.numeroFattura) : '') + '" ';
+      h += 'style="height:38px;padding:0 14px;border-radius:10px;border:none;background:var(--accent);color:#111;font-size:12px;font-weight:900;cursor:pointer;">🖨️ Stampa Bolla</button>';
     } else {
       h += '<button onclick="stampaDDT(\'' + cart.id + '\')" title="Anteprima stampa DDT (Documento di Trasporto)" ';
       h += 'style="height:38px;padding:0 14px;border-radius:10px;border:1px solid #2f2f2f;background:#1b1b1b;color:#ddd;font-size:12px;font-weight:800;cursor:pointer;">🖨️ Stampa DDT</button>';
@@ -182,9 +184,11 @@ function renderCartTabs(){
 
     // ── BARRA STICKY: cliente + sconto globale (niente totale € qui) ─────────
     var scontoGl = cart.scontoGlobale;
+    var _stIsFatt = !!(cart.fatturaRichiesta || cart.tipo === 'fattura');
+    var _stFatBadge = _stIsFatt ? ' <span class="ct-fattura-badge" title="Documento fatturato' + (cart.numeroFattura ? ' N. ' + esc(cart.numeroFattura) : '') + '">🧾 FATTURA' + (cart.numeroFattura ? ' N.' + esc(cart.numeroFattura) : '') + '</span>' : '';
     h += '<div class="ct-sticky-total">';
     h += '<span class="ct-sticky-client" onclick="ctEditClienteName(\'' + cart.id + '\')" title="Tap per modificare il cliente">' +
-         esc(cart.nome || 'Cliente') + _ctHtmlOrdineVistoBadge(cart) + '</span>';
+         esc(cart.nome || 'Cliente') + _ctHtmlOrdineVistoBadge(cart) + _stFatBadge + '</span>';
     h += '<div class="ct-sticky-right">';
     if(scontoGl) h += '<span class="ct-sconto-badge">-'+scontoGl+'%</span>';
     h += '<span class="ct-sticky-n">' + (cart.items||[]).length + ' art.</span>';

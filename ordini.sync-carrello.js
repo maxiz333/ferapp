@@ -69,6 +69,8 @@ function aggiornaOrdine(cartId){
   ord.fatturaRichiesta=!!cart.fatturaRichiesta;
   ord.fatturaCliente=cart.fatturaCliente?JSON.parse(JSON.stringify(cart.fatturaCliente)):null;
   ord.salvaFatturaInRubrica=!!cart.salvaFatturaInRubrica;
+  ord.tipo=cart.tipo||(cart.fatturaRichiesta?'fattura':'');
+  ord.numeroFattura=cart.numeroFattura||'';
   if(ord.fatturaRichiesta && ord.salvaFatturaInRubrica && ord.fatturaCliente && typeof upsertClienteAnagrafica==='function'){
     upsertClienteAnagrafica(ord.fatturaCliente);
   }
@@ -94,6 +96,8 @@ function annullaModifica(cartId){
       cart.fatturaRichiesta=!!ord.fatturaRichiesta;
       cart.fatturaCliente=ord.fatturaCliente?JSON.parse(JSON.stringify(ord.fatturaCliente)):null;
       cart.salvaFatturaInRubrica=!!ord.salvaFatturaInRubrica;
+      cart.tipo=ord.tipo||'';
+      cart.numeroFattura=ord.numeroFattura||'';
       cart.stato='inviato';
       cart.locked=true;
     } else {

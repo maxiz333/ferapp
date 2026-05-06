@@ -100,9 +100,13 @@ function renderOrdini(){
       // ── HEADER: banda colorata con stato ──
       var _bannerLabel = isBozza ? 'In lavorazione' : ((_isExBozza && ost==='nuovo') ? 'ORDINE IN ARRIVO' : SL[ost]);
       var _bannerTextCol = (ost==='nuovo' && !_isExBozza && !isBozza) ? '#111' : '#fff';
+      var _ordIsFatt = !!(ord.tipo === 'fattura' || ord.fatturaRichiesta);
       h+='<div class="ord-card-stato" style="background:'+sc+';color:'+_bannerTextCol+'">';
       h+=_bannerLabel;
       if(ord.numero) h+=' — #'+ord.numero;
+      if(_ordIsFatt){
+        h+=' <span class="ord-fattura-badge" title="Documento fatturato'+(ord.numeroFattura?(' N. '+esc(ord.numeroFattura)):'')+'">🧾 FATTURA'+(ord.numeroFattura?(' N.'+esc(ord.numeroFattura)):'')+'</span>';
+      }
       if(typeof ordVistoMostraIcona === 'function' && ordVistoMostraIcona(ord)) h+='<span class="ord-visto-ico" title="Visto in ufficio">\uD83D\uDC41\uFE0F</span>';
       if(_isExBozza && ost!=='nuovo' && !isBozza){
         h+=' <span style="font-size:9px;opacity:.85;font-weight:700;letter-spacing:.25px;vertical-align:middle;color:#fca5a5;">ORDINE IN ARRIVO</span>';
@@ -357,11 +361,15 @@ function renderOrdini(){
       h+='</div>';
 
       // ── AZIONI ──
+      // Per gli ordini fattura il tasto Stampa apre SEMPRE il template DDT (no ricevuta+WA).
+      var _stampaBtnHtml = _ordIsFatt
+        ? '<button onclick="event.stopPropagation();stampaDDT(\''+ord.id+'\')" class="ord-abtn ord-abtn--print" title="Stampa Bolla (template DDT)">🖨️ Stampa Bolla</button>'
+        : '<button onclick="ordStampaDblTap(this,'+gi+')" class="ord-abtn ord-abtn--print">🖨️ Stampa</button>';
       if(isCompleted && !unlocked){
         // Completato e bloccato: solo Sblocca, Stampa, Elimina
         h+='<div class="ord-actions">';
         h+='<button onclick="ordSbloccaFatto('+gi+')" class="ord-abtn ord-abtn--reopen">🔓 Sblocca</button>';
-        h+='<button onclick="ordStampaDblTap(this,'+gi+')" class="ord-abtn ord-abtn--print">🖨️ Stampa</button>';
+        h+=_stampaBtnHtml;
         h+='<button onclick="deleteOrdine('+gi+')" class="ord-abtn ord-abtn--del">🗑️ Elimina</button>';
         h+='</div>';
       } else {
@@ -374,7 +382,7 @@ function renderOrdini(){
         }
         h+='</div>';
         h+='<div class="ord-actions ord-actions-sec">';
-        h+='<button onclick="ordStampaDblTap(this,'+gi+')" class="ord-abtn ord-abtn--print">🖨️ Stampa</button>';
+        h+=_stampaBtnHtml;
         if(ost!=='pronto') h+='<button onclick="setStatoOrdine('+gi+',\'pronto\')" class="ord-abtn ord-abtn--ready">📦 Pronto</button>';
         h+='<button onclick="deleteOrdine('+gi+')" class="ord-abtn ord-abtn--del">🗑️ Elimina</button>';
         h+='</div>';
