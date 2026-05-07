@@ -161,7 +161,7 @@ function _doInvSearch(){
       var isLow   = x.isLow;
       var rowBg   = isLow ? 'rgba(229,62,62,0.08)' : '';
       var borderL = isLow ? 'border-left:3px solid #e53e3e;' : 'border-left:3px solid transparent;';
-      var unit    = m.unit || 'pz';
+      var unit    = rowListinoUnit(r);
       var specs   = m.specs || '';
       var pos     = m.posizione || '';
       var marca   = m.marca || '';

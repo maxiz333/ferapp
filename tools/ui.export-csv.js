@@ -21,7 +21,7 @@ function exportCatalogoCSV(){
       r.prezzo || '',
       r.prezzoOld || '',
       m.qty !== undefined && m.qty !== '' ? m.qty : '',
-      m.unit || 'pz',
+      rowListinoUnit(r),
       (m.posizione || '').replace(/;/g, ','),
       (m.marca || '').replace(/;/g, ','),
       (m.nomeFornitore || '').replace(/;/g, ','),

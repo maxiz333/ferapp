@@ -122,7 +122,7 @@ function _doMagSearch(){
   results.forEach(function(o){
     var r = o.r, i = o.i, m = o.m, isLow = o.isLow;
     var qty    = o.qty !== null ? o.qty : '';
-    var unit   = m.unit   || 'pz';
+    var unit   = rowListinoUnit(r);
     var specs  = m.specs  || '';
     var marca  = m.marca  || '';
     var sub    = m.subcat || '';

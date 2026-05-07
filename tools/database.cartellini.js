@@ -44,7 +44,7 @@ var isRem=removed.has(String(i));
     var soglia=getSoglia(i);
     var qty=m.qty!==undefined&&m.qty!==''?Number(m.qty):null;
     var isLow=qty!==null&&qty<=soglia;
-    var unit=m.unit||'pz';
+    var unit=rowListinoUnit(r);
 
     var tr=document.createElement('tr');
     tr.dataset.idx=i;

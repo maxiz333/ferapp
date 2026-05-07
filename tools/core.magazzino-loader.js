@@ -8,6 +8,15 @@ function loadMagazzinoFB(){
     var d = snap.val();
     if(!d){ showToastGen('yellow','⚠ Nessun articolo su Firebase'); _magExtLoaded=false; _hideLoadingBar(); return; }
     var keys = Object.keys(d);
+    keys.sort(function(a, b){
+      var na = parseInt(a, 10), nb = parseInt(b, 10);
+      var aNum = String(na) === a && !isNaN(na);
+      var bNum = String(nb) === b && !isNaN(nb);
+      if(aNum && bNum) return na - nb;
+      if(aNum && !bNum) return -1;
+      if(!aNum && bNum) return 1;
+      return String(a).localeCompare(String(b));
+    });
     var total = keys.length;
     var arr = [];
     var pos = 0;

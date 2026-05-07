@@ -25,6 +25,17 @@ var SCONTO_ROTOLO_DEFAULT_PCT = 10;
 var SCONTO_SCAMPOLO_DEFAULT_PCT = 30;
 var SCONTO_SCAGLIONI_DEFAULT_PCT = 5;
 
+/**
+ * UM listino: esclusivamente `r.unit` sul record articolo. Non usare m.unit.
+ * (normalizeUmValue non è definito in questo bundle tools: si usa il valore trimmato.)
+ */
+function rowListinoUnit(r){
+  r = r || {};
+  var u = r.unit;
+  if(u == null || String(u).trim() === '') return 'pz';
+  return String(u).trim();
+}
+
 /** UM con prezzo per unità base (kg, m, litro) e quantità nella UM di riga (es. g, cm, ml). */
 function itemUsesPrezzoPerBaseUm(unit){
   var u = String(unit || '').toLowerCase();

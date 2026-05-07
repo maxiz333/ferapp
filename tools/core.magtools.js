@@ -45,7 +45,7 @@ function esportaDatabaseCSV(){
       old1 || '', old2 || '', old3 || '',
       m.prezzoAcquisto || '',
       m.qty !== undefined && m.qty !== '' ? String(m.qty) : '',
-      m.unit || 'pz', m.marca || '', m.nomeFornitore || ''
+      rowListinoUnit(r), m.marca || '', m.nomeFornitore || ''
     ];
     csvLines.push(cols.join(sep));
   });

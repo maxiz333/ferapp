@@ -29,7 +29,7 @@ function cartAddItem(rowIdx){
   var m=magazzino[rowIdx]||{};
   var hasScag=!!(m.scaglioni&&m.scaglioni.length);
   var newItem={rowIdx:rowIdx,desc:r.desc||'',codF:r.codF||'',codM:r.codM||'',specs:m.specs||'',
-    posizione:m.posizione||'',prezzoUnit:r.prezzo||'0',qty:1,unit:(typeof normalizeUmValue === 'function' ? normalizeUmValue(m.unit||'pz') : (m.unit||'pz')),
+    posizione:m.posizione||'',prezzoUnit:r.prezzo||'0',qty:1,unit:rowListinoUnit(r),
     scampolo:false,hasScaglioni:hasScag,scaglioni:hasScag?JSON.parse(JSON.stringify(m.scaglioni)):[],
     nota:'',_scaglioniAperti:false,daOrdinare:false};
   (cart.items=cart.items||[]).push(newItem);
@@ -50,7 +50,7 @@ function cartAddItem(rowIdx){
     if(stock===0){
       showToastGen('red','-- ESAURITO - '+r.desc+' (stock: 0)');
     } else {
-      showToastGen('orange','-- Stock basso - '+r.desc+' (rimaste: '+stock+' '+esc(m.unit||'pz')+')');
+      showToastGen('orange','-- Stock basso - '+r.desc+' (rimaste: '+stock+' '+esc(rowListinoUnit(r))+')');
     }
   }
   var s=document.getElementById('cart-search');if(s)s.value='';

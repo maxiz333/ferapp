@@ -122,10 +122,13 @@ var SCONTO_SCAGLIONI_DEFAULT_PCT = 5;
 // UM standard applicazione (unica fonte per tutte le tendine).
 var UM_STANDARD = ['pz', 'kg', 'MQ', 'mt', 'conf', 'CT', 'RT', 'FG'];
 
-/** Normalizza UM legacy/varianti alla forma standard condivisa. */
+/** Normalizza UM legacy/varianti alla forma standard condivisa.
+ *  Valori non mappati: restituisce la stringa originale trimmata (mai '' né forzare 'pz'),
+ *  così il listino (es. magazzino_ext) non perde UM fuori da UM_STANDARD. */
 function normalizeUmValue(unit){
-  var u = String(unit == null ? '' : unit).trim().toLowerCase();
-  if(!u) return 'pz';
+  var raw = String(unit == null ? '' : unit).trim();
+  if(!raw) return 'pz';
+  var u = raw.toLowerCase();
   if(u === 'pz' || u === 'pezzo' || u === 'pezzi' || u === 'pc' || u === 'pcs') return 'pz';
   if(u === 'kg' || u === 'kilo' || u === 'chilo' || u === 'chilogrammo' || u === 'kilogrammo') return 'kg';
   if(u === 'mt' || u === 'm' || u === 'metro' || u === 'metri') return 'mt';
@@ -136,7 +139,19 @@ function normalizeUmValue(unit){
   if(u === 'ct' || u === 'cart' || u === 'cartone' || u === 'cartoni') return 'CT';
   if(u === 'rt' || u === 'rotolo' || u === 'rotoli') return 'RT';
   if(u === 'fg') return 'FG';
-  return 'pz';
+  return raw;
+}
+
+/**
+ * UM listino: esclusivamente `r.unit` (record articolo / magazzino_ext).
+ * Non usare m.unit né altri oggetti.
+ */
+function rowListinoUnit(r){
+  r = r || {};
+  var u = r.unit;
+  if(u == null || String(u).trim() === '') return 'pz';
+  u = String(u).trim();
+  return typeof normalizeUmValue === 'function' ? normalizeUmValue(u) : u;
 }
 
 /** Costruisce le option HTML UM standard con selezione coerente. */

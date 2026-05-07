@@ -448,7 +448,7 @@ function renderInventario(){
     var catLabel='';
     if(catId){var cf=categorie.find(function(x){return x.id===catId;});catLabel=cf?cf.nome:'';}
     var sub=m.subcat||'';
-    var unit=(typeof normalizeUmValue === 'function') ? normalizeUmValue(m.unit||'pz') : (m.unit||'pz');
+    var unit=rowListinoUnit(r);
     var specs=m.specs||'';
     var pos=m.posizione||'';
     var marca=m.marca||'';
@@ -684,7 +684,7 @@ function renderMagazzino(){
     items.forEach(function(o){
       var r=o.r,i=o.i,m=o.m,isLow=o.isLow;
       var qty=m.qty||'';
-      var unit=(typeof normalizeUmValue === 'function') ? normalizeUmValue(m.unit||'pz') : (m.unit||'pz');
+      var unit=rowListinoUnit(r);
       var sub=m.subcat||'';
       var marca=m.marca||'';
       var specs=m.specs||'';
@@ -846,7 +846,7 @@ function _mostraOverlayFotoSpecifiche(i, foto){
     m.specs?('<div style="color:#2dd4bf;font-size:12px;margin-top:6px;">'+esc(m.specs)+'</div>'):'',
     m.subcat?('<span style="color:#888;font-size:11px;">- '+esc(m.subcat)+'</span>'):'',
     r.prezzo?('<div style="color:var(--accent);font-size:16px;font-weight:900;margin-top:8px;">- '+esc(r.prezzo)+'</div>'):'',
-    m.qty!==undefined&&m.qty!==''?('<span style="color:#68d391;font-size:11px;">- Scorta: '+m.qty+' '+(m.unit||'pz')+'</span>'):'',
+    m.qty!==undefined&&m.qty!==''?('<span style="color:#68d391;font-size:11px;">- Scorta: '+m.qty+' '+rowListinoUnit(r)+'</span>'):'',
   ].filter(Boolean).join('<br>');
   info.innerHTML=specs;
   ov.appendChild(info);
@@ -925,7 +925,7 @@ function _updateMagQtyRow(i, qty){
   var badge = document.getElementById('mag-scorta-badge-'+i);
   if(badge){
     if(isLow){
-      var uNorm = (typeof normalizeUmValue === 'function') ? normalizeUmValue(magazzino[i].unit||'pz') : (magazzino[i].unit||'pz');
+      var uNorm = rowListinoUnit(rows[i]||{});
       badge.textContent='- SCORTA BASSA - '+qty+' '+uNorm+' (min: '+(magazzino[i].soglia||0)+')';
       badge.style.display='inline-block';
     } else {
@@ -938,7 +938,7 @@ function _updateMagQtyRow(i, qty){
 function buildQtaCell(i){
   var m=magazzino[i]||{};
   var qty=m.qty!==undefined&&m.qty!==''?m.qty:'';
-  var unit=(typeof normalizeUmValue === 'function') ? normalizeUmValue(m.unit||'pz') : (m.unit||'pz');
+  var unit=rowListinoUnit(rows[i]||{});
   var soglia=m.soglia!==undefined&&m.soglia!==''?Number(m.soglia):null;
   var isLow=soglia!==null && qty!=='' && Number(qty)<=soglia && Number(qty)>=0;
   var col=isLow?'#e53e3e':'var(--accent)';

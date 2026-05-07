@@ -57,8 +57,8 @@ function openEditProdotto(i, isNew){
   // Unit-
   var unitSel = document.getElementById('ep-unit');
   if(unitSel){
-    if(typeof umOptionsHtml === 'function') unitSel.innerHTML = umOptionsHtml(m.unit || 'pz');
-    unitSel.value = (typeof normalizeUmValue === 'function') ? normalizeUmValue(m.unit || 'pz') : (m.unit || 'pz');
+    if(typeof umOptionsHtml === 'function') unitSel.innerHTML = umOptionsHtml(rowListinoUnit(r));
+    unitSel.value = rowListinoUnit(r);
     unitSel.onchange = function(){ epRefreshPrezzoBaseUi(); };
   }
   var prezzoInp = document.getElementById('ep-prezzo');
@@ -171,6 +171,7 @@ function saveEditProdotto(){
   rows[i].prezzoOld = gf('ep-prezzoold');
   rows[i].size      = autoSize(newPrezzo);
   rows[i]._updatedAt = Date.now();
+  rows[i].unit      = unitNow || 'pz';
 
   // Aggiorna magazzino
   magazzino[i].specs          = gf('ep-specs');
@@ -181,7 +182,6 @@ function saveEditProdotto(){
   var qtyVal = gf('ep-qty');
   var newQtyEdit = qtyVal !== '' ? parseFloat(qtyVal) : '';
   magazzino[i].qty   = newQtyEdit;
-  magazzino[i].unit  = unitNow || 'pz';
   var sogVal = gf('ep-soglia');
   magazzino[i].soglia  = sogVal !== '' ? parseFloat(sogVal) : '';
   var catEl = document.getElementById('ep-cat');

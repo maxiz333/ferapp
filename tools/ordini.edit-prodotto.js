@@ -37,7 +37,10 @@ function openEditProdotto(i, isNew){
 
   // Unit-
   var unitSel = document.getElementById('ep-unit');
-  if(unitSel){ unitSel.value = m.unit || 'pz'; }
+  if(unitSel){
+    if(typeof umOptionsHtml === 'function') unitSel.innerHTML = umOptionsHtml(rowListinoUnit(r));
+    unitSel.value = rowListinoUnit(r);
+  }
 
   // Popola categorie
   var catSel = document.getElementById('ep-cat');
@@ -103,6 +106,9 @@ function saveEditProdotto(){
   rows[i].prezzo    = newPrezzo;
   rows[i].prezzoOld = gf('ep-prezzoold');
   rows[i].size      = autoSize(newPrezzo);
+  var unitEl = document.getElementById('ep-unit');
+  var unitNow = unitEl ? String(unitEl.value || 'pz').trim() : 'pz';
+  rows[i].unit = unitNow || 'pz';
 
   // Aggiorna magazzino
   magazzino[i].specs          = gf('ep-specs');
@@ -113,8 +119,6 @@ function saveEditProdotto(){
   var qtyVal = gf('ep-qty');
   var newQtyEdit = qtyVal !== '' ? parseFloat(qtyVal) : '';
   magazzino[i].qty   = newQtyEdit;
-  var unitEl = document.getElementById('ep-unit');
-  magazzino[i].unit  = unitEl ? unitEl.value : 'pz';
   var sogVal = gf('ep-soglia');
   magazzino[i].soglia  = sogVal !== '' ? parseFloat(sogVal) : '';
   var catEl = document.getElementById('ep-cat');

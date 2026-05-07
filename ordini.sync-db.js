@@ -53,12 +53,11 @@ function _syncPrezziOrdineAlDB(ord){
     // ── 2. Aggiorna unità di misura ─────────────────────────────
     if(it.unit){
       var unitOrd = (typeof normalizeUmValue === 'function') ? normalizeUmValue(it.unit) : it.unit;
-      var unitMag = (typeof normalizeUmValue === 'function') ? normalizeUmValue(m.unit || 'pz') : (m.unit || 'pz');
-      if(unitOrd !== unitMag){
-        m.unit = unitOrd;
-        magazzino[dbIdx] = m; // persiste UM anche se non cambia la qty
+      var unitR = (typeof normalizeUmValue === 'function') ? normalizeUmValue(r.unit || 'pz') : String(r.unit || 'pz');
+      if(unitOrd !== unitR){
+        r.unit = unitOrd;
         changed = true;
-        magTouched = true;
+        productTouched = true;
         aggiornateUm++;
       }
     }
@@ -118,32 +117,14 @@ function _syncPrezziOrdineAlDB(ord){
   }
 }
 
-/** Ritorna indice articolo database da riga ordine (rowIdx/codM). */
+/** Ritorna indice articolo database da riga ordine. Priorità codM/codF; rowIdx solo se coerente (vedi _findRowIdx in ordini.scheda-cliente.js). */
 function _ordResolveDbIdx(it){
   if(!it) return -1;
-  if(it.rowIdx !== undefined && it.rowIdx !== null && rows[it.rowIdx]){
-    var byIdx = parseInt(it.rowIdx, 10);
-    return isNaN(byIdx) ? it.rowIdx : byIdx;
+  if(typeof _findRowIdx === 'function'){
+    var byItem = _findRowIdx(it);
+    if(byItem >= 0) return byItem;
   }
-  if(it.codM){
-    for(var ri = 0; ri < rows.length; ri++){
-      if(!rows[ri]) continue;
-      if(typeof codiciMagazzinoUguali === 'function'){
-        if(codiciMagazzinoUguali(rows[ri].codM, it.codM)) return ri;
-      } else if(String(rows[ri].codM || '').trim() === String(it.codM || '').trim()){
-        return ri;
-      }
-    }
-  }
-  if(it.codF){
-    var codF = String(it.codF || '').trim();
-    if(codF){
-      for(var rf = 0; rf < rows.length; rf++){
-        if(rows[rf] && String(rows[rf].codF || '').trim() === codF) return rf;
-      }
-    }
-  }
-  if(it.desc){
+  if(it.desc && rows && rows.length){
     var d = String(it.desc || '').trim().toLowerCase();
     if(d){
       for(var rd = 0; rd < rows.length; rd++){

@@ -126,9 +126,9 @@ function stampaListaRiordino() {
       H.push('<td>' + (item.r.codM || '') + '</td>');
       H.push('<td style="color:#0a7a7a;font-style:italic">' + (item.m.specs || '') + '</td>');
       H.push('<td style="color:#888">' + (item.m.posizione || '') + '</td>');
-      H.push('<td class="qty" style="text-align:center">' + item.qty + '&nbsp;' + (item.m.unit || 'pz') + '</td>');
+      H.push('<td class="qty" style="text-align:center">' + item.qty + '&nbsp;' + rowListinoUnit(item.r) + '</td>');
       H.push('<td style="text-align:center">' + item.soglia + '</td>');
-      H.push('<td style="text-align:center;font-weight:bold">' + da + '&nbsp;' + (item.m.unit || 'pz') + '</td>');
+      H.push('<td style="text-align:center;font-weight:bold">' + da + '&nbsp;' + rowListinoUnit(item.r) + '</td>');
       H.push('</tr>');
     });
     H.push('</tbody></table>');

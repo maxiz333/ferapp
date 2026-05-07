@@ -211,7 +211,7 @@ function openMovDetail(rowIdx){
   html += (isLow?';border-color:#e53e3e':'');
   html += ';border-radius:8px;padding:10px 12px;">';
   html += '<div style="font-size:10px;color:var(--muted);margin-bottom:2px;">- Giacenza attuale</div>';
-  html += '<div style="font-size:20px;font-weight:900;color:'+(isLow?'#e53e3e':'var(--accent)')+';">'+(qty!==null?qty:'-')+' '+(m.unit||'pz')+'</div>';
+  html += '<div style="font-size:20px;font-weight:900;color:'+(isLow?'#e53e3e':'var(--accent)')+';">'+(qty!==null?qty:'-')+' '+rowListinoUnit(r)+'</div>';
   html += '<div style="font-size:10px;color:'+(isLow?'#e53e3e':'var(--muted)')+';">min: '+soglia+(isLow?' -- SOTTO SCORTA':'')+'</div>';
   html += '</div>';
 
@@ -228,8 +228,8 @@ function openMovDetail(rowIdx){
   html += '<div style="font-size:11px;font-weight:700;color:var(--accent);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">- Statistiche movimenti</div>';
   html += '<div style="display:flex;gap:16px;flex-wrap:wrap;">';
   html += '<div><div style="font-size:11px;color:var(--muted);">Totale movimenti</div><div style="font-size:18px;font-weight:900;color:var(--text);">'+movProd.length+'</div></div>';
-  html += '<div><div style="font-size:11px;color:#fc8181;">Totale venduto</div><div style="font-size:18px;font-weight:900;color:#fc8181;">'+totVenduto+' '+(m.unit||'pz')+'</div></div>';
-  html += '<div><div style="font-size:11px;color:#68d391;">Totale caricato</div><div style="font-size:18px;font-weight:900;color:#68d391;">'+totCaricato+' '+(m.unit||'pz')+'</div></div>';
+  html += '<div><div style="font-size:11px;color:#fc8181;">Totale venduto</div><div style="font-size:18px;font-weight:900;color:#fc8181;">'+totVenduto+' '+rowListinoUnit(r)+'</div></div>';
+  html += '<div><div style="font-size:11px;color:#68d391;">Totale caricato</div><div style="font-size:18px;font-weight:900;color:#68d391;">'+totCaricato+' '+rowListinoUnit(r)+'</div></div>';
   if(primoMov) html += '<div><div style="font-size:11px;color:var(--muted);">Primo movimento</div><div style="font-size:12px;font-weight:700;color:var(--text);">'+primoMov.data+'</div></div>';
   if(ultimoMov) html += '<div><div style="font-size:11px;color:var(--muted);">Ultimo movimento</div><div style="font-size:12px;font-weight:700;color:var(--text);">'+ultimoMov.data+' '+ultimoMov.ora+'</div></div>';
   html += '</div>';

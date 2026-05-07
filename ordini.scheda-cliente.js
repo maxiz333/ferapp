@@ -100,19 +100,50 @@ function salvaPosizioneRapida(rowIdx, val){
   showToastGen('green','📍 Posizione salvata');
 }
 
-// Trova l'indice in rows[] da un item ordine (tramite codM o codF+desc)
+// Trova l'indice in rows[] da un item ordine/carrello.
+// Dopo reload magazzino_ext l'ordine degli indici può cambiare: NON fidarsi di rowIdx
+// finché non coincide con codM/codF; priorità ai codici.
 function _findRowIdx(it){
-  if(it.rowIdx !== undefined && it.rowIdx !== null && rows[it.rowIdx]) return it.rowIdx;
-  // Cerca per codice magazzino
-  if(it.codM){
-    for(var i=0;i<rows.length;i++){
-      if(rows[i] && rows[i].codM === it.codM) return i;
+  if(!it || typeof rows === 'undefined' || !rows || !rows.length) return -1;
+  var n = rows.length;
+  var cm = it.codM != null && String(it.codM).trim() !== '' ? String(it.codM).trim() : '';
+  var cf = it.codF != null && String(it.codF).trim() !== '' ? String(it.codF).trim() : '';
+
+  var i;
+  if(cm){
+    if(typeof codiciMagazzinoUguali === 'function'){
+      for(i = 0; i < n; i++){
+        if(!rows[i] || (typeof removed !== 'undefined' && removed.has(String(i)))) continue;
+        if(codiciMagazzinoUguali(rows[i].codM, cm)) return i;
+      }
+    }else{
+      for(i = 0; i < n; i++){
+        if(!rows[i] || (typeof removed !== 'undefined' && removed.has(String(i)))) continue;
+        if(String(rows[i].codM || '').trim() === cm) return i;
+      }
     }
   }
-  // Cerca per codice fornitore + desc
-  if(it.codF){
-    for(var i=0;i<rows.length;i++){
-      if(rows[i] && rows[i].codF === it.codF) return i;
+  if(cf){
+    for(i = 0; i < n; i++){
+      if(!rows[i] || (typeof removed !== 'undefined' && removed.has(String(i)))) continue;
+      if(String(rows[i].codF || '').trim() === cf) return i;
+    }
+  }
+  if(it.rowIdx !== undefined && it.rowIdx !== null){
+    var ri = parseInt(it.rowIdx, 10);
+    if(isNaN(ri)) ri = it.rowIdx;
+    if(rows[ri]){
+      if(cm){
+        if(typeof codiciMagazzinoUguali === 'function'){
+          if(codiciMagazzinoUguali(rows[ri].codM, cm)) return ri;
+        }else if(String(rows[ri].codM || '').trim() === cm){
+          return ri;
+        }
+      }else if(cf){
+        if(String(rows[ri].codF || '').trim() === cf) return ri;
+      }else{
+        return ri;
+      }
     }
   }
   return -1;

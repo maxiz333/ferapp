@@ -7,20 +7,14 @@ function _syncPrezziOrdineAlDB(ord){
   if(!ord || !ord.items || !ord.items.length) return;
   var aggiornatiPrezzi = 0;
   var aggiornatiQty = 0;
+  var aggiornateUm = 0;
   var sottoScortaList = [];
 
   ord.items.forEach(function(it){
     var prezzoOrd = it.prezzoUnit;
     var qVenduta = parseFloat(it.qty || 0);
 
-    // Trova articolo nel database
-    var dbIdx = -1;
-    if(it.rowIdx !== undefined && it.rowIdx !== null && rows[it.rowIdx]) dbIdx = it.rowIdx;
-    else if(it.codM){
-      for(var ri = 0; ri < rows.length; ri++){
-        if(rows[ri] && rows[ri].codM === it.codM){ dbIdx = ri; break; }
-      }
-    }
+    var dbIdx = _ordResolveDbIdx(it);
     if(dbIdx < 0 || !rows[dbIdx]) return;
 
     var r = rows[dbIdx];
@@ -47,9 +41,14 @@ function _syncPrezziOrdineAlDB(ord){
     }
 
     // ── 2. Aggiorna unità di misura ─────────────────────────────
-    if(it.unit && it.unit !== (m.unit || 'pz')){
-      m.unit = it.unit;
-      changed = true;
+    if(it.unit){
+      var uo = (typeof normalizeUmValue === 'function') ? normalizeUmValue(it.unit) : String(it.unit).trim();
+      var ur = (typeof normalizeUmValue === 'function') ? normalizeUmValue(r.unit || 'pz') : String(r.unit || 'pz');
+      if(uo !== ur){
+        r.unit = uo;
+        changed = true;
+        aggiornateUm++;
+      }
     }
 
     // ── 3. Scarico magazzino (qty) ──────────────────────────────
@@ -77,12 +76,13 @@ function _syncPrezziOrdineAlDB(ord){
     }
   });
 
-  if(aggiornatiPrezzi) lsSet(SK, rows);
+  if(aggiornatiPrezzi || aggiornateUm) lsSet(SK, rows);
 
   // Toast riepilogo
   var parts = [];
   if(aggiornatiPrezzi) parts.push(aggiornatiPrezzi + ' prezz' + (aggiornatiPrezzi === 1 ? 'o' : 'i'));
   if(aggiornatiQty) parts.push(aggiornatiQty + ' qt' + (aggiornatiQty === 1 ? 'à' : 'à'));
+  if(aggiornateUm) parts.push(aggiornateUm + ' UM');
   if(parts.length){
     showToastGen('green', '💰 Aggiornati: ' + parts.join(' · '));
   }
@@ -96,4 +96,22 @@ function _syncPrezziOrdineAlDB(ord){
       showToastGen('red', msg.trim());
     }, 1800);
   }
+}
+
+/** Priorità codM/codF; rowIdx solo se coerente (vedi _findRowIdx in ordini.scheda-cliente.js). */
+function _ordResolveDbIdx(it){
+  if(!it) return -1;
+  if(typeof _findRowIdx === 'function'){
+    var byItem = _findRowIdx(it);
+    if(byItem >= 0) return byItem;
+  }
+  if(it.desc && rows && rows.length){
+    var d = String(it.desc || '').trim().toLowerCase();
+    if(d){
+      for(var rd = 0; rd < rows.length; rd++){
+        if(rows[rd] && String(rows[rd].desc || '').trim().toLowerCase() === d) return rd;
+      }
+    }
+  }
+  return -1;
 }

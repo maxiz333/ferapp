@@ -177,7 +177,7 @@ function _doMagSearch(){
     var r = o.r, i = o.i, m = o.m, isLow = o.isLow;
     var codMJson = JSON.stringify(r.codM == null ? '' : String(r.codM));
     var qty    = o.qty !== null ? o.qty : '';
-    var unit   = (typeof normalizeUmValue === 'function') ? normalizeUmValue(m.unit || 'pz') : (m.unit || 'pz');
+    var unit   = rowListinoUnit(r);
     var specs  = m.specs  || '';
     var marca  = m.marca  || '';
     var sub    = m.subcat || '';

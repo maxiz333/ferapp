@@ -465,8 +465,8 @@ function syncCsvAlDatabase(){
       }
 
       // 5. Unità di misura
-      if(r.unit && r.unit !== (m.unit||'pz')){
-        m.unit = r.unit;
+      if(r.unit && r.unit !== (row.unit||'pz')){
+        row.unit = r.unit;
         changed = true;
         stats.unit++;
       }

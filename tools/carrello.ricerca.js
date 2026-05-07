@@ -1,4 +1,5 @@
 // --- RICERCA CARRELLO (intelligente con ranking) ---------------
+// Debug UM: window.__DEBUG_CART_SEARCH_UM__ = true in console, poi cerca.
 var _cartSearchTimer = null;
 function renderCartSearch(){
   // Debounce: evita calcoli su ogni keystroke su cataloghi grandi
@@ -41,6 +42,9 @@ function _doCartSearch(){
   matches.slice(0,15).forEach(function(x){
     var r=x.r,i=x.i,m=x.m;
     var qty=m.qty!==undefined&&m.qty!==''?m.qty:'';
+    if(typeof window !== 'undefined' && window.__DEBUG_CART_SEARCH_UM__){
+      console.log('[cart-search-um]', 'idx='+i, 'codM='+(r&&r.codM), 'r.unit=', r.unit, '→', rowListinoUnit(r));
+    }
     var promoG = !!(r && r.isPromo === true && String(r.promoTipo || '') === 'G');
     h+='<div style="padding:10px 12px;border-bottom:1px solid #2a2a2a;display:flex;justify-content:space-between;align-items:center;gap:10px;">';
     h+='<div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:700;color:var(--text);">'+esc(r.desc)+'</div>';
@@ -49,7 +53,7 @@ function _doCartSearch(){
     if(r.codM)h+='<span style="color:var(--accent);font-weight:600;">'+esc(r.codM)+'</span>';
     if(m.marca)h+=' <span style="color:var(--muted);">- '+esc(m.marca)+'</span>';
     h+='</div>';
-    if(qty!=='')h+='<div style="font-size:10px;color:#555;margin-top:1px;">Stock: '+qty+' '+(m.unit||'pz')+'</div>';
+    if(qty!=='')h+='<div style="font-size:10px;color:#555;margin-top:1px;">Stock: '+qty+' '+esc(rowListinoUnit(r))+'</div>';
     if(m.posizione)h+='<div style="font-size:10px;color:#63b3ed;margin-top:1px;">- '+esc(m.posizione)+'</div>';
     h+='</div>';
     h+='<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">';
