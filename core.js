@@ -177,6 +177,23 @@ function ordineSegnaVistoSeUfficio(ordOrId){
   }catch(e){ console.warn('ordineSegnaVistoSeUfficio', e); }
 }
 
+/**
+ * Dopo una modifica dal banco (schermo stretto = negozio), l'ufficio deve
+ * rivedere l'ordine: azzera "visto" solo se era già segnato.
+ * Su layout ufficio (largo) non fa nulla, così chi modifica dall'ufficio non
+ * resetta l'indicatore inutilmente.
+ */
+function ordineResetVistoSeNegozio(ordOrId){
+  if(typeof ordini === 'undefined' || !ordini || ordineUfficioIsWide()) return;
+  try{
+    var id = ordOrId && ordOrId.id ? ordOrId.id : ordOrId;
+    if(!id) return;
+    var ord = ordini.find(function(o){ return o && o.id === id; });
+    if(!ord || !ordVistoMostraIcona(ord)) return;
+    ord.visto = false;
+  }catch(e){ console.warn('ordineResetVistoSeNegozio', e); }
+}
+
 // --- ULTIMO ARTICOLO AGGIUNTO (per ripeti) --------------------
 var _lastAddedItem=null;
 

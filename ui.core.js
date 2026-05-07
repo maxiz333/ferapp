@@ -280,7 +280,9 @@ function _apriBozzaModal(bozza){
   }
 
   bd.classList.add('open');
-  if(typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(bozza);
+  // Non segnare "visto" qui: il modal si apre automaticamente alla notifica;
+  // l'occhio deve accendersi solo quando l'ufficio apre esplicitamente la bozza
+  // (tap card, dettaglio, modifica, ecc.).
 
   // Suono — tono più basso e dolce rispetto all'ordine
   try {
@@ -409,7 +411,8 @@ function _apriOrdineModal(ord){
   }
 
   bd.classList.add('open');
-  if(typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(ord);
+  // Non segnare "visto" qui: stesso motivo della bozza — altrimenti l'ordine
+  // risulta "visto" non appena appare il popup, anche senza azione ufficio.
 
   // Suono (beep sottile) solo se supportato
   try {

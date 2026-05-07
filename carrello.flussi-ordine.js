@@ -185,6 +185,7 @@ function avvisaUfficio(cartId){
     numeroFattura:cart.numeroFattura||''
   };
   ordini.unshift(bozza);
+  if(typeof window.ordNotificaMarkBozzaKnown === 'function') window.ordNotificaMarkBozzaKnown(bozza);
   saveOrdini();
   cart.bozzaOrdId=bozzaId;
   saveCarrelli();
@@ -247,6 +248,7 @@ function _aggiornaBozzaOrdine(cart){
   bozza.modificato=true;
   bozza.modificatoAt=new Date().toLocaleString('it-IT');
   bozza.modificatoAtISO=new Date().toISOString();
+  if(typeof ordineResetVistoSeNegozio === 'function') ordineResetVistoSeNegozio(bozza);
   saveOrdini();
 }
 
@@ -304,6 +306,7 @@ function _aggiornaOrdineDaCarrelloModifica(cart){
   ord.numeroFattura=cart.numeroFattura||'';
   ord.scontoGlobale=cart.scontoGlobale||null;
   ord.totale=ordTotaleSenzaCongelati(ord).toFixed(2);
+  if(typeof ordineResetVistoSeNegozio === 'function') ordineResetVistoSeNegozio(ord);
   saveOrdini();
 }
 
@@ -367,10 +370,13 @@ function inviaOrdine(cartId){
     tipo:cart.tipo||(cart.fatturaRichiesta?'fattura':''),
     numeroFattura:cart.numeroFattura||''
   };
+  // Difesa esplicita: invio da carrello non deve mai partire come "visto"
+  ord.visto = false;
   if(ord.fatturaRichiesta && ord.salvaFatturaInRubrica && ord.fatturaCliente && typeof upsertClienteAnagrafica==='function'){
     upsertClienteAnagrafica(ord.fatturaCliente);
   }
   ordini.unshift(ord);
+  if(typeof window.ordNotificaMarkOrdineIdsKnown === 'function') window.ordNotificaMarkOrdineIdsKnown(ord.id);
   saveOrdini();
 
   // -- Scarico automatico magazzino --

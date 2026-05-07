@@ -277,6 +277,19 @@ function _scheduleDbSystemMaintenance(){
     var _bozzaSnap={}; // snapshot JSON delle bozze per rilevare aggiornamenti
     ordini.forEach(function(o){if(o&&o.id){_idKnown[o.id]=true; if(o.stato==='bozza'){_bozzaKnown[o.id]=true; _bozzaSnap[o.id]=JSON.stringify(o);}}});
     var _first=true;
+    // Dopo creazione locale (banco invia ordine/bozza), marca gli id come già noti
+    // così il round-trip Firebase non scatena modal/notifica sullo stesso device
+    // (evita occhio "visto" da ordineSegnaVistoSeUfficio nel modal + falsi nuovi).
+    window.ordNotificaMarkOrdineIdsKnown = function(ids){
+      if(!ids) return;
+      if(!Array.isArray(ids)) ids = [ids];
+      ids.forEach(function(id){ if(id) _idKnown[id] = true; });
+    };
+    window.ordNotificaMarkBozzaKnown = function(bozza){
+      if(!bozza || !bozza.id) return;
+      _bozzaKnown[bozza.id] = true;
+      try{ _bozzaSnap[bozza.id] = JSON.stringify(bozza); }catch(e){}
+    };
     _fbDb.ref('ordini').on('value',function(snap){
       var d=snap.val();
       var fresh=d ? _fbFix(d) : [];

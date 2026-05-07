@@ -4,7 +4,7 @@ var _ordTapLockPending = {};
 
 function ordCardTapLock(ev, ordId){
   if(!ordId || typeof ordAcquireOrderLock !== 'function') return;
-  // PC/ufficio: segna subito visto (sync Firebase) anche se il lock fallisce dopo
+  // Tap sulla card = apertura esplicita: segna "visto" in ufficio (solo schermo largo).
   if(typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(ordId);
   var key = String(ordId);
   if(_ordTapLockPending[key]) return;
