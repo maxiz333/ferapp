@@ -250,8 +250,7 @@
         um: unit,
         qty: qty,
         prezzoImp: _fmtImp(puNetto),
-        totaleImp: _fmtImp(subNetto),
-        prezzoVend: _fmtImp(puLordo)
+        totaleImp: _fmtImp(subNetto)
       });
     });
     return righe;
@@ -272,7 +271,6 @@
         + '<td class="c-qta"' + ce + '>' + _esc(String(r.qty)) + '</td>'
         + '<td class="c-prz"' + ce + '>' + _esc(r.prezzoImp) + '</td>'
         + '<td class="c-tot"' + ce + '>' + _esc(r.totaleImp) + '</td>'
-        + '<td class="c-extra"' + ce + '>' + _esc(r.prezzoVend) + '</td>'
         + '</tr>';
     }
     var emptyRow = '<tr>'
@@ -282,9 +280,8 @@
       + '<td class="c-qta"' + ce + '></td>'
       + '<td class="c-prz"' + ce + '></td>'
       + '<td class="c-tot"' + ce + '></td>'
-      + '<td class="c-extra"' + ce + '></td>'
       + '</tr>';
-    for(var j = righe.length; j < 25; j++) html += emptyRow;
+    for(var j = righe.length; j < 42; j++) html += emptyRow;
     tbody.innerHTML = html;
   }
 
@@ -440,14 +437,13 @@
     for(var i = 0; i < trs.length; i++){
       var tds = trs[i].querySelectorAll('td');
       var any = false;
-      var row = { codice: '', desc: '', um: '', qty: '', prezzoImp: '', totaleImp: '', prezzoVend: '' };
+      var row = { codice: '', desc: '', um: '', qty: '', prezzoImp: '', totaleImp: '' };
       if(tds[0]) row.codice = (tds[0].textContent || '').trim();
       if(tds[1]) row.desc = (tds[1].textContent || '').trim();
       if(tds[2]) row.um = (tds[2].textContent || '').trim();
       if(tds[3]) row.qty = (tds[3].textContent || '').trim();
       if(tds[4]) row.prezzoImp = (tds[4].textContent || '').trim();
       if(tds[5]) row.totaleImp = (tds[5].textContent || '').trim();
-      if(tds[6]) row.prezzoVend = (tds[6].textContent || '').trim();
       Object.keys(row).forEach(function(kk){ if(row[kk]) any = true; });
       if(any) righe.push(row);
     }
@@ -550,7 +546,7 @@
       + '#fat-tpl-bar button.primary:hover{filter:brightness(.95);}'
       + '#fat-tpl-bar button.danger{color:#e57373;border-color:#553030;}'
       + '#fat-tpl-frame-wrap{flex:1;overflow:auto;background:#888;padding:14px 0;}'
-      + '#fat-tpl-frame{display:block;width:215mm;max-width:98vw;height:307mm;margin:0 auto;border:0;background:#fff;box-shadow:0 6px 22px rgba(0,0,0,.5);}'
+      + '#fat-tpl-frame{display:block;width:210mm;max-width:100vw;height:307mm;margin:0 auto;border:0;background:#fff;box-shadow:0 6px 22px rgba(0,0,0,.5);}'
       + '@media (max-width:520px){#fat-tpl-frame{height:540px;}}';
     document.head.appendChild(s);
   }

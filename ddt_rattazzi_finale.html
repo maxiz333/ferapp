@@ -5,28 +5,34 @@
 <title>DDT - Ferramenta Rattazzi</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
+*::before, *::after { box-sizing:border-box; }
 @page { size: A4; margin: 0; }
 
 body {
   font-family: Arial, sans-serif;
   font-size: 9px;
-  background: #888;
-  padding: 15px;
+  background: #fff;
+  padding: 2mm;
   color: #0d2060;
+  width: 210mm;
+  margin: 0 auto;
 }
 
 .page {
-  width: 210mm;
-  min-height: 297mm;
+  width: 100%;
+  min-height: 293mm;
   background: white;
-  margin: 0 auto;
-  padding: 5mm 5mm 4mm 5mm;
+  margin: 0;
+  padding: 0;
   position: relative;
 }
 
 @media print {
-  body { background: white; padding: 0; margin: 0; }
-  .page { width: 210mm; min-height: 297mm; padding: 5mm 5mm 4mm 5mm; margin: 0; border: none; }
+  @page { size: A4; margin: 2mm; }
+  body { width: 100%; background: white; margin: 0; padding: 0; }
+  .page { width: 100%; min-height: 293mm; padding: 0; margin: 0; border: none; }
+  #main-wrap { width: 100% !important; margin: 0 !important; max-width: none !important; }
+  .side-strip { display: none !important; }
 }
 
 /* Colore blu documento */
@@ -35,16 +41,19 @@ body {
 /* ── WRAPPER principale (esclude striscia laterale) ── */
 .main-wrap {
   border: 1.5px solid #0d2060;
-  width: calc(100% - 14px);
+  width: 100% !important;
+  margin: 0 !important;
+  max-width: none !important;
 }
 
 /* ── STRISCIA LATERALE ── */
 .side-strip {
   position: absolute;
-  right: 5mm;
+  right: 0;
   top: 5mm;
-  width: 13px;
+  width: 9px;
   border: 1.5px solid #0d2060;
+  border-right: none;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   font-size: 5.5px;
@@ -80,15 +89,18 @@ body {
 
 /* ── RIGA 2: LOGO | DESTINATARIO ── */
 .hdr-main {
-  display: flex;
+  display: flex !important;
+  justify-content: space-between !important;
+  width: 100% !important;
   border-bottom: 1.5px solid #0d2060;
 }
 
 /* Logo area */
 .hdr-logo {
-  flex: 0 0 45%;
+  flex: 1 1 0%;
   border-right: 1.5px solid #0d2060;
   padding: 4px 6px 5px 6px;
+  min-width: 0;
 }
 .logo-svg-wrap {
   display: flex;
@@ -121,10 +133,16 @@ body {
 
 /* Destinatario area */
 .hdr-dest {
-  flex: 1;
+  flex: 1 1 0%;
   padding: 3px 8px 3px 8px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+}
+
+.hdr-logo svg {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Titolo documento */
@@ -278,7 +296,7 @@ body {
   border-right: 1px solid #0d2060;
   border-bottom: 1px dotted #9aaccc;
   padding: 0 3px;
-  height: 14px;
+  height: 18px;
   font-size: 8px;
   vertical-align: middle;
   color: #0d2060;
@@ -287,12 +305,11 @@ body {
 .art-table tr:last-child td { border-bottom: none; }
 
 .c-cod  { width: 13%; }
-.c-desc { width: 40%; }
+.c-desc { width: 46%; }
 .c-um   { width: 5%;  text-align: center; }
 .c-qta  { width: 8%;  text-align: center; }
-.c-prz  { width: 10%; text-align: right; }
-.c-tot  { width: 12%; text-align: right; }
-.c-extra { width: 12%; text-align: right; }
+.c-prz  { width: 12%; text-align: right; }
+.c-tot  { width: 16%; text-align: right; }
 
 /* ── FOOTER ── */
 .footer-vettore {
@@ -385,7 +402,7 @@ body {
 </head>
 <body>
 <div class="page">
-<div class="main-wrap">
+<div id="main-wrap" class="main-wrap">
 
   <!-- RIGA 1: label CEDENTE -->
   <div class="cedente-label">
@@ -532,35 +549,51 @@ body {
         <th class="c-qta">Quantità</th>
         <th class="c-prz">Prezzo unit.</th>
         <th class="c-tot">Totale imponibile €</th>
-        <th class="c-extra">Prezzo vendita</th>
       </tr>
     </thead>
     <tbody>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-      <tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
     </tbody>
   </table>
 

@@ -144,8 +144,7 @@ function stampaDDT(cartIdOrOrdId){
       um: _ddtEsc(unit),
       qty: qty,
       prezzoImp: _ddtFmtImp(puNetto),
-      totaleImp: _ddtFmtImp(subNetto),
-      prezzoVend: _ddtFmtImp(puLordo)
+      totaleImp: _ddtFmtImp(subNetto)
     });
   });
   // Estrae il numero civico finale (es. "VIA ZANOIA 4" → via="VIA ZANOIA", civico="4").
@@ -246,11 +245,10 @@ function stampaDDT(cartIdOrOrdId){
           + '<td class="c-qta">'+r.qty+'</td>'
           + '<td class="c-prz">'+r.prezzoImp+'</td>'
           + '<td class="c-tot">'+r.totaleImp+'</td>'
-          + '<td class="c-extra">'+r.prezzoVend+'</td>'
           + '</tr>';
       }
-      for(var j=righeData.length; j<25; j++){
-        rowsHtml += '<tr><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
+      for(var j=righeData.length; j<42; j++){
+        rowsHtml += '<tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
       }
       tbody.innerHTML = rowsHtml;
     }
@@ -278,7 +276,7 @@ function stampaDDT(cartIdOrOrdId){
     + '</div>'
     + '<div style="padding:15px 0;">'
     +   '<iframe id="ddt-template-frame" src="ddt_rattazzi_finale.html?v=' + Date.now() + '" '
-    +   'style="display:block;width:215mm;max-width:98vw;height:307mm;margin:0 auto;border:0;background:#fff;"></iframe>'
+    +   'style="display:block;width:210mm;max-width:100vw;height:307mm;margin:0 auto;border:0;background:#fff;"></iframe>'
     + '</div>';
 
   var frame = document.getElementById('ddt-template-frame');
