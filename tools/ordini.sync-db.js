@@ -1,13 +1,12 @@
 // ordini.sync-db.js - estratto da ordini.js
 
 // ── Sync ordine completato → database articoli ───────────────────────────────
-// Aggiorna prezzo, qty (scarico), unit nel database per ogni articolo dell'ordine.
+// Aggiorna prezzo e qty (scarico) nel database per ogni articolo dell'ordine.
 // Chiamata sia da setStatoOrdine che da _cassaModeFatto — comportamento identico.
 function _syncPrezziOrdineAlDB(ord){
   if(!ord || !ord.items || !ord.items.length) return;
   var aggiornatiPrezzi = 0;
   var aggiornatiQty = 0;
-  var aggiornateUm = 0;
   var sottoScortaList = [];
 
   ord.items.forEach(function(it){
@@ -40,18 +39,7 @@ function _syncPrezziOrdineAlDB(ord){
       aggiornatiPrezzi++;
     }
 
-    // ── 2. Aggiorna unità di misura ─────────────────────────────
-    if(it.unit){
-      var uo = (typeof normalizeUmValue === 'function') ? normalizeUmValue(it.unit) : String(it.unit).trim();
-      var ur = (typeof normalizeUmValue === 'function') ? normalizeUmValue(r.unit || 'pz') : String(r.unit || 'pz');
-      if(uo !== ur){
-        r.unit = uo;
-        changed = true;
-        aggiornateUm++;
-      }
-    }
-
-    // ── 3. Scarico magazzino (qty) ──────────────────────────────
+    // ── 2. Scarico magazzino (qty) ──────────────────────────────
     if(qVenduta > 0 && m.qty !== undefined && m.qty !== ''){
       var prevQty = Number(m.qty);
       var nuovaQty = Math.max(0, prevQty - qVenduta);
@@ -76,13 +64,12 @@ function _syncPrezziOrdineAlDB(ord){
     }
   });
 
-  if(aggiornatiPrezzi || aggiornateUm) lsSet(SK, rows);
+  if(aggiornatiPrezzi) lsSet(SK, rows);
 
   // Toast riepilogo
   var parts = [];
   if(aggiornatiPrezzi) parts.push(aggiornatiPrezzi + ' prezz' + (aggiornatiPrezzi === 1 ? 'o' : 'i'));
   if(aggiornatiQty) parts.push(aggiornatiQty + ' qt' + (aggiornatiQty === 1 ? 'à' : 'à'));
-  if(aggiornateUm) parts.push(aggiornateUm + ' UM');
   if(parts.length){
     showToastGen('green', '💰 Aggiornati: ' + parts.join(' · '));
   }
