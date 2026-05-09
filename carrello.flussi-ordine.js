@@ -248,7 +248,7 @@ function _aggiornaBozzaOrdine(cart){
   bozza.modificato=true;
   bozza.modificatoAt=new Date().toLocaleString('it-IT');
   bozza.modificatoAtISO=new Date().toISOString();
-  if(typeof ordineResetVistoSeNegozio === 'function') ordineResetVistoSeNegozio(bozza);
+  // Come ordine già inviato: il sync carrello→bozza non azzera "visto" (l'ufficio resta "visto" finché non serve altro flusso)
   saveOrdini();
 }
 

@@ -344,6 +344,15 @@ function _scheduleDbSystemMaintenance(){
             _bozzaSnap[o.id]=newSnap;
           }
         });
+        // Tab Carrello: ridisegna badge "visto" quando ordini/bozze arrivano da Firebase (come listener carrelli)
+        var tc=document.getElementById('tc');
+        if(tc&&tc.classList.contains('active')){
+          if(typeof cartNoteFieldHasFocus==='function'&&cartNoteFieldHasFocus()){
+            /* evita renderCartTabs mentre si scrive nelle note */
+          }else if(typeof renderCartTabs==='function'){
+            renderCartTabs();
+          }
+        }
       }catch(e){console.error('FB ordini:',e);}
       _fbSyncing=false;
     });
