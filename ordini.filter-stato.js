@@ -27,6 +27,7 @@ function filterOrdini(f){
     if(sb){sb.style.background='transparent';sb.style.borderColor='#333';}
     var sv=document.getElementById('ord-storico-view');if(sv)sv.style.display='none';
     var ll2=document.getElementById('ord-list');if(ll2)ll2.style.display='';
+    if(typeof storicoSetMainSearchVisible==='function') storicoSetMainSearchVisible(true);
   }
   ordFiltro=f;
   ['nuovo','pronto','completato','tutti'].forEach(function(x){

@@ -210,6 +210,20 @@ function ctSetCodF(cartId, idx, val){
   }, 600);
 }
 
+// ctOpenEditArticoloFromCart: apre la stessa scheda "Modifica articolo" di Inventario
+function ctOpenEditArticoloFromCart(cartId, idx, ev){
+  if(ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+  var cart = carrelli.find(function(c){ return c.id === cartId; });
+  if(!cart || !cart.items || !cart.items[idx]) return;
+  var it = cart.items[idx];
+  var ri = parseInt(it.rowIdx, 10);
+  if(isNaN(ri) || !rows || !rows[ri]){
+    if(typeof showToastGen === 'function') showToastGen('yellow', 'Articolo non collegato all\'inventario');
+    return;
+  }
+  if(typeof openEditProdotto === 'function') openEditProdotto(ri, false, { cartId: cartId, itemIdx: idx });
+}
+
 // ctCassaSingleClick: doppio tap per conferma (Safari iOS compatibile)
 var _ctCassaTimer = null;
 var _ctCassaPending = false;

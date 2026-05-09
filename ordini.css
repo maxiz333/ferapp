@@ -1154,7 +1154,7 @@ body.light-mode .ord-forn-line {
   box-sizing: border-box;
 }
 .ord-storico-toolbar {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 .ord-storico-search {
   width: 100%;
@@ -1165,7 +1165,7 @@ body.light-mode .ord-forn-line {
   background: #1a1b1d;
   color: var(--ct-text, #f0f0f0);
   font-size: 14px;
-  margin-bottom: 10px;
+  margin-bottom: 0;
   font-family: inherit;
 }
 .ord-storico-forn-filt {
@@ -1209,6 +1209,36 @@ body.light-mode .ord-forn-line {
   color: #805ad5;
   margin-bottom: 10px;
 }
+.ord-storico-day-sep {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 10px 0 7px;
+  padding: 6px 10px;
+  border: 1px solid #333;
+  border-radius: 10px;
+  background: #171717;
+  color: #c4b5fd;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .35px;
+}
+.ord-storico-day-sep b {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #805ad522;
+  color: #d6bcfa;
+  font-size: 10px;
+  line-height: 18px;
+  text-align: center;
+}
 .ord-storico-empty {
   text-align: center;
   color: #555;
@@ -1218,10 +1248,11 @@ body.light-mode .ord-forn-line {
 }
 .ord-storico-card {
   border: 1px solid #2a2a2a;
-  border-radius: 10px;
-  margin-bottom: 8px;
+  border-radius: 9px;
+  margin-bottom: 6px;
   overflow: hidden;
-  border-top: 3px solid #805ad5;
+  border-left: 3px solid #805ad5;
+  background: #171717;
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
@@ -1231,46 +1262,101 @@ body.light-mode .ord-forn-line {
 }
 .ord-storico-card-hd {
   background: #805ad522;
-  padding: 8px 12px;
+  padding: 6px 8px;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
 }
+.ord-storico-card-left,
+.ord-storico-card-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ord-storico-card-left { flex: 1; }
+.ord-storico-card-right { flex-shrink: 0; }
 .ord-storico-card-cliente {
-  font-size: 14px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 900;
   color: #d6bcfa;
   flex: 1;
   min-width: 0;
-  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .ord-storico-card-when {
-  font-size: 11px;
+  font-size: 10px;
   color: #805ad5;
   white-space: nowrap;
   flex-shrink: 0;
 }
-.ord-storico-card-sum {
-  padding: 8px 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.ord-storico-card-n {
-  font-size: 11px;
-  color: #888;
-}
 .ord-storico-card-tot {
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 900;
   color: var(--accent, #68d391);
+  white-space: nowrap;
 }
-.ord-storico-card-hint {
-  font-size: 9px;
+.ord-storico-doc-badge {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: .35px;
+}
+.ord-storico-doc-badge--fat {
+  background: #2b1a00;
+  color: #f6ad55;
+  border: 1px solid #f6ad5544;
+}
+.ord-storico-doc-badge--ord {
+  background: #102a43;
+  color: #63b3ed;
+  border: 1px solid #63b3ed44;
+}
+.ord-storico-card-items {
+  padding: 5px 8px 4px;
+}
+.ord-storico-item-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+}
+.ord-storico-item-line:last-child { border-bottom: none; }
+.ord-storico-item-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+}
+.ord-storico-item-qty {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.ord-storico-more-items {
+  padding-top: 3px;
+  color: #777;
+  font-size: 10px;
+  font-style: italic;
+}
+.ord-storico-card-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 8px 6px;
   color: #555;
-  padding: 0 12px 8px;
-  text-align: center;
+  font-size: 9px;
 }
 .ord-storico-more-wrap {
   text-align: center;
@@ -1390,6 +1476,46 @@ body.light-mode .ord-forn-line {
 
 /* Dettaglio storico: stessi pesi colonna della tab ordini su mobile */
 @media (max-width: 768px) {
+  .ord-storico-view {
+    padding: 2px 2px 14px;
+  }
+  .ord-storico-search {
+    padding: 9px 10px;
+    font-size: 13px;
+  }
+  .ord-storico-head {
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+  .ord-storico-day-sep {
+    margin: 8px 0 6px;
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+  .ord-storico-card {
+    margin-bottom: 6px;
+  }
+  .ord-storico-card-hd {
+    padding: 5px 7px;
+  }
+  .ord-storico-card-cliente {
+    font-size: 12px;
+  }
+  .ord-storico-card-when {
+    display: none;
+  }
+  .ord-storico-card-tot {
+    font-size: 13px;
+  }
+  .ord-storico-card-items {
+    padding: 4px 7px 3px;
+  }
+  .ord-storico-item-name {
+    font-size: 10.5px;
+  }
+  .ord-storico-card-foot {
+    padding: 2px 7px 5px;
+  }
   .ord-storico-detail-grid.ord-items-wrap .ord-grid {
     grid-template-columns:
       minmax(6.25rem, 1fr)
@@ -1410,7 +1536,202 @@ body.light-mode .ord-forn-line {
   }
 }
 body.light-mode .ord-storico-search {
+  background: var(--field-bg);
+  border-color: var(--border);
+  color: var(--field-text);
+}
+body.light-mode .ord-storico-day-sep {
+  background: #f7f7f7;
+  border-color: #ddd;
+  color: #553c9a;
+}
+body.light-mode .ord-storico-day-sep b {
+  background: #ede7f6;
+  color: #553c9a;
+}
+body.light-mode .ord-storico-card {
   background: #fff;
   border-color: #ddd;
-  color: #111;
+}
+body.light-mode .ord-storico-card-hd {
+  background: #f3edff;
+}
+body.light-mode .ord-storico-card-cliente {
+  color: #44337a;
+}
+body.light-mode .ord-storico-item-name {
+  color: #222;
+}
+body.light-mode .ord-storico-item-line {
+  border-bottom-color: #eee;
+}
+body.light-mode .ord-storico-more-items,
+body.light-mode .ord-storico-card-foot,
+body.light-mode .ord-storico-item-qty {
+  color: #666;
+}
+body.light-mode .ord-storico-doc-badge--fat {
+  background: #fff7ed;
+  color: #9a3412;
+  border-color: #fed7aa;
+}
+body.light-mode .ord-storico-doc-badge--ord {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+body.light-mode .ord-storico-card-when,
+body.light-mode .ord-storico-head {
+  color: #553c9a;
+}
+
+/* ══ ORDINI — light mode professionale e leggibile ════════════════ */
+body.light-mode #to .panel {
+  background: var(--surface) !important;
+  color: var(--text);
+}
+
+body.light-mode .ord-card,
+body.light-mode .ord-card--done,
+body.light-mode .ord-card--bozza {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow-soft);
+}
+
+body.light-mode .ord-card--done {
+  border-color: rgba(39,103,73,.30) !important;
+  border-top-color: rgba(39,103,73,.55) !important;
+}
+
+body.light-mode .ord-card-cliente,
+body.light-mode .ord-items-wrap,
+body.light-mode .ord-total-bar,
+body.light-mode .ord-actions,
+body.light-mode .ord-actions-sec {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+}
+
+body.light-mode .ord-grid-head {
+  background: var(--surface-strong) !important;
+  border-color: var(--border) !important;
+}
+
+body.light-mode .ord-grid-row {
+  border-color: var(--border) !important;
+}
+
+body.light-mode .ord-grid-even {
+  background: var(--surface) !important;
+}
+
+body.light-mode .ord-grid-odd {
+  background: var(--surface-soft) !important;
+}
+
+body.light-mode .ord-card--done .ord-grid-even,
+body.light-mode .ord-card--done .ord-grid-odd {
+  background: var(--surface) !important;
+}
+
+body.light-mode .ord-cliente-nome,
+body.light-mode .ord-card--done .ord-cliente-nome,
+body.light-mode .ord-item-name,
+body.light-mode .ord-card--done .ord-item-name,
+body.light-mode .ord-gc-sub,
+body.light-mode #to .ord-items-wrap .ord-gc-sub,
+body.light-mode .ord-total-label {
+  color: var(--text) !important;
+}
+
+body.light-mode .ord-cliente-meta,
+body.light-mode .ord-gh,
+body.light-mode .ord-gc-price,
+body.light-mode #to .ord-items-wrap .ord-gc-price,
+body.light-mode .ord-unit,
+body.light-mode .ord-gc-qty .ord-unit {
+  color: var(--muted) !important;
+}
+
+body.light-mode .ord-gc-qty,
+body.light-mode .ord-total-value {
+  color: var(--accent) !important;
+}
+
+body.light-mode .ord-code-mag {
+  background: rgba(196,154,0,.16) !important;
+  color: var(--accent) !important;
+  border: 1px solid rgba(196,154,0,.28);
+}
+
+body.light-mode .ord-code-forn {
+  background: rgba(197,48,48,.10) !important;
+  color: var(--danger) !important;
+  border: 1px solid rgba(197,48,48,.18);
+}
+
+body.light-mode .ord-card--done .ord-item-codes span {
+  color: var(--muted) !important;
+}
+
+body.light-mode .ord-total-bar {
+  border-top: 1px solid var(--border) !important;
+}
+
+body.light-mode .ord-date-line {
+  background: var(--border) !important;
+}
+
+body.light-mode .ord-date-label {
+  color: var(--muted) !important;
+}
+
+body.light-mode .ord-spacer-line {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--border) 0,
+    var(--border) 8px,
+    transparent 8px,
+    transparent 16px
+  ) !important;
+}
+
+body.light-mode .ord-inline-input,
+body.light-mode .ord-mini-pct,
+body.light-mode .ord-nota-input,
+body.light-mode .ord-unit-select {
+  background: var(--field-bg) !important;
+  color: var(--field-text) !important;
+  -webkit-text-fill-color: var(--field-text) !important;
+  border-color: var(--border) !important;
+}
+
+body.light-mode .ord-unit-select option {
+  background: var(--field-bg);
+  color: var(--field-text);
+}
+
+body.light-mode .ord-mini-btn,
+body.light-mode .ord-abtn--reopen,
+body.light-mode .ord-abtn--cassa,
+body.light-mode .ord-abtn--print,
+body.light-mode .ord-abtn--wip,
+body.light-mode .ord-abtn--ready,
+body.light-mode .ord-abtn--edit {
+  background: var(--surface-soft) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+body.light-mode .ord-abtn--reopen,
+body.light-mode .ord-abtn--cassa {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+body.light-mode .ord-abtn--del {
+  background: var(--surface-soft) !important;
+  color: var(--danger) !important;
+  border-color: rgba(197,48,48,.22) !important;
 }

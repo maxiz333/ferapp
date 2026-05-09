@@ -51,6 +51,7 @@ function getOrdiniArchivio(){
   var daArch=[];
   ordini=ordini.filter(function(o){
     if(o.stato!=='completato') return true;
+    if(o.unlocked) return true;
     var compAt=o.completatoAtISO?new Date(o.completatoAtISO).getTime():
                (o.createdAt?new Date(o.createdAt).getTime():0);
     if(!compAt) return true;

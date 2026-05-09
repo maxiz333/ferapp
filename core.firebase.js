@@ -242,6 +242,11 @@ function _scheduleDbSystemMaintenance(){
           }
         } else if(globalVarName === 'carrelliCestino' || globalVarName === 'ordiniCestino'){
           if(typeof renderCestino === 'function') renderCestino();
+          if(globalVarName === 'carrelliCestino'){
+            if(typeof renderCartTabs === 'function') renderCartTabs();
+            var cm = document.getElementById('cart-trash-modal');
+            if(cm && cm.classList.contains('open') && typeof renderCartTrash === 'function') renderCartTrash();
+          }
         } else if(globalVarName === 'movimenti'){
           if(typeof renderMovimenti === 'function') renderMovimenti();
         }

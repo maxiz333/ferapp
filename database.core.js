@@ -535,12 +535,12 @@ var rows=[], removed=new Set(lsGet(RK,[])), cestino=lsGet(CK,[]);
 var movimenti=lsGet(MOVK)||[];
 var sortCol=null, sortDir=1, noteIdx=null, pendingImport=[];
 var categorie=[], magazzino={};
-var _epIdx=null, _epSnapshot=null, _epIsNew=false, _epFromCart=false;
+var _epIdx=null, _epSnapshot=null, _epIsNew=false, _epFromCart=false, _epPromoG=false, _epCartEditContext=null;
 
 var DEF=[]; // Cartellini partono sempre vuoti — si aggiungono via CSV o ricerca
 
 
-// -- Scorta minima default = 1 ------------------------------
+// -- Scorta minima default = 0 ------------------------------
 function getSoglia(i){
   var m=magazzino[i]||{};
   if(m.soglia!==undefined && m.soglia!=='' && m.soglia!==null) return Number(m.soglia);
@@ -595,11 +595,41 @@ var CAT_DEFAULT=[
 ];
 
 // --- TOGGLE TEMA CHIARO/SCURO -------------------------------------------
-function toggleTheme(){
-  var body=document.body;
-  var isLight=body.classList.toggle('light-mode');
-  localStorage.setItem(window.AppKeys.THEME, isLight?'light':'dark');
+function _themeUserKey(userKey){
+  return window.AppKeys.THEME + '_' + userKey;
+}
+function _themeCurrentUserKey(){
+  if(typeof _currentUser !== 'undefined' && _currentUser && _currentUser.key) return _currentUser.key;
+  return localStorage.getItem(window.AppKeys.LAST_USER) || '';
+}
+function _themeGetSaved(userKey){
+  var t = '';
+  if(userKey){
+    t = localStorage.getItem(_themeUserKey(userKey)) || '';
+    if(!t && typeof _roles !== 'undefined' && _roles[userKey] && _roles[userKey].theme) t = _roles[userKey].theme;
+  }
+  return t || localStorage.getItem(window.AppKeys.THEME) || 'dark';
+}
+function _themeApply(theme){
+  var isLight = theme === 'light';
+  document.body.classList.toggle('light-mode', isLight);
   _updateThemeBtn(isLight);
+}
+function _themeSave(theme){
+  localStorage.setItem(window.AppKeys.THEME, theme);
+  var userKey = _themeCurrentUserKey();
+  if(userKey){
+    localStorage.setItem(_themeUserKey(userKey), theme);
+    if(typeof _roles !== 'undefined' && _roles[userKey]){
+      _roles[userKey].theme = theme;
+      if(typeof _authSaveFirebase === 'function') _authSaveFirebase();
+    }
+  }
+}
+function toggleTheme(){
+  var theme = document.body.classList.contains('light-mode') ? 'dark' : 'light';
+  _themeApply(theme);
+  _themeSave(theme);
 }
 function _updateThemeBtn(isLight){
   var icon=document.getElementById('theme-icon');
@@ -608,10 +638,10 @@ function _updateThemeBtn(isLight){
   if(label)label.textContent=isLight?'Tema scuro':'Tema chiaro';
 }
 function initTheme(){
-  var t=localStorage.getItem(window.AppKeys.THEME);
-  var isLight=(t==='light');
-  if(isLight) document.body.classList.add('light-mode');
-  _updateThemeBtn(isLight);
+  _themeApply(_themeGetSaved(_themeCurrentUserKey()));
+}
+function applyThemeForCurrentUser(){
+  initTheme();
 }
 
 // --- CREA NUOVO ARTICOLO DAL CARRELLO -----------------------------------
@@ -645,6 +675,7 @@ function nacConferma(){
 
 
 function init(){
+  initTheme();
   // rows = database Firebase (caricato da loadMagazzinoFB, non da SK)
   // ctRows = cartellini (chiave separata CTK)
   var savedCt = lsGet(CTK, null);

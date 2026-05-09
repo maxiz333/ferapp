@@ -368,7 +368,7 @@ function magAddArticoloManuale(){
     createdAt: now,
     _updatedAt: now
   });
-  magazzino[idx] = { qty:'', unit:'pz', soglia:'', _updatedAt: now };
+  magazzino[idx] = { qty:'', unit:'pz', soglia:0, _updatedAt: now };
   lsSet(SK, rows);
   lsSet(MAGK, magazzino);
   openEditProdotto(idx, true);

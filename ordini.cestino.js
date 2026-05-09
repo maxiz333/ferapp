@@ -29,6 +29,14 @@ function toggleCestinoOrdini(){
   }
   var listEl = document.getElementById('ord-list');
   if(_cestinoOrdOpen){
+    if(typeof _storicoOpen!=='undefined'&&_storicoOpen){
+      _storicoOpen=false;
+      var sb=document.getElementById('ord-f-storico');
+      if(sb){sb.style.background='transparent';sb.style.borderColor='#333';}
+      var sv=document.getElementById('ord-storico-view');
+      if(sv)sv.style.display='none';
+      if(typeof storicoSetMainSearchVisible==='function') storicoSetMainSearchVisible(true);
+    }
     if(listEl) listEl.style.display = 'none';
     renderCestinoOrdini();
   } else {

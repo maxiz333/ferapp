@@ -61,7 +61,10 @@ function renderCartTabs(){
     '<button id="ct-btn-clienti" onclick="ctApriClienti()" title="Scegli cliente">' +
       '👥 CLIENTI' + (nCl ? ' <span class="ct-pill-n">' + nCl + '</span>' : '') +
     '</button>' +
-    '<button id="ct-btn-ordfor" onclick="goTab(\'t-ordfor\');renderOrdFor()" title="Ordini per fornitore">📦 ORDINI</button>';
+    '<button id="ct-btn-ordfor" onclick="goTab(\'t-ordfor\');renderOrdFor()" title="Ordini per fornitore">📦 ORDINI</button>' +
+    '<button id="ct-btn-trash" onclick="cartTrashOpen()" title="Cestino ordini eliminati" aria-label="Cestino ordini eliminati">🗑️' +
+      (typeof carrelliCestino !== 'undefined' && carrelliCestino.length ? ' <span>' + carrelliCestino.length + '</span>' : '') +
+    '</button>';
 
   // ── DROPDOWN CLIENTI (creato una sola volta nel body) ─────────────────────
   if(!document.getElementById('ct-clienti-dropdown')){
@@ -265,7 +268,11 @@ function renderCartTabs(){
       // Colonna prodotto: nome + codici
       h += '<div class="ord-gc-desc">';
       var _progNum = idx + 1; // posizione 1-based nel carrello (insertion order)
-      h += '<div class="ord-item-name"><span class="ct-card-num" aria-hidden="true">' + _progNum + '.</span> ' + esc(it.desc || '—') + '</div>';
+      var _canOpenEdit = !isStorno && it.rowIdx !== undefined && it.rowIdx !== null && it.rowIdx !== '' && rows && rows[parseInt(it.rowIdx, 10)];
+      var _nameAttrs = _canOpenEdit
+        ? ' role="button" tabindex="0" title="Apri scheda modifica articolo" style="cursor:pointer" onclick="ctOpenEditArticoloFromCart(\'' + cart.id + '\',' + idx + ',event)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();ctOpenEditArticoloFromCart(\'' + cart.id + '\',' + idx + ',event);}"'
+        : '';
+      h += '<div class="ord-item-name"' + _nameAttrs + '><span class="ct-card-num" aria-hidden="true">' + _progNum + '.</span> ' + esc(it.desc || '—') + '</div>';
       if(isStorno){
         h += '<div style="font-size:9px;font-weight:800;color:#fc8181;margin:4px 0 2px;letter-spacing:.25px;">STORNO RESO</div>';
       }

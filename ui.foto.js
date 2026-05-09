@@ -139,7 +139,7 @@ function confermaDaFoto(){
       specs: gf('foto-specs'),
       qty: 0,
       unit: 'pz',
-      soglia: ''
+      soglia: 0
     };
     lsSet(SK, rows);
     lsSet(MAGK, magazzino);

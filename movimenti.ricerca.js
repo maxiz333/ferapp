@@ -162,7 +162,7 @@ function creaArticoloDaFoto() {
     var ni = rows.length - 1;
     magazzino[ni] = {
       specs: gfi('specs'), marca: gfi('marca'), nomeFornitore: gfi('nomeFornitore'),
-      qty: 0, unit: 'pz', posizione: '', soglia: '', prezzoAcquisto: ''
+      qty: 0, unit: 'pz', posizione: '', soglia: 0, prezzoAcquisto: ''
     };
     lsSet(SK, rows); lsSet(MAGK, magazzino);
     chiudiFotoImport();

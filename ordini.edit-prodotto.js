@@ -1,9 +1,10 @@
 // ordini.edit-prodotto.js - estratto da ordini.js
 
-function openEditProdotto(i, isNew){
+function openEditProdotto(i, isNew, cartEditContext){
   if(!rows[i]) return;
   _epIdx = i;
   _epIsNew = !!isNew;
+  _epCartEditContext = cartEditContext || null;
   var r = rows[i];
   var m = magazzino[i] || {};
 
@@ -19,6 +20,8 @@ function openEditProdotto(i, isNew){
   sf('ep-codm',   r.codM || '');
   sf('ep-prezzo', r.prezzo || '');
   sf('ep-prezzoold', r.prezzoOld || '');
+  _epPromoG = !!(r.isPromo === true && String(r.promoTipo || '') === 'G');
+  epRenderPromoGBtn();
   // Popola tendina storico prezzi
   var ph = r.priceHistory || [];
   var phWrap = document.getElementById('ep-price-history');
@@ -38,7 +41,7 @@ function openEditProdotto(i, isNew){
       if(!ph[pi]){
         phEl.textContent = '—';
       } else {
-        var isG = String(ph[pi].tipo || '') === 'G';
+        var isG = String(ph[pi].tipo || ph[pi].promoTipo || '') === 'G';
         var dFmt = _epFmtHistDate(ph[pi].data);
         var txt = '€ ' + (ph[pi].prezzo || '') + (dFmt ? ' — ' + dFmt : '');
         phEl.innerHTML = txt + (isG && typeof htmlPromoGBadge === 'function' ? ' ' + htmlPromoGBadge() : '');
@@ -51,7 +54,7 @@ function openEditProdotto(i, isNew){
   sf('ep-marca',  m.marca || '');
   sf('ep-pos',    m.posizione || '');
   sf('ep-qty',    m.qty !== undefined ? m.qty : '');
-  sf('ep-soglia',    m.soglia !== undefined ? m.soglia : '');
+  sf('ep-soglia', (m.soglia !== undefined && m.soglia !== null && m.soglia !== '') ? m.soglia : 0);
   sf('ep-fornitore', m.nomeFornitore || '');
 
   // Unit-
@@ -128,6 +131,59 @@ function epRefreshPrezzoBaseUi(){
   }
 }
 
+function epRenderPromoGBtn(){
+  var btn = document.getElementById('ep-promo-g-btn');
+  if(!btn) return;
+  var active = !!_epPromoG;
+  btn.style.borderColor = active ? 'var(--accent)' : '#5c4a00';
+  btn.style.background = active ? 'rgba(245,196,0,.08)' : '#1a1a1a';
+  btn.style.opacity = active ? '1' : '.55';
+  var badgeHtml = (typeof htmlPromoGBadge === 'function') ? htmlPromoGBadge() : '<span class="promo-g-badge">[G]</span>';
+  if(active){
+    btn.innerHTML = badgeHtml;
+  } else {
+    btn.innerHTML = '<span class="promo-g-badge" style="opacity:.35;filter:grayscale(1);" title="Promo giornalino">[G]</span>';
+  }
+}
+
+function epTogglePromoG(ev){
+  if(ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+  _epPromoG = !_epPromoG;
+  epRenderPromoGBtn();
+}
+
+function epSyncPrezzoBaseRigaCarrello(rowIdx, newPrezzo){
+  if(!_epCartEditContext || !newPrezzo || typeof carrelli === 'undefined') return;
+  var cart = carrelli.find(function(c){ return c.id === _epCartEditContext.cartId; });
+  if(!cart || !cart.items) return;
+  var itemIdx = parseInt(_epCartEditContext.itemIdx, 10);
+  var it = (!isNaN(itemIdx) && cart.items[itemIdx]) ? cart.items[itemIdx] : null;
+  if(!it || String(it.rowIdx) !== String(rowIdx)){
+    it = cart.items.find(function(x){ return x && String(x.rowIdx) === String(rowIdx); });
+  }
+  if(!it || it._stornoReso) return;
+
+  it.prezzoUnit = newPrezzo;
+  it._prezzoOriginale = newPrezzo;
+  it._prezzoBase = newPrezzo;
+  it._scontoApplicato = 0;
+  delete it._scontoTipo;
+  delete it._scaglioneAttivo;
+  delete it._scaglioneQta;
+  it.scampolo = false;
+  it.fineRotolo = false;
+  it._tuttoRotolo = false;
+  it._scaglionato = false;
+  if(typeof itemUsesPrezzoPerBaseUm === 'function' && itemUsesPrezzoPerBaseUm(it.unit)){
+    it._prezzoUnitaBase = newPrezzo;
+  } else {
+    delete it._prezzoUnitaBase;
+  }
+  if(String(it.nota || '').trim() === 'ROTOLO INTERO') it.nota = '';
+  if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(cart);
+  if(typeof saveCarrelli === 'function') saveCarrelli();
+}
+
 function saveEditProdotto(){
   if(_epIdx === null) return;
   var i = _epIdx;
@@ -159,19 +215,29 @@ function saveEditProdotto(){
     // Per UM base (kg/mt/mq/lt ecc.) il prezzo articolo è sempre il prezzo base.
     newPrezzo = itemFormatPrezzoLineStr(parsePriceIT(newPrezzo));
   }
-  if(newPrezzo && newPrezzo !== rows[i].prezzo){
+  var oldPrezzoEdit = rows[i].prezzo;
+  var oldPromoTipoEdit = rows[i].isPromo === true && String(rows[i].promoTipo || '') === 'G' ? 'G' : '';
+  if(newPrezzo && newPrezzo !== oldPrezzoEdit){
     if(!rows[i].priceHistory) rows[i].priceHistory = [];
-    rows[i].priceHistory.push({ prezzo: rows[i].prezzo, data: rows[i].data });
+    var histEntry = { prezzo: oldPrezzoEdit, data: new Date().toLocaleDateString('it-IT') };
+    if(oldPromoTipoEdit) histEntry.tipo = oldPromoTipoEdit;
+    rows[i].priceHistory.unshift(histEntry);
+    if(rows[i].priceHistory.length > 30) rows[i].priceHistory.length = 30;
   }
 
   rows[i].desc      = gf('ep-desc');
   rows[i].codF      = gf('ep-codf');
   rows[i].codM      = newCodM;
   rows[i].prezzo    = newPrezzo;
-  rows[i].prezzoOld = gf('ep-prezzoold');
+  rows[i].prezzoOld = (newPrezzo && newPrezzo !== oldPrezzoEdit) ? oldPrezzoEdit : gf('ep-prezzoold');
   rows[i].size      = autoSize(newPrezzo);
   rows[i]._updatedAt = Date.now();
   rows[i].unit      = unitNow || 'pz';
+  rows[i].isPromo   = !!_epPromoG;
+  rows[i].promoTipo = _epPromoG ? 'G' : '';
+  if(newPrezzo && newPrezzo !== oldPrezzoEdit){
+    epSyncPrezzoBaseRigaCarrello(i, newPrezzo);
+  }
 
   // Aggiorna magazzino
   magazzino[i].specs          = gf('ep-specs');
@@ -183,7 +249,7 @@ function saveEditProdotto(){
   var newQtyEdit = qtyVal !== '' ? parseFloat(qtyVal) : '';
   magazzino[i].qty   = newQtyEdit;
   var sogVal = gf('ep-soglia');
-  magazzino[i].soglia  = sogVal !== '' ? parseFloat(sogVal) : '';
+  magazzino[i].soglia  = sogVal !== '' ? parseFloat(sogVal) : 0;
   var catEl = document.getElementById('ep-cat');
   magazzino[i].cat   = catEl ? catEl.value : '';
   var subEl = document.getElementById('ep-subcat');
@@ -228,6 +294,8 @@ function saveEditProdotto(){
   document.getElementById('ep').classList.remove('open');
   _epSnapshot = null;
   _epIdx = null;
+  _epPromoG = false;
+  _epCartEditContext = null;
   updateOrdBadge();
   updateCartBadge();
   var activeTab = document.querySelector('.tab-content.active');
@@ -283,6 +351,8 @@ function cancelEditProdotto(){
   _epIdx = null;
   _epIsNew = false;
   _epFromCart = false;
+  _epPromoG = false;
+  _epCartEditContext = null;
   document.getElementById('ep').classList.remove('open');
 }
 

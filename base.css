@@ -1,11 +1,15 @@
 /* ══ BASE — tema, layout, overlays, popups, print ══════════════════ */
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Inter:wght@400;500;600;700&family=Oswald:wght@700&display=swap');
-:root{--bg:#1a1a1a;--card:#242424;--accent:#FFD700;--accent2:#ffe44d;--text:#f0f0f0;--muted:#888;--border:#333;--panel:#2a2a2a;--danger:#e53e3e;--success:#38a169;--info:#3182ce;}
+:root{--bg:#1a1a1a;--card:#242424;--accent:#FFD700;--accent2:#ffe44d;--text:#f0f0f0;--muted:#888;--border:#333;--panel:#2a2a2a;--danger:#e53e3e;--success:#38a169;--info:#3182ce;--surface:#242424;--surface-soft:#1e1e1e;--surface-strong:#111;--text-soft:#d8d8d8;--field-bg:#1e1e1e;--field-text:#f0f0f0;--shadow-soft:0 2px 16px rgba(0,0,0,.4);}
 body.light-mode{
   --bg:#f2f2f2;--card:#ffffff;--accent:#c49a00;--accent2:#d4aa00;
   --text:#1a1a1a;--muted:#666;--border:#d0d0d0;--panel:#e8e8e8;
   --danger:#c53030;--success:#276749;--info:#2b6cb0;
+  --surface:#ffffff;--surface-soft:#f7f7f7;--surface-strong:#eeeeee;
+  --text-soft:#333333;--field-bg:#ffffff;--field-text:#222222;
+  --shadow-soft:0 2px 14px rgba(0,0,0,.08);
 }
+
 body.light-mode .app-header{background:#fff !important;box-shadow:0 1px 4px rgba(0,0,0,.08);}
 body.light-mode nav.tab-bottom{background:#fff !important;border-top:1px solid #e0e0e0;}
 body.light-mode #ord-detail-overlay{background:#f2f2f2;}
@@ -101,6 +105,32 @@ select{padding:3px 4px;border:1px solid var(--border);border-radius:3px;font-siz
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:2000;align-items:center;justify-content:center;}
 .overlay.open{display:flex;}
 .ob{background:var(--panel);border-radius:12px;padding:20px;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 8px 40px rgba(0,0,0,.6);width:95vw;max-width:600px;border:1px solid var(--border);}
+.ep-stock-row{display:flex;gap:6px;align-items:flex-end;margin-bottom:8px;width:100%;}
+.ep-stock-field{min-width:0;}
+.ep-stock-qty{flex:1 1 170px;}
+.ep-stock-unit{flex:0 0 74px;}
+.ep-stock-min{flex:0 0 82px;}
+.ep-stock-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.35px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ep-stock-label-danger{color:var(--danger);}
+.ep-qty-control{display:flex;align-items:center;gap:4px;}
+.ep-qty-btn{background:#333;border:none;color:var(--text);width:26px;height:28px;border-radius:6px;cursor:pointer;font-size:15px;font-weight:bold;flex-shrink:0;line-height:1;touch-action:manipulation;}
+.ep-stock-input,.ep-stock-select{width:100%;height:28px;padding:4px 5px;border:1px solid var(--border);border-radius:6px;background:#111;color:var(--text);font-size:12px;}
+.ep-stock-input{text-align:center;}
+.ep-stock-input-qty{color:var(--accent);font-size:14px;font-weight:900;min-width:48px;}
+.ep-stock-input-min{border-color:rgba(229,62,62,.5);color:var(--danger);font-size:13px;font-weight:900;min-width:0;}
+.ep-stock-select{color:var(--text);font-size:12px;}
+@media (max-width:420px){
+  .ep-stock-row{gap:4px;}
+  .ep-stock-qty{flex:1 1 118px;}
+  .ep-stock-unit{flex:0 0 56px;}
+  .ep-stock-min{flex:0 0 56px;}
+  .ep-stock-label{font-size:8px;letter-spacing:.2px;}
+  .ep-qty-btn{width:22px;height:28px;}
+  .ep-stock-input-qty{min-width:38px;}
+  .ep-stock-input,.ep-stock-select{padding-left:3px;padding-right:3px;font-size:11px;}
+  .ep-stock-input-qty{font-size:13px;}
+  .ep-stock-input-min{font-size:12px;}
+}
 #al li{padding:10px 4px;border-bottom:1px solid var(--border);font-size:13px;display:flex;align-items:flex-start;gap:8px;color:var(--text);}
 #al li.r{opacity:.4;}
 #al li input[type=checkbox]{width:20px;height:20px;cursor:pointer;flex-shrink:0;margin-top:2px;}
@@ -732,4 +762,306 @@ body.light-mode .cassa-mode-item { border-color: #eee; }
     word-break:break-word;
     overflow-wrap:anywhere;
   }
+}
+
+/* ══ LIGHT MODE FINAL OVERRIDES — dopo vecchie regole legacy ══════ */
+body.light-mode .app-header,
+body.light-mode .tab-bottom,
+body.light-mode .panel,
+body.light-mode .ob,
+body.light-mode #ph,
+body.light-mode #odv-header,
+body.light-mode #odv-footer,
+body.light-mode .cassa-header,
+body.light-mode .cassa-footer,
+body.light-mode #cartellin-popup,
+body.light-mode #fatture-popup,
+body.light-mode #global-search-box,
+body.light-mode #foto-box,
+body.light-mode #numpad-box {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+body.light-mode .tab-bottom {
+  border-top: 1px solid var(--border) !important;
+}
+
+body.light-mode input,
+body.light-mode textarea,
+body.light-mode select,
+body.light-mode .search-box,
+body.light-mode .ord-edit-inp,
+body.light-mode .note-textarea,
+body.light-mode .note-pos,
+body.light-mode .ord-inline-input,
+body.light-mode .odv-row-desc input,
+body.light-mode .odv-price,
+body.light-mode .odv-qty-num,
+body.light-mode #global-search-input {
+  background: var(--field-bg) !important;
+  color: var(--field-text) !important;
+  -webkit-text-fill-color: var(--field-text) !important;
+  border-color: var(--border) !important;
+}
+
+body.light-mode input::placeholder,
+body.light-mode textarea::placeholder {
+  color: var(--muted) !important;
+  -webkit-text-fill-color: var(--muted) !important;
+  opacity: 1;
+}
+
+body.light-mode .note-card,
+body.light-mode .hi,
+body.light-mode .sc,
+body.light-mode .odv-row,
+body.light-mode .odv-qty-wrap,
+body.light-mode #ordine-modal {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow-soft);
+}
+
+body.light-mode th {
+  background: var(--surface-strong) !important;
+  color: var(--accent) !important;
+  border-bottom-color: var(--accent) !important;
+}
+
+body.light-mode td {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+}
+
+body.light-mode tr:nth-child(even) td {
+  background: var(--surface-soft) !important;
+}
+
+/* ══ LIGHT MODE — Inventario, Cartellini, Fatture, Movimenti ══════ */
+body.light-mode .tab-content,
+body.light-mode #t0,
+body.light-mode #t1,
+body.light-mode #t2,
+body.light-mode #t3,
+body.light-mode #t4,
+body.light-mode #t6,
+body.light-mode #t7,
+body.light-mode #t9,
+body.light-mode #t10,
+body.light-mode #t12,
+body.light-mode #tmov,
+body.light-mode #tfat,
+body.light-mode #tfor,
+body.light-mode #t-ordfor {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+body.light-mode #inv-subtabs,
+body.light-mode #t1-panel,
+body.light-mode #t1-topbar,
+body.light-mode #ct-footer,
+body.light-mode #ct-csv-panel,
+body.light-mode #ct-search-results,
+body.light-mode #mag-list .mag-card,
+body.light-mode #mov-detail .ob,
+body.light-mode #fat-overlay > div,
+body.light-mode #ordfor-overlay > div,
+body.light-mode #fat-tpl-bar,
+body.light-mode #fat-tpl-results,
+body.light-mode #rg-panel {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+
+body.light-mode #inv-sub-panel-lista,
+body.light-mode #inv-sub-panel-magazzino,
+body.light-mode #inv-sub-panel-giornalino-g,
+body.light-mode #ct-list,
+body.light-mode #mov-list,
+body.light-mode #fat-list,
+body.light-mode #ordfor-list,
+body.light-mode #fat-tpl-frame-wrap {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+}
+
+body.light-mode #inv-subtabs {
+  border-bottom: 1px solid var(--border) !important;
+}
+
+body.light-mode #inv-subtabs button,
+body.light-mode #mag-mode-spec,
+body.light-mode #mag-scorta-btn,
+body.light-mode #mag-recenti-btn,
+body.light-mode #inv-scorta-btn,
+body.light-mode #inv-giorn-btn,
+body.light-mode #ct-tab-dafare,
+body.light-mode #ct-tab-fatti,
+body.light-mode #ct-csv-btn,
+body.light-mode #tmov button,
+body.light-mode #tfat button,
+body.light-mode #tfor button,
+body.light-mode .ord-act-btn {
+  background: var(--surface-soft) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+body.light-mode #inv-subtab-lista,
+body.light-mode #mag-mode-prod,
+body.light-mode #mov-f-tutti,
+body.light-mode #fat-f-tutte,
+body.light-mode #for-f-tutti,
+body.light-mode #ct-tab-dafare[style*="var(--accent)"],
+body.light-mode #ct-tab-fatti[style*="var(--accent)"] {
+  background: var(--accent) !important;
+  color: #111 !important;
+  border-color: var(--accent) !important;
+}
+
+body.light-mode #inv-body,
+body.light-mode #inv-body-g,
+body.light-mode #ct-list table,
+body.light-mode #ct-list thead tr,
+body.light-mode #ct-list tbody tr {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+body.light-mode #ct-list .ct-prod-name {
+  color: var(--text) !important;
+}
+
+body.light-mode #ct-list input,
+body.light-mode #ct-list select,
+body.light-mode #ct-search,
+body.light-mode #mag-search,
+body.light-mode #mag-cat-filter,
+body.light-mode #inv-search,
+body.light-mode #inv-cat-filter,
+body.light-mode #mov-search,
+body.light-mode #fat-tpl-search,
+body.light-mode .fat-inp {
+  background: var(--field-bg) !important;
+  color: var(--field-text) !important;
+  -webkit-text-fill-color: var(--field-text) !important;
+  border-color: var(--border) !important;
+}
+
+body.light-mode #ct-list input[style*="transparent"],
+body.light-mode #ct-list select[style*="transparent"] {
+  background: transparent !important;
+}
+
+body.light-mode #ct-list th,
+body.light-mode #ct-list td {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+body.light-mode #ct-list tbody tr:nth-child(even) td {
+  background: var(--surface-soft) !important;
+}
+
+body.light-mode #ct-empty,
+body.light-mode #mov-list:empty,
+body.light-mode #fat-list:empty,
+body.light-mode #mag-list:empty {
+  color: var(--muted) !important;
+}
+
+body.light-mode #mag-list [style*="background:#1e1e1e"],
+body.light-mode #mag-list [style*="background:#111"],
+body.light-mode #fat-list [style*="background:#1a1a1a"],
+body.light-mode #fat-list [style*="background:#111"],
+body.light-mode #ordfor-list [style*="background:#1a1a1a"],
+body.light-mode #ordfor-list [style*="background:#111"],
+body.light-mode #mov-list [style*="background:#1a1a1a"],
+body.light-mode #mov-list [style*="background:#111"],
+body.light-mode #rg-results [style*="background:#1e1e1e"],
+body.light-mode #global-search-results [style*="background:#1e1e1e"] {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+body.light-mode #mag-list [style*="color:#aaa"],
+body.light-mode #mag-list [style*="color:#888"],
+body.light-mode #mag-list [style*="color:#555"],
+body.light-mode #fat-list [style*="color:#bbb"],
+body.light-mode #fat-list [style*="color:#555"],
+body.light-mode #ordfor-list [style*="color:#bbb"],
+body.light-mode #ordfor-list [style*="color:#555"],
+body.light-mode #mov-list [style*="color:#888"],
+body.light-mode #mov-list [style*="color:#555"],
+body.light-mode #ct-empty [style*="color:#444"],
+body.light-mode #ct-empty [style*="color:#333"] {
+  color: var(--muted) !important;
+}
+
+body.light-mode #mag-list [style*="color:var(--text)"],
+body.light-mode #fat-list [style*="color:var(--text)"],
+body.light-mode #ordfor-list [style*="color:var(--text)"],
+body.light-mode #mov-list [style*="color:var(--text)"],
+body.light-mode #global-search-results [style*="color:var(--text)"],
+body.light-mode #rg-results [style*="color:var(--text)"] {
+  color: var(--text) !important;
+}
+
+body.light-mode #fat-stats > *,
+body.light-mode #mov-stats > *,
+body.light-mode #mag-stats > *,
+body.light-mode #inv-stats > *,
+body.light-mode #inv-stats-g > *,
+body.light-mode #ct-dashboard > * {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow-soft);
+}
+
+body.light-mode #fat-overlay,
+body.light-mode #ordfor-overlay,
+body.light-mode #mov-detail,
+body.light-mode #global-search-overlay,
+body.light-mode #foto-overlay {
+  background: rgba(0,0,0,.28) !important;
+}
+
+body.light-mode #fat-tpl-results,
+body.light-mode .fat-tpl-item,
+body.light-mode .fat-sug-btn {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+body.light-mode .fat-tpl-item:hover,
+body.light-mode .fat-sug-btn:hover {
+  background: var(--surface-soft) !important;
+}
+
+body.light-mode #t1 [style*="background:#0d0d0d"],
+body.light-mode #t1 [style*="background:#111"],
+body.light-mode #t1 [style*="background:#1a1a1a"],
+body.light-mode #t1 [style*="background:#1e1e1e"],
+body.light-mode #t0 [style*="background:#0d0d0d"],
+body.light-mode #t0 [style*="background:#111"],
+body.light-mode #t0 [style*="background:#1a1a1a"],
+body.light-mode #t0 [style*="background:#1e1e1e"],
+body.light-mode #tmov [style*="background:#111"],
+body.light-mode #tfat [style*="background:#111"],
+body.light-mode #tfor [style*="background:#111"] {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
 }

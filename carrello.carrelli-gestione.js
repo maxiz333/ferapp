@@ -48,6 +48,42 @@ function switchCart(idx){
   if(carrelli[idx])activeCartId=carrelli[idx].id;
   renderCartTabs();
 }
+
+function _cartTrashSave(){
+  lsSet(CART_CK, carrelliCestino);
+  if(typeof _fbReady !== 'undefined' && _fbReady && typeof _fbDb !== 'undefined' && _fbDb){
+    try{ _fbDb.ref('ordini_eliminati').set(carrelliCestino.length ? carrelliCestino : null); }catch(e){ console.error('Firebase ordini_eliminati:', e); }
+  }
+}
+
+function _cartTrashTotal(cart){
+  return (cart.items || []).reduce(function(s, it){
+    return s + (parsePriceIT(it.prezzoUnit) * parseFloat(it.qty || 0));
+  }, 0);
+}
+
+function _cartTrashMoveLinkedOrdine(cart){
+  if(!cart || typeof ordini === 'undefined' || !ordini) return;
+  var oid = cart.bozzaOrdId || cart.ordId || '';
+  if(!oid) return;
+  var idx = ordini.findIndex(function(o){ return o && o.id === oid; });
+  if(idx < 0) return;
+  var ord = ordini.splice(idx, 1)[0];
+  if(!ord) return;
+  ord.eliminatoAt = new Date().toLocaleString('it-IT');
+  ord.eliminatoAtISO = new Date().toISOString();
+  ord.eliminatoDaCarrello = true;
+  var oc = (typeof ordiniCestino !== 'undefined') ? ordiniCestino : (lsGet(window.AppKeys.ORDINI_CESTINO) || []);
+  oc.unshift(ord);
+  window.ordiniCestino = oc;
+  lsSet(window.AppKeys.ORDINI_CESTINO, oc);
+  saveOrdini();
+  if(typeof renderOrdini==='function') renderOrdini();
+  if(typeof window!=='undefined' && typeof window.dispatchEvent==='function'){
+    window.dispatchEvent(new CustomEvent('sync-orders',{detail:{source:'carrello-delete'}}));
+  }
+}
+
 function deleteCart(id, toastMsg){
   var cart=carrelli.find(function(c){return c.id===id;});
   if(!cart)return;
@@ -55,12 +91,160 @@ function deleteCart(id, toastMsg){
     showToastGen('orange','🔒 Non puoi eliminare il carrello di un altro account');
     return;
   }
-  cart.deletedAt=new Date().toLocaleString('it-IT');
-  carrelliCestino.push(cart);lsSet(CART_CK,carrelliCestino);
+  var now = new Date();
+  cart.deletedAt = now.toLocaleString('it-IT');
+  cart.deletedAtISO = now.toISOString();
+  cart.eliminato = true;
+  cart.eliminatoDa = (typeof _currentUser !== 'undefined' && _currentUser) ? (_currentUser.nome || _currentUser.key || '') : '';
+  carrelliCestino.unshift(cart);
+  _cartTrashSave();
   carrelli=carrelli.filter(function(c){return c.id!==id;});
   if(activeCartId===id)activeCartId=carrelli.length?carrelli[carrelli.length-1].id:null;
   saveCarrelli();renderCartTabs();
   showToastGen('green', toastMsg != null ? toastMsg : '🗑️ Carrello eliminato');
+}
+
+function cartTrashEnsureModal(){
+  var existing = document.getElementById('cart-trash-modal');
+  if(existing) return existing;
+  var modal = document.createElement('div');
+  modal.id = 'cart-trash-modal';
+  modal.innerHTML =
+    '<div class="cart-trash-backdrop" onclick="cartTrashClose()"></div>' +
+    '<div class="cart-trash-panel" role="dialog" aria-modal="true" aria-label="Cestino ordini eliminati">' +
+      '<div class="cart-trash-head">' +
+        '<div><div class="cart-trash-kicker">Cestino Carrello</div><h3>🗑️ Ordini eliminati</h3></div>' +
+        '<button type="button" class="cart-trash-x" onclick="cartTrashClose()" aria-label="Chiudi">✕</button>' +
+      '</div>' +
+      '<div id="cart-trash-list"></div>' +
+    '</div>';
+  document.body.appendChild(modal);
+  return modal;
+}
+
+function cartTrashOpen(){
+  var modal = cartTrashEnsureModal();
+  modal.classList.add('open');
+  renderCartTrash();
+}
+
+function cartTrashClose(){
+  var modal = document.getElementById('cart-trash-modal');
+  if(modal) modal.classList.remove('open');
+}
+
+function _cartTrashDayKey(cart){
+  if(cart && cart.deletedAtISO){
+    var dIso = new Date(cart.deletedAtISO);
+    if(!isNaN(dIso.getTime())) return dIso.toISOString().slice(0, 10);
+  }
+  var raw = String(cart && cart.deletedAt || '').trim();
+  var m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m) return m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0');
+  return 'senza-data';
+}
+
+function _cartTrashDayLabel(key){
+  if(key === 'senza-data') return 'Senza data';
+  var today = new Date().toISOString().slice(0, 10);
+  var y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  if(key === today) return 'Oggi';
+  if(key === y) return 'Ieri';
+  var p = key.split('-');
+  return p.length === 3 ? (p[2] + '/' + p[1] + '/' + p[0]) : key;
+}
+
+function renderCartTrash(){
+  var modal = cartTrashEnsureModal();
+  var list = document.getElementById('cart-trash-list');
+  if(!list) return;
+  if(!carrelliCestino || !carrelliCestino.length){
+    list.innerHTML = '<div class="cart-trash-empty">Il cestino degli ordini è vuoto.</div>';
+    return;
+  }
+  var groups = {};
+  carrelliCestino.forEach(function(cart, i){
+    var key = _cartTrashDayKey(cart);
+    if(!groups[key]) groups[key] = [];
+    groups[key].push({ cart: cart, idx: i });
+  });
+  var keys = Object.keys(groups).sort(function(a, b){
+    if(a === 'senza-data') return 1;
+    if(b === 'senza-data') return -1;
+    return a < b ? 1 : (a > b ? -1 : 0);
+  });
+  var h = '<div class="cart-trash-toolbar">' +
+    '<div class="cart-trash-count">' + carrelliCestino.length + ' ordini eliminati</div>' +
+    '<button type="button" class="cart-trash-delete-all" onclick="svuotaCartCestino()">🗑️ Elimina tutti</button>' +
+    '</div>';
+  keys.forEach(function(key){
+    h += '<div class="cart-trash-day">';
+    h += '<div class="cart-trash-day-title">' + esc(_cartTrashDayLabel(key)) + ' <span>' + groups[key].length + '</span></div>';
+    groups[key].forEach(function(entry){
+    var cart = entry.cart;
+    var i = entry.idx;
+    var nArt = (cart.items || []).length;
+    var tot = _cartTrashTotal(cart);
+    var preview = (cart.items || []).slice(0, 3).map(function(it){
+      return '<span>' + esc(it.desc || 'Articolo') + ' × ' + esc(it.qty || 0) + '</span>';
+    }).join('');
+    h += '<div class="cart-trash-card">';
+    h += '<div class="cart-trash-main">';
+    h += '<div class="cart-trash-title">' + esc(cart.nome || 'Ordine senza nome') + '</div>';
+    h += '<div class="cart-trash-meta">' + nArt + ' articoli · € ' + tot.toFixed(2) + (cart.deletedAt ? ' · Eliminato: ' + esc(cart.deletedAt) : '') + '</div>';
+    if(cart.eliminatoDa) h += '<div class="cart-trash-meta">Da: ' + esc(cart.eliminatoDa) + '</div>';
+    if(preview) h += '<div class="cart-trash-preview">' + preview + ((cart.items || []).length > 3 ? '<span>+' + ((cart.items || []).length - 3) + ' altri</span>' : '') + '</div>';
+    h += '</div>';
+    h += '<div class="cart-trash-actions">';
+    h += '<button type="button" class="cart-trash-restore" onclick="ripristinaCarrello(' + i + ')">🔄 Ripristina</button>';
+    h += '<button type="button" class="cart-trash-delete" onclick="eliminaCartCestino(' + i + ')">🗑️ Elimina definitivamente</button>';
+    h += '</div></div>';
+    });
+    h += '</div>';
+  });
+  list.innerHTML = h;
+  modal.classList.add('open');
+}
+
+function ripristinaCarrello(i){
+  var cart = carrelliCestino.splice(i, 1)[0];
+  if(!cart) return;
+  delete cart.deletedAt;
+  delete cart.deletedAtISO;
+  delete cart.eliminato;
+  delete cart.eliminatoDa;
+  if(carrelli.some(function(c){ return c.id === cart.id; })){
+    cart.id = 'cart_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+  }
+  carrelli.push(cart);
+  activeCartId = cart.id;
+  _cartTrashSave();
+  saveCarrelli();
+  renderCartTrash();
+  renderCartTabs();
+  showToastGen('green','🔄 Ordine ripristinato');
+}
+
+function eliminaCartCestino(i){
+  showConfirm('Eliminare definitivamente questo ordine?', function(){
+    carrelliCestino.splice(i, 1);
+    _cartTrashSave();
+    renderCartTrash();
+    renderCartTabs();
+    showToastGen('red','🗑️ Ordine eliminato definitivamente');
+  });
+}
+
+function svuotaCartCestino(){
+  if(!carrelliCestino || !carrelliCestino.length) return;
+  showConfirm('Eliminare definitivamente tutti gli ordini nel cestino?', function(){
+    var n = carrelliCestino.length;
+    carrelliCestino = [];
+    _cartTrashSave();
+    renderCartTrash();
+    renderCartTabs();
+    showToastGen('red','🗑️ Eliminati definitivamente ' + n + ' ordini');
+  });
 }
 
 // ── PERMESSI CARRELLO ────────────────────────────────────────────────────────
@@ -127,16 +311,8 @@ function cartForzaAccesso(cartId){
 function eliminaCarrelloModifica(cartId){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
   if(!cart) return;
-  showConfirm('Eliminare questo carrello?\nSe l\'ordine esiste ancora rimarrà invariato.', function(){
-    // Scollega bozza se presente
-    if(cart.bozzaOrdId){
-      ordini = ordini.filter(function(o){ return o.id !== cart.bozzaOrdId; });
-      saveOrdini();
-      if(typeof renderOrdini==='function') renderOrdini();
-      if(typeof window!=='undefined' && typeof window.dispatchEvent==='function'){
-        window.dispatchEvent(new CustomEvent('sync-orders',{detail:{source:'carrello-delete'}}));
-      }
-    }
+  showConfirm('Eliminare questo carrello?\nSe esiste un ordine collegato verrà spostato nel cestino.', function(){
+    _cartTrashMoveLinkedOrdine(cart);
     // Rimuovi il carrello
     deleteCart(cartId);
   });
@@ -155,14 +331,7 @@ function eliminaOrdineCarrello(cartId){
     _takeSnapshot();
     var c = carrelli.find(function(x){ return x.id === cartId; });
     if(!c) return;
-    if(c.bozzaOrdId){
-      ordini = ordini.filter(function(o){ return o.id !== c.bozzaOrdId; });
-      saveOrdini();
-      if(typeof renderOrdini==='function') renderOrdini();
-      if(typeof window!=='undefined' && typeof window.dispatchEvent==='function'){
-        window.dispatchEvent(new CustomEvent('sync-orders',{detail:{source:'carrello-delete'}}));
-      }
-    }
+    _cartTrashMoveLinkedOrdine(c);
     deleteCart(cartId, '✅ Ordine eliminato');
   });
 }

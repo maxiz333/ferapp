@@ -27,6 +27,7 @@ function _authLoad(){
         if(saved[k].pin) _roles[k].pin = saved[k].pin;
         if(saved[k].nome) _roles[k].nome = saved[k].nome;
         if(saved[k].colore) _roles[k].colore = saved[k].colore;
+        if(saved[k].theme) _roles[k].theme = saved[k].theme;
       }
     });
   }
@@ -40,6 +41,7 @@ function _authLoad(){
             if(d[k].pin) _roles[k].pin = d[k].pin;
             if(d[k].nome) _roles[k].nome = d[k].nome;
             if(d[k].colore) _roles[k].colore = d[k].colore;
+        if(d[k].theme) _roles[k].theme = d[k].theme;
           }
         });
         _authSaveLocal();
@@ -49,6 +51,7 @@ function _authLoad(){
         if(_currentUser && _roles[_currentUser.key]){
           _currentUser.nome = _roles[_currentUser.key].nome;
           _currentUser.colore = _roles[_currentUser.key].colore;
+          if(typeof applyThemeForCurrentUser === 'function') applyThemeForCurrentUser();
           _authUpdateHeader();
         }
       }
@@ -59,7 +62,7 @@ function _authLoad(){
 function _authSaveLocal(){
   var data = {};
   Object.keys(_roles).forEach(function(k){
-    data[k] = { pin: _roles[k].pin, nome: _roles[k].nome, colore: _roles[k].colore || '' };
+    data[k] = { pin: _roles[k].pin, nome: _roles[k].nome, colore: _roles[k].colore || '', theme: _roles[k].theme || '' };
   });
   lsSet(AUTH_K, data);
 }
@@ -69,7 +72,7 @@ function _authSaveFirebase(){
   if(_fbReady && _fbDb){
     var data = {};
     Object.keys(_roles).forEach(function(k){
-      data[k] = { pin: _roles[k].pin, nome: _roles[k].nome, colore: _roles[k].colore || '' };
+      data[k] = { pin: _roles[k].pin, nome: _roles[k].nome, colore: _roles[k].colore || '', theme: _roles[k].theme || '' };
     });
     try{ _fbDb.ref('auth').set(data); }catch(e){}
   }
@@ -187,6 +190,7 @@ function _authPinKey(k){
       localStorage.setItem(window.AppKeys.LAST_USER, key);
       _authSaveSession(key);
       ov.style.display = 'none';
+      if(typeof applyThemeForCurrentUser === 'function') applyThemeForCurrentUser();
       _authApplyRole();
       _authUpdateHeader();
       showToastGen('green','Benvenuto '+r.nome+'!');
@@ -405,6 +409,7 @@ function _authInit(){
     _currentUser = { key: session.key, nome: _roles[session.key].nome, ruolo: _roles[session.key].ruolo, colore: _roles[session.key].colore||'' };
     _deviceName = _currentUser.nome;
     localStorage.setItem(window.AppKeys.DEVICE_NAME, _currentUser.nome);
+    if(typeof applyThemeForCurrentUser === 'function') applyThemeForCurrentUser();
     _authApplyRole();
     _authUpdateHeader();
     // Nascondi overlay login se presente

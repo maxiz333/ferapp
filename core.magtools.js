@@ -17,6 +17,46 @@ function _extractMagFromRows(){
     }
   }
   if(changed) lsSet(MAGK, magazzino);
+  if(typeof resetScortaMinimaZeroFirebase === 'function') resetScortaMinimaZeroFirebase(false);
+}
+
+// Reset strutturale una tantum: scorta minima default a 0 su tutti gli articoli.
+function resetScortaMinimaZeroFirebase(force){
+  if(!rows || !rows.length) return;
+  if(!_fbReady || !_fbDb) return;
+  var flagRef = _fbDb.ref('maintenance/scortaMinimaZeroV1');
+  flagRef.once('value', function(snap){
+    if(snap.val() && !force) return;
+    for(var i = 0; i < rows.length; i++){
+      if(!rows[i]) continue;
+      if(!magazzino[i]) magazzino[i] = {};
+      magazzino[i].soglia = 0;
+    }
+    lsSet(MAGK, magazzino);
+    var total = rows.length;
+    var idx = 0;
+    var CHUNK = 500;
+    function uploadChunk(){
+      var updates = {};
+      var end = Math.min(idx + CHUNK, total);
+      for(; idx < end; idx++){
+        if(rows[idx]) updates[MAGEXT_K + '/' + idx + '/_m_soglia'] = 0;
+      }
+      _fbDb.ref().update(updates, function(err){
+        if(err){
+          if(typeof showToastGen === 'function') showToastGen('red', 'Errore reset scorta minima: ' + err.message);
+          return;
+        }
+        if(idx < total){
+          setTimeout(uploadChunk, 20);
+        } else {
+          flagRef.set({ done: true, at: new Date().toISOString(), count: total });
+          if(typeof showToastGen === 'function') showToastGen('green', 'Scorta minima impostata a 0 su ' + total + ' articoli');
+        }
+      });
+    }
+    uploadChunk();
+  });
 }
 
 // ══ ESPORTA DATABASE CSV ══════════════════════════════════════════════════════

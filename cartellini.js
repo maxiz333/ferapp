@@ -91,6 +91,110 @@ var renderTable = (function(_origRenderTable){
 
 var _fbSyncingCt = false; // flag per evitare loop sync Firebase cartellini
 var _ctTab = 'dafare'; // tab attiva: 'dafare' | 'fatti'
+var _ctLastDupFattiReportAt = 0;
+var _ctFattiSearch = '';
+
+function ctCodiceArticolo(r){
+  return String(r && r.codM || '').trim().toUpperCase();
+}
+
+function ctFindActiveDuplicateByCode(code){
+  if(!code) return null;
+  for(var i = 0; i < ctRows.length; i++){
+    var r = ctRows[i];
+    if(r && !r.fatto && ctCodiceArticolo(r) === code) return { row: r, idx: i };
+  }
+  return null;
+}
+
+function ctFindDoneHistoryByCode(code){
+  if(!code) return null;
+  for(var i = 0; i < ctRows.length; i++){
+    var r = ctRows[i];
+    if(r && r.fatto && ctCodiceArticolo(r) === code){
+      return { row: r, idx: i, data: r.fattoData || r.data || '' };
+    }
+  }
+  return null;
+}
+
+function ctWarnDoneHistory(row){
+  var code = ctCodiceArticolo(row);
+  var old = ctFindDoneHistoryByCode(code);
+  if(old && typeof showToastGen === 'function'){
+    showToastGen('yellow', 'Attenzione: hai già stampato un cartellino per questo codice il giorno ' + (old.data || 'non indicato'));
+  }
+}
+
+function ctConfirmAddDuplicate(row){
+  var code = ctCodiceArticolo(row);
+  if(!code) return true;
+  var dup = ctFindActiveDuplicateByCode(code);
+  if(!dup) return true;
+  return window.confirm('Articolo già in lista, vuoi aggiungerlo di nuovo?');
+}
+
+function ctPrepareImportRows(rowsToAdd){
+  var accepted = [];
+  var activeDup = [];
+  var doneWarnings = [];
+  var seenInBatch = {};
+  (rowsToAdd || []).forEach(function(row){
+    var code = ctCodiceArticolo(row);
+    if(!code){
+      accepted.push(row);
+      return;
+    }
+    var active = ctFindActiveDuplicateByCode(code) || seenInBatch[code];
+    if(active) activeDup.push(row);
+    else accepted.push(row);
+    seenInBatch[code] = { row: row };
+    var done = ctFindDoneHistoryByCode(code);
+    if(done) doneWarnings.push({ code: code, data: done.data || 'non indicato' });
+  });
+  if(activeDup.length){
+    var codes = activeDup.map(function(r){ return ctCodiceArticolo(r); }).filter(Boolean).slice(0, 8).join(', ');
+    var ok = window.confirm(activeDup.length + ' articoli sono già nella lista di stampa di oggi' + (codes ? ' (' + codes + ')' : '') + '. Vuoi aggiungerli di nuovo?');
+    if(ok) accepted = accepted.concat(activeDup);
+  }
+  if(doneWarnings.length && typeof showToastGen === 'function'){
+    var first = doneWarnings.slice(0, 3).map(function(x){ return x.code + ' (' + x.data + ')'; }).join(', ');
+    showToastGen('yellow', 'Attenzione: già stampati in passato: ' + first + (doneWarnings.length > 3 ? ' +' + (doneWarnings.length - 3) : ''));
+  }
+  return accepted;
+}
+
+function ctReportDuplicatiFatti(){
+  var map = {};
+  (ctRows || []).forEach(function(r){
+    if(!r || !r.fatto) return;
+    var code = ctCodiceArticolo(r);
+    if(!code) return;
+    if(!map[code]) map[code] = [];
+    map[code].push(r);
+  });
+  var dup = Object.keys(map).filter(function(code){ return map[code].length > 1; });
+  if(!dup.length) return 0;
+  var msg = 'Duplicati nei cartellini fatti: ' + dup.slice(0, 6).map(function(code){
+    return code + ' x' + map[code].length;
+  }).join(', ') + (dup.length > 6 ? ' +' + (dup.length - 6) : '');
+  if(typeof showToastGen === 'function') showToastGen('orange', msg);
+  return dup.length;
+}
+
+function ctUpdateSearchPlaceholder(){
+  var inp = document.getElementById('ct-search');
+  var res = document.getElementById('ct-search-results');
+  if(!inp) return;
+  if(_ctTab === 'fatti'){
+    inp.placeholder = '🔍 Cerca nei cartellini fatti...';
+    _ctFattiSearch = String(inp.value || '').trim();
+    if(res){ res.style.display = 'none'; res.innerHTML = ''; }
+  } else {
+    inp.placeholder = '🔍 Cerca articolo dal database e aggiungi...';
+    _ctFattiSearch = '';
+  }
+}
 
 function ct_setTab(tab){
   _ctTab = tab;
@@ -105,7 +209,9 @@ function ct_setTab(tab){
       btnDf.style.background = 'transparent'; btnDf.style.color = '#555'; btnDf.style.border = '1px solid #2a2a2a';
     }
   }
+  ctUpdateSearchPlaceholder();
   CT.render();
+  if(tab === 'fatti') ctReportDuplicatiFatti();
 }
 
 var CT = {
@@ -143,6 +249,10 @@ var CT = {
 
     // Filtra per tab attiva
     var isFatti = (_ctTab === 'fatti');
+    if(isFatti && Date.now() - _ctLastDupFattiReportAt > 10000){
+      _ctLastDupFattiReportAt = Date.now();
+      setTimeout(ctReportDuplicatiFatti, 80);
+    }
 
     // Aggiorna contatori nei tab
     var nDf = ctRows.filter(function(r){ return !r.fatto; }).length;
@@ -155,12 +265,38 @@ var CT = {
     // Indici reali nel ctRows per la tab corrente
     var realIndices = [];
     ctRows.forEach(function(r, i){ if(isFatti ? !!r.fatto : !r.fatto) realIndices.push(i); });
+    if(isFatti && _ctFattiSearch){
+      var qFatti = _ctFattiSearch.toLowerCase();
+      realIndices = realIndices.filter(function(i){
+        var r = ctRows[i] || {};
+        return [
+          r.desc || '',
+          r.codM || '',
+          r.codF || '',
+          r.prezzo || '',
+          r.prezzoOld || '',
+          r.fattoData || '',
+          r.data || ''
+        ].join(' ').toLowerCase().indexOf(qFatti) >= 0;
+      });
+    }
+    var dupFattiByCode = {};
+    if(isFatti){
+      ctRows.forEach(function(r){
+        if(!r || !r.fatto) return;
+        var code = ctCodiceArticolo(r);
+        if(!code) return;
+        dupFattiByCode[code] = (dupFattiByCode[code] || 0) + 1;
+      });
+    }
 
     if(!realIndices.length){
       if(empty){
         empty.style.display = 'block';
         empty.innerHTML = isFatti
-          ? '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">✅</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino fatto</div><div style="font-size:13px;color:#333;">Spunta un articolo per spostarlo qui.</div>'
+          ? (_ctFattiSearch
+            ? '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">🔍</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino fatto trovato</div><div style="font-size:13px;color:#333;">Prova con codice articolo, descrizione o data.</div>'
+            : '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">✅</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino fatto</div><div style="font-size:13px;color:#333;">Spunta un articolo per spostarlo qui.</div>')
           : '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">🏷️</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino</div><div style="font-size:13px;color:#333;line-height:1.5;">Cerca un articolo in alto<br>oppure importa un file CSV.</div>';
       }
       list.style.display  = 'none';
@@ -189,13 +325,18 @@ var CT = {
       var r = ctRows[realIdx];
       var c = CT.color(r.giornalino||'');
       var promoOn = (r.barrato==='si' || r.promo==='si');
+      var dupCode = isFatti ? ctCodiceArticolo(r) : '';
+      var isDupFatto = !!(dupCode && dupFattiByCode[dupCode] > 1);
+      var rowStyle = 'border-bottom:1px solid #222;border-left:3px solid '+(isDupFatto ? '#f6ad55' : c.dot)+';';
+      if(isDupFatto) rowStyle += 'background:rgba(246,173,85,.14);box-shadow:inset 0 0 0 1px rgba(246,173,85,.38);';
 
-      h += '<tr style="border-bottom:1px solid #222;border-left:3px solid '+c.dot+';">';
+      h += '<tr style="'+rowStyle+'">';
 
       // Prodotto
       h += '<td style="padding:6px 4px;">';
       h += '<div class="ct-prod-name" onclick="this.classList.toggle(\'ct-expanded\')" style="font-size:12px;font-weight:700;color:#e8e8e8;line-height:1.2;">'+esc(r.desc||'—')+'</div>';
       if(r.codM) h += '<div style="font-size:9px;color:var(--accent);margin-top:1px;">'+esc(r.codM)+'</div>';
+      if(isDupFatto) h += '<div style="display:inline-block;margin-top:3px;padding:2px 6px;border-radius:999px;background:#f6ad55;color:#111;font-size:9px;font-weight:900;letter-spacing:.3px;">DUPLICATO x'+dupFattiByCode[dupCode]+'</div>';
       if(r.fatto) h += '<div style="font-size:9px;color:#38a169;margin-top:1px;">✅ '+esc(r.fattoData||'')+'</div>';
       h += '</td>';
 
@@ -561,6 +702,13 @@ function ct_searchInput(val){
   var res = document.getElementById('ct-search-results');
   if(!res) return;
   val = (val||'').trim();
+  if(_ctTab === 'fatti'){
+    _ctFattiSearch = val;
+    res.style.display = 'none';
+    res.innerHTML = '';
+    CT.render();
+    return;
+  }
   if(val.length<2){ res.style.display='none'; res.innerHTML=''; return; }
   _ctSearchTimer = setTimeout(function(){ ct_doSearch(val); }, 280);
 }
@@ -629,6 +777,8 @@ function ct_addFromSearch(idx){
     priceHistory: []
   };
 
+  if(!ctConfirmAddDuplicate(newRow)) return;
+  ctWarnDoneHistory(newRow);
   ctRows.push(newRow);
   CT.save(); CT.render();
   ct_closeSearch();
@@ -662,6 +812,7 @@ var confirmImp = (function(_ci_orig){
       var aggiornatiCodF = 0;
       var prezziGiornalino = 0;
 
+      var rowsToAdd = [];
       pendingImportDB.forEach(function(r){
         var coloreValido = ['rosso','verde','blu','giallo','viola','arancio','grigio'];
         var colore = r.giornalino && coloreValido.indexOf(r.giornalino) >= 0 ? r.giornalino : '';
@@ -688,8 +839,8 @@ var confirmImp = (function(_ci_orig){
           prezziGiornalino++;
         }
 
-        // Aggiungi al cartellino con il NOME del database
-        var newRow = {
+        // Prepara il cartellino con il NOME del database
+        rowsToAdd.push({
           data: new Date().toLocaleDateString('it-IT'),
           desc: descFinale,
           codF: r.codF || '',
@@ -702,8 +853,7 @@ var confirmImp = (function(_ci_orig){
           barrato: prezzoVecchio ? 'si' : 'no',
           promo: prezzoVecchio ? 'si' : 'no',
           priceHistory: []
-        };
-        ctRows.push(newRow);
+        });
 
         // Aggiorna il database SOLO: codF se mancava
         if(dbIdx >= 0 && dbRow){
@@ -729,9 +879,12 @@ var confirmImp = (function(_ci_orig){
           }
         }
       });
+      var acceptedRows = ctPrepareImportRows(rowsToAdd);
+      acceptedRows.forEach(function(r){ ctRows.push(r); });
 
       CT.save(); CT.render();
-      var msg = '✅ ' + pendingImportDB.length + ' cartellini importati';
+      var msg = '✅ ' + acceptedRows.length + ' cartellini importati';
+      if(acceptedRows.length !== rowsToAdd.length) msg += ' | ' + (rowsToAdd.length - acceptedRows.length) + ' duplicati saltati';
       if(aggiornatiCodF > 0) msg += ' | ' + aggiornatiCodF + ' cod.forn. aggiunti';
       if(prezziGiornalino > 0) msg += ' | ' + prezziGiornalino + ' con prezzo diverso';
       showToastGen('green', msg);
@@ -741,11 +894,12 @@ var confirmImp = (function(_ci_orig){
 
     // Vecchio formato: rows = cartellini puri
     if(typeof pendingImport !== 'undefined' && pendingImport && pendingImport.length){
-      pendingImport.forEach(function(r){
+      var acceptedOld = ctPrepareImportRows(pendingImport.map(function(r){ return Object.assign({}, r); }));
+      acceptedOld.forEach(function(r){
         ctRows.push(Object.assign({}, r));
       });
       CT.save(); CT.render();
-      showToastGen('green', '✅ ' + pendingImport.length + ' cartellini importati');
+      showToastGen('green', '✅ ' + acceptedOld.length + ' cartellini importati' + (acceptedOld.length !== pendingImport.length ? ' | ' + (pendingImport.length - acceptedOld.length) + ' duplicati saltati' : ''));
       cancelImp();
       return;
     }
@@ -766,7 +920,7 @@ document.addEventListener('click', function(e){
 }, true);
 
 // Render iniziale
-setTimeout(function(){ CT.render(); }, 350);
+setTimeout(function(){ ctUpdateSearchPlaceholder(); CT.render(); }, 350);
 
 
 // ══ SYNC CARTELLINI → DATABASE ═══════════════════════════════════════════════

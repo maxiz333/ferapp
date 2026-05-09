@@ -73,12 +73,22 @@ function ctHexSlotsOrdineFornitore(){
   return ctOrderedFilterColors(byColor);
 }
 
+function ctForniColoreKey(){
+  if(typeof CT_FORN_KEY !== 'undefined' && CT_FORN_KEY) return CT_FORN_KEY;
+  if(window.AppKeys && window.AppKeys.FORNI_COLORE) return window.AppKeys.FORNI_COLORE;
+  return 'cp4_forniColore';
+}
 function ctGetForniColore(){
-  return lsGet(CT_FORN_KEY, {}) || {};
+  var saved = {};
+  try{ saved = lsGet(ctForniColoreKey(), {}) || {}; }catch(e){ saved = {}; }
+  if((!saved || !Object.keys(saved).length) && typeof window.forniColore === 'object' && window.forniColore){
+    saved = window.forniColore;
+  }
+  return saved || {};
 }
 function ctSaveForniColore(map){
   map = map || {};
-  lsSet(CT_FORN_KEY, map);
+  lsSet(ctForniColoreKey(), map);
   if(typeof window !== 'undefined') window.forniColore = map;
 }
 
@@ -248,6 +258,10 @@ function _daoResolveCart(cartId){
   if(c) return { cart: c, inCestino: true };
   return null;
 }
+function _daoResolveOrdine(ordId){
+  var o = (typeof ordini !== 'undefined' && ordini) ? ordini.find(function(x){ return x && x.id === ordId; }) : null;
+  return o ? { ordine: o } : null;
+}
 function _daoPersistCartRef(res){
   if(!res || !res.cart) return;
   if(res.inCestino){
@@ -255,6 +269,23 @@ function _daoPersistCartRef(res){
   } else if(typeof saveCarrelli === 'function'){
     saveCarrelli();
   }
+}
+function _daoColorFromItem(it){
+  if(!it) return '';
+  var col = ctNormalizeHex(it._ordColore);
+  if(col) return col;
+  var nome = String(it._ordFornitoreNome || it.fornitore || '').trim().toLowerCase();
+  if(!nome) return '';
+  var map = ctGetForniColore();
+  var keys = Object.keys(map || {});
+  for(var i = 0; i < keys.length; i++){
+    if(String(map[keys[i]] || '').trim().toLowerCase() === nome) return ctNormalizeHex(keys[i]) || keys[i];
+  }
+  var fs = window.fornitoriSettings || [];
+  for(var j = 0; j < fs.length; j++){
+    if(fs[j] && String(fs[j].nome || '').trim().toLowerCase() === nome) return ctNormalizeHex(fs[j].colore) || fs[j].colore;
+  }
+  return '#888888';
 }
 
 var _daoOrdQtyTimer = null;
@@ -269,9 +300,11 @@ function daoSetDaOrdQtyCommit(cartId, idx, el){
 
 function daoSetDaOrdQty(cartId, idx, val){
   var res = _daoResolveCart(cartId);
-  if(!res || !res.cart.items[idx]) return;
-  var cart = res.cart;
-  var it = cart.items[idx];
+  var ordRes = null;
+  if(!res && String(cartId || '').indexOf('ord:') === 0) ordRes = _daoResolveOrdine(String(cartId).slice(4));
+  if((!res || !res.cart.items[idx]) && (!ordRes || !ordRes.ordine.items[idx])) return;
+  var cart = res ? res.cart : null;
+  var it = res ? cart.items[idx] : ordRes.ordine.items[idx];
   if(!it.daOrdinare) return;
   var allowDec = (typeof itemUnitAllowsDecimalQty === 'function') ? itemUnitAllowsDecimalQty(it.unit) : false;
   var parsed = parseFloat(val);
@@ -282,9 +315,14 @@ function daoSetDaOrdQty(cartId, idx, val){
     it.qty = Math.max(1, Math.round(parsed));
   }
   if(typeof _cartRicalcolaPrezzoVendita === 'function') _cartRicalcolaPrezzoVendita(it);
-  if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(cart);
-  _daoPersistCartRef(res);
+  if(res){
+    if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(cart);
+    _daoPersistCartRef(res);
+  } else if(typeof saveOrdini === 'function'){
+    saveOrdini();
+  }
   if(typeof renderCartTabs === 'function') renderCartTabs();
+  if(typeof renderOrdini === 'function') renderOrdini();
   if(typeof renderOrdFor === 'function') renderOrdFor();
   if(typeof renderDaOrdinareView === 'function') renderDaOrdinareView();
 }
@@ -292,20 +330,31 @@ function daoSetDaOrdQty(cartId, idx, val){
 /** Articoli "da ordinare" raggruppati per colore (con cartId + idx per azioni). Include carrelli nel cestino. */
 function daoCollectDaOrdinareByColor(){
   var byColor = {};
+  var seen = {};
+  function addEntry(it, idx, refId, cartNome){
+    if(!it || !it.daOrdinare) return;
+    var col = _daoColorFromItem(it);
+    if(!col) return;
+    var key = String(it.codM || it.codF || it.desc || '') + '|' + String(refId || '') + '|' + idx;
+    if(seen[key]) return;
+    seen[key] = true;
+    if(!byColor[col]) byColor[col] = [];
+    byColor[col].push({ it: it, cartNome: cartNome || '', cartId: refId, idx: idx });
+  }
   function scanList(list){
     (list||[]).forEach(function(cart){
       (cart.items||[]).forEach(function(it, idx){
-        if(!it.daOrdinare) return;
-        if(!it._ordColore || it._ordColore === '#888888') return;
-        var col = ctNormalizeHex(it._ordColore) || it._ordColore;
-        if(!col || col === '#888888') return;
-        if(!byColor[col]) byColor[col] = [];
-        byColor[col].push({ it: it, cartNome: cart.nome||'', cartId: cart.id, idx: idx });
+        addEntry(it, idx, cart.id, cart.nome || '');
       });
     });
   }
   scanList(typeof carrelli !== 'undefined' ? carrelli : []);
   scanList(typeof carrelliCestino !== 'undefined' ? carrelliCestino : []);
+  (typeof ordini !== 'undefined' ? ordini : []).forEach(function(ord){
+    (ord.items||[]).forEach(function(it, idx){
+      addEntry(it, idx, 'ord:' + ord.id, ord.nome || ord.cliente || 'Ordine');
+    });
+  });
   return byColor;
 }
 
@@ -343,21 +392,33 @@ function daoPropagaNomeFornitoreSuArticoli(colore, nome){
 /** Toglie marcatore "da ordinare" (speculare carrello ↔ ordine collegato). */
 function daoRipulisciVoceDaOrdinare(cartId, idx){
   var res = _daoResolveCart(cartId);
-  if(!res || !res.cart.items[idx]) return;
-  var cart = res.cart;
-  var it = cart.items[idx];
+  var ordRes = null;
+  if(!res && String(cartId || '').indexOf('ord:') === 0) ordRes = _daoResolveOrdine(String(cartId).slice(4));
+  if((!res || !res.cart.items[idx]) && (!ordRes || !ordRes.ordine.items[idx])) return;
+  var cart = res ? res.cart : null;
+  var it = res ? cart.items[idx] : ordRes.ordine.items[idx];
   it.daOrdinare = false;
   delete it._ordColore;
   delete it._ordFornitoreNome;
-  if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(cart);
-  _daoPersistCartRef(res);
+  if(res){
+    if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(cart);
+    _daoPersistCartRef(res);
+  } else if(typeof saveOrdini === 'function'){
+    saveOrdini();
+  }
   if(typeof renderCartTabs === 'function') renderCartTabs();
+  if(typeof renderOrdini === 'function') renderOrdini();
   if(typeof renderOrdFor === 'function') renderOrdFor();
   if(typeof renderDaOrdinareView === 'function') renderDaOrdinareView();
 }
 
 function daoGetStoricoRecent(){
-  return lsGet(ORD_FORN_STOR_K, []) || [];
+  var recent = lsGet(ORD_FORN_STOR_K, []) || [];
+  if(Array.isArray(recent)) return recent;
+  if(recent && typeof recent === 'object'){
+    return Object.keys(recent).map(function(k){ return recent[k]; }).filter(function(x){ return x; });
+  }
+  return [];
 }
 
 /** True se il driver Firebase è pronto per scritture/letture. */
@@ -479,16 +540,23 @@ function daoArchiviaColoreGruppo(colore){
   };
   var touchedActive = false;
   var touchedCestino = false;
+  var touchedOrdini = false;
   entries.forEach(function(e){
     var res = _daoResolveCart(e.cartId);
-    if(!res || !res.cart.items[e.idx]) return;
-    var it = res.cart.items[e.idx];
+    var ordRes = null;
+    if(!res && String(e.cartId || '').indexOf('ord:') === 0) ordRes = _daoResolveOrdine(String(e.cartId).slice(4));
+    if((!res || !res.cart.items[e.idx]) && (!ordRes || !ordRes.ordine.items[e.idx])) return;
+    var it = res ? res.cart.items[e.idx] : ordRes.ordine.items[e.idx];
     it.daOrdinare = false;
     delete it._ordColore;
     delete it._ordFornitoreNome;
-    if(res.inCestino) touchedCestino = true;
-    else touchedActive = true;
-    if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(res.cart);
+    if(res){
+      if(res.inCestino) touchedCestino = true;
+      else touchedActive = true;
+      if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(res.cart);
+    } else {
+      touchedOrdini = true;
+    }
   });
   // 1) Persistenza FULL su Firebase: avviene PRIMA del prune locale,
   //    così l'eccedenza scartata in locale resta comunque sul cloud.
@@ -503,8 +571,9 @@ function daoArchiviaColoreGruppo(colore){
   if(typeof window !== 'undefined') window.ordFornStorico = recent;
   if(touchedActive && typeof saveCarrelli === 'function') saveCarrelli();
   if(touchedCestino && typeof lsSet === 'function' && typeof CART_CK !== 'undefined') lsSet(CART_CK, carrelliCestino);
-  if(typeof saveOrdini === 'function') saveOrdini();
+  if((touchedOrdini || touchedActive) && typeof saveOrdini === 'function') saveOrdini();
   if(typeof renderCartTabs === 'function') renderCartTabs();
+  if(typeof renderOrdini === 'function') renderOrdini();
   if(typeof renderOrdFor === 'function') renderOrdFor();
   if(typeof renderDaOrdinareView === 'function') renderDaOrdinareView();
   if(typeof showToastGen === 'function') showToastGen('green', 'Gruppo archiviato come ordinato');
@@ -975,6 +1044,7 @@ function daoHtmlSearchBar(){
 function renderOrdFor(){
   var wrap = document.getElementById('t-ordfor-body');
   if(!wrap) return;
+  try{
 
   var byColor = daoCollectDaOrdinareByColor();
   var forniMap = ctGetForniColore();
@@ -1063,6 +1133,25 @@ function renderOrdFor(){
 
   h += daoHtmlBloccoStoricoRecente();
   wrap.innerHTML = h;
+  }catch(e){
+    console.error('[OrdFor] render errore:', e);
+    var safeByColor = {};
+    try{ safeByColor = daoCollectDaOrdinareByColor(); }catch(e2){ safeByColor = {}; }
+    var safe = '';
+    safe += '<div style="padding:10px 12px;border:1px solid #e53e3e44;border-radius:10px;background:#2a0808;color:#fc8181;font-size:12px;margin-bottom:10px;">';
+    safe += 'Errore nel caricamento fornitori. Puoi comunque ricreare i fornitori con il tasto +.</div>';
+    try{
+      if(typeof ctHtmlBarraFiltriFornitore === 'function'){
+        safe += ctHtmlBarraFiltriFornitore(safeByColor, _ordForColorFilter, { fnFilter: 'ordForFilterColor', fnReset: 'ordForResetFiltri', showStoricoBtn: true });
+      } else {
+        safe += '<button type="button" class="ord-forn-filt-add" onclick="ctApriAggiungiFornitore()" title="Nuovo fornitore">＋</button>';
+      }
+    }catch(e3){
+      safe += '<button type="button" class="ord-forn-filt-add" onclick="ctApriAggiungiFornitore()" title="Nuovo fornitore">＋</button>';
+    }
+    try{ safe += daoHtmlBloccoStoricoRecente(); }catch(e4){}
+    wrap.innerHTML = safe;
+  }
 }
 
 // ctSaveFornNome: salva il nome fornitore per un colore (con debounce)

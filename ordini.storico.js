@@ -2,9 +2,17 @@
 
 var _storicoOpen=false;
 var _storicoSearch='';
-var _storicoFornHex=null;
 var _storicoShown=20;
 var STORICO_PAGE=20;
+
+function storicoSetMainSearchVisible(visible){
+  var wrap=document.getElementById('ord-main-search-wrap');
+  if(!wrap){
+    var s=document.getElementById('ord-search');
+    wrap=s&&s.parentNode?s.parentNode:null;
+  }
+  if(wrap)wrap.style.display=visible?'':'none';
+}
 
 function toggleStoricoOrdini(){
   _storicoOpen=!_storicoOpen;
@@ -15,32 +23,35 @@ function toggleStoricoOrdini(){
   }
   var listEl=document.getElementById('ord-list');
   if(_storicoOpen){
+    if(typeof _daOrdView!=='undefined'&&_daOrdView){
+      _daOrdView=false;
+      var dbtn=document.getElementById('ord-f-daordinare');
+      if(dbtn){dbtn.style.background='transparent';dbtn.style.color='#fc8181';}
+      var daoEl=document.getElementById('ord-daordinare-view');
+      if(daoEl)daoEl.style.display='none';
+    }
+    if(typeof _cestinoOrdOpen!=='undefined'&&_cestinoOrdOpen){
+      _cestinoOrdOpen=false;
+      var cb=document.getElementById('ord-f-cestino');
+      if(cb){cb.style.background='transparent';cb.style.borderColor='#222';cb.style.color='#444';}
+      var cv=document.getElementById('ord-cestino-view');
+      if(cv)cv.style.display='none';
+    }
     _storicoShown=STORICO_PAGE;
+    storicoSetMainSearchVisible(false);
     renderStoricoOrdini();
     if(listEl)listEl.style.display='none';
   } else {
     var sv=document.getElementById('ord-storico-view');
     if(sv)sv.style.display='none';
     if(listEl)listEl.style.display='';
+    storicoSetMainSearchVisible(true);
     storicoChiudiDettaglio();
   }
 }
 
 function storicoOnSearch(val){
   _storicoSearch=(val||'').trim().toLowerCase();
-  _storicoShown=STORICO_PAGE;
-  renderStoricoOrdini();
-}
-
-function storicoSetFornitore(hex){
-  _storicoFornHex = (_storicoFornHex === hex) ? null : hex;
-  _storicoShown=STORICO_PAGE;
-  renderStoricoOrdini();
-}
-
-/** Reset solo filtro fornitore (la ricerca testuale resta). */
-function storicoResetFornitore(){
-  _storicoFornHex=null;
   _storicoShown=STORICO_PAGE;
   renderStoricoOrdini();
 }
@@ -58,33 +69,54 @@ function _storicoSortNewestFirst(arr){
   });
 }
 
+function _storicoDateObj(ord){
+  var raw=ord&&(ord.completatoAtISO||ord.createdAt||ord.dataISO||'');
+  if(raw){
+    var d=new Date(raw);
+    if(!isNaN(d.getTime()))return d;
+  }
+  var data=String(ord&&ord.data||'').trim();
+  var m=data.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m){
+    var year=m[3].length===2?('20'+m[3]):m[3];
+    var d2=new Date(Number(year),Number(m[2])-1,Number(m[1]));
+    if(!isNaN(d2.getTime()))return d2;
+  }
+  return null;
+}
+
+function _storicoDayKey(ord){
+  var d=_storicoDateObj(ord);
+  return d?d.toISOString().slice(0,10):'senza-data';
+}
+
+function _storicoDayLabel(key){
+  if(key==='senza-data')return 'Senza data';
+  var d=new Date(key+'T00:00:00');
+  if(isNaN(d.getTime()))return key;
+  var oggi=new Date();oggi.setHours(0,0,0,0);
+  var ieri=new Date(oggi);ieri.setDate(ieri.getDate()-1);
+  if(d.getTime()===oggi.getTime())return 'Oggi';
+  if(d.getTime()===ieri.getTime())return 'Ieri';
+  return d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+
 function _storicoMatchSearch(ord,q){
   if(!q)return true;
-  var hay=((ord.nomeCliente||'')+' '+(ord.numero!=null?String(ord.numero):'')).toLowerCase();
+  var doc=!!(ord&&(ord.tipo==='fattura'||ord.fatturaRichiesta))?'fattura':'ordine';
+  var hay=((ord.nomeCliente||'')+' '+(ord.numero!=null?String(ord.numero):'')+' '+doc).toLowerCase();
   (ord.items||[]).forEach(function(it){
     hay+=' '+(it.desc||'')+' '+(it.codM||'')+' '+(it.codF||'')+' '+(it.nota||'');
   });
   return hay.toLowerCase().indexOf(q)>=0;
 }
 
-function _storicoMatchFornitore(ord,hex){
-  if(!hex)return true;
-  var nomeSlot=typeof ctEtichettaFornitore==='function'?ctEtichettaFornitore(hex):'';
-  var hit=false;
-  (ord.items||[]).forEach(function(it){
-    if(it._ordColore===hex)hit=true;
-    if(nomeSlot&&it._ordFornitoreNome&&String(it._ordFornitoreNome).trim()===String(nomeSlot).trim())hit=true;
-  });
-  return hit;
-}
-
 function storicoGetFiltered(){
   var arch=typeof getOrdiniArchivio==='function'?getOrdiniArchivio():(lsGet(ORDK_ARCH)||[]);
   if(!arch||!arch.length)return[];
   var q=_storicoSearch;
-  var hex=_storicoFornHex;
   return _storicoSortNewestFirst(arch.filter(function(ord){
-    return _storicoMatchSearch(ord,q)&&_storicoMatchFornitore(ord,hex);
+    return _storicoMatchSearch(ord,q);
   }));
 }
 
@@ -110,18 +142,7 @@ function renderStoricoOrdini(){
   h+='<div class="ord-storico-toolbar">';
   h+='<input type="search" id="ord-storico-search" class="ord-storico-search" placeholder="Cerca cliente o prodotto…" value="'+esc(_storicoSearch)+'" ';
   h+='oninput="storicoOnSearch(this.value)" autocomplete="off">';
-  h+='<div class="ord-storico-forn-filt">';
-  h+='<button type="button" class="ord-storico-f-tutti'+(!_storicoFornHex?' ord-storico-f--on':'')+'" onclick="storicoResetFornitore()">Tutti i fornitori</button>';
-  if(typeof CT_FORN_CANON_HEX!=='undefined'&&typeof ctEtichettaFornitore==='function'){
-    CT_FORN_CANON_HEX.forEach(function(col){
-      var nm=ctEtichettaFornitore(col);
-      var on=_storicoFornHex===col;
-      h+='<button type="button" class="ord-storico-f-slot'+(on?' ord-storico-f--on':'')+'" style="'+(on?'border-color:'+col+';color:'+col+';background:'+col+'18':'')+'" onclick="storicoSetFornitore(\''+col+'\')">';
-      h+='<span class="ord-storico-f-dot" style="background:'+col+'"></span>'+esc(nm);
-      h+='</button>';
-    });
-  }
-  h+='</div></div>';
+  h+='</div>';
 
   h+='<div class="ord-storico-head">📂 Storico — '+total+' ordini'+(total!==arch.length?' (filtrati su '+arch.length+')':'')+'</div>';
 
@@ -134,7 +155,14 @@ function renderStoricoOrdini(){
     return;
   }
 
+  var lastDay=null;
   slice.forEach(function(ord){
+    var dayKey=_storicoDayKey(ord);
+    if(dayKey!==lastDay){
+      var groupCount=filtered.filter(function(x){return _storicoDayKey(x)===dayKey;}).length;
+      h+='<div class="ord-storico-day-sep"><span>'+esc(_storicoDayLabel(dayKey))+'</span><b>'+groupCount+'</b></div>';
+      lastDay=dayKey;
+    }
     var oid=ord.id!=null?String(ord.id):'';
     var sid=oid.replace(/"/g,'&quot;');
     var nArt=(ord.items||[]).length;
@@ -142,16 +170,34 @@ function renderStoricoOrdini(){
     (ord.items||[]).forEach(function(it){
       if(!ordItemCongelato(it)) tot+=parsePriceIT(it.prezzoUnit)*parseFloat(it.qty||0);
     });
+    var isFattura=!!(ord.tipo==='fattura'||ord.fatturaRichiesta);
+    var previewItems=(ord.items||[]).filter(function(it){return !ordItemCongelato(it);}).slice().reverse().slice(0,4);
     h+='<div class="ord-storico-card" role="button" tabindex="0" data-storico-id="'+sid+'" onclick="storicoApriDettaglioFromEl(this)">';
     h+='<div class="ord-storico-card-hd">';
+    h+='<div class="ord-storico-card-left">';
     h+='<span class="ord-storico-card-cliente">'+esc(ord.nomeCliente||'—')+'</span>';
-    h+='<span class="ord-storico-card-when">'+esc(ord.data||'')+' '+esc(ord.ora||'')+'</span>';
+    h+='<span class="ord-storico-doc-badge '+(isFattura?'ord-storico-doc-badge--fat':'ord-storico-doc-badge--ord')+'">'+(isFattura?'FATTURA':'ORDINE')+'</span>';
     h+='</div>';
-    h+='<div class="ord-storico-card-sum">';
-    h+='<span class="ord-storico-card-n">'+nArt+' art.</span>';
+    h+='<div class="ord-storico-card-right">';
+    h+='<span class="ord-storico-card-when">'+esc(ord.data||'')+' '+esc(ord.ora||'')+'</span>';
     h+='<span class="ord-storico-card-tot">€'+tot.toFixed(2)+'</span>';
     h+='</div>';
-    h+='<div class="ord-storico-card-hint">Tap per riepilogo completo</div>';
+    h+='</div>';
+    h+='<div class="ord-storico-card-items">';
+    if(previewItems.length){
+      previewItems.forEach(function(it){
+        var q=parseFloat(it.qty||0);
+        h+='<div class="ord-storico-item-line">';
+        h+='<span class="ord-storico-item-name">'+esc(it.desc||'—')+'</span>';
+        h+='<span class="ord-storico-item-qty">'+esc((typeof itemFormatQtyDisplay==='function'?itemFormatQtyDisplay(q,it.unit):String(q)))+' '+esc(it.unit||'pz')+'</span>';
+        h+='</div>';
+      });
+      if(nArt>previewItems.length) h+='<div class="ord-storico-more-items">+'+(nArt-previewItems.length)+' altri articoli</div>';
+    } else {
+      h+='<div class="ord-storico-more-items">Nessun articolo attivo</div>';
+    }
+    h+='</div>';
+    h+='<div class="ord-storico-card-foot"><span>'+nArt+' art.</span><span>Tap per riepilogo</span></div>';
     h+='</div>';
   });
 

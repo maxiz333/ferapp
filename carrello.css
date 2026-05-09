@@ -593,6 +593,247 @@ button[touch-action="manipulation"],
 }
 #ct-btn-ordfor:active { transform: scale(.96); filter: brightness(.88); }
 
+#ct-btn-trash {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 9px;
+  border-radius: 16px;
+  border: 1px solid rgba(229,62,62,.35);
+  background: transparent;
+  color: rgba(252,129,129,.75);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  min-height: 30px;
+  white-space: nowrap;
+}
+#ct-btn-trash span {
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: rgba(229,62,62,.18);
+  color: #fc8181;
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+}
+#ct-btn-trash:active { transform: scale(.96); }
+
+.cart-trash-modal-open { overflow: hidden; }
+#cart-trash-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 3600;
+}
+#cart-trash-modal.open { display: block; }
+.cart-trash-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.68);
+}
+.cart-trash-panel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 22px));
+  max-height: min(78vh, 680px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 18px 60px rgba(0,0,0,.6);
+}
+.cart-trash-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(229,62,62,.08);
+}
+.cart-trash-kicker {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--muted);
+  font-weight: 800;
+}
+.cart-trash-head h3 {
+  margin: 2px 0 0;
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.1;
+}
+.cart-trash-x {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 16px;
+}
+#cart-trash-list {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px;
+}
+.cart-trash-empty {
+  padding: 28px 10px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+.cart-trash-count {
+  color: #fc8181;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+}
+.cart-trash-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+.cart-trash-delete-all {
+  padding: 5px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(229,62,62,.5);
+  background: transparent;
+  color: #fc8181;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cart-trash-day { margin-bottom: 12px; }
+.cart-trash-day-title {
+  position: sticky;
+  top: -10px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  margin: 0 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--panel);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .35px;
+}
+.cart-trash-day-title span {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(255,215,0,.12);
+  color: var(--accent);
+  font-size: 10px;
+  line-height: 18px;
+  text-align: center;
+}
+.cart-trash-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-left: 3px solid #e53e3e;
+  border-radius: 12px;
+  background: var(--surface-soft, #1e1e1e);
+}
+.cart-trash-main { flex: 1; min-width: 0; }
+.cart-trash-title {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cart-trash-meta {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.25;
+}
+.cart-trash-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+.cart-trash-preview span {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(255,215,0,.08);
+  color: var(--text-soft, #d8d8d8);
+  font-size: 10px;
+}
+.cart-trash-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 0 0 142px;
+}
+.cart-trash-actions button {
+  min-height: 30px;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.cart-trash-restore {
+  border: 1px solid rgba(56,161,105,.55);
+  color: #68d391;
+}
+.cart-trash-delete {
+  border: 1px solid rgba(229,62,62,.5);
+  color: #fc8181;
+}
+@media (max-width: 460px) {
+  .cart-trash-panel {
+    top: auto;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 100%;
+    max-height: 82vh;
+    border-radius: 16px 16px 0 0;
+  }
+  .cart-trash-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .cart-trash-actions {
+    flex: none;
+    flex-direction: row;
+  }
+  .cart-trash-actions button { flex: 1; }
+}
+
 /* ── Tasto CLIENTI — arancione, discreto ───────────────────────── */
 #ct-btn-clienti {
   display: inline-flex;
@@ -1789,22 +2030,22 @@ body.light-mode .ct-fattura-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-left: 4px;
-  min-width: 18px;
-  height: 16px;
-  padding: 0 5px;
+  margin-left: 2px;
+  min-width: 16px;
+  height: 14px;
+  padding: 0 4px;
   border-radius: 999px;
   border: 1px solid #ff9800;
   background: #ff9800;
   color: #fff;
-  font-size: 10px;
+  font-size: 9px;
   line-height: 1;
   font-weight: 900;
   letter-spacing: 0.2px;
   vertical-align: middle;
   flex-shrink: 0;
-  position: relative;
-  z-index: 999;
+  position: static;
+  z-index: auto;
   box-shadow: 0 1px 4px rgba(0,0,0,.35);
 }
 .ct-price-promo-wrap {
@@ -1983,6 +2224,41 @@ body.light-mode .ct-inviato-box .ct-inviato-esauriti-banner { background: #81e6d
 body.light-mode .ct-footer-tot { color: var(--accent); }
 body.light-mode .ct-pill { background: #eee; color: #555; }
 body.light-mode .ct-pill.active { background: var(--accent); color: #111; }
+body.light-mode #ct-btn-trash {
+  border-color: rgba(197,48,48,.35);
+  color: #9b2c2c;
+  background: #fff;
+}
+body.light-mode #ct-btn-trash span {
+  background: rgba(197,48,48,.12);
+  color: #9b2c2c;
+}
+body.light-mode .cart-trash-panel {
+  background: #fff;
+  border-color: #ddd;
+  color: #1a1a1a;
+}
+body.light-mode .cart-trash-head {
+  background: #fff5f5;
+  border-bottom-color: #e2e2e2;
+}
+body.light-mode .cart-trash-card {
+  background: #fff;
+  border-color: #e0e0e0;
+}
+body.light-mode .cart-trash-title { color: #1a1a1a; }
+body.light-mode .cart-trash-preview span {
+  background: #fff8dc;
+  color: #333;
+}
+body.light-mode .cart-trash-day-title {
+  background: #f7f7f7;
+  border-color: #ddd;
+}
+body.light-mode .cart-trash-delete-all {
+  color: #9b2c2c;
+  border-color: rgba(197,48,48,.35);
+}
 body.light-mode #ct-clienti-panel { background: #fff; }
 body.light-mode .ct-clienti-btn { color: #333; }
 body.light-mode .ct-panel { background: #f5f5f5; }
@@ -2921,5 +3197,111 @@ body.light-mode .ct-mq-inp:focus {
   #tc .ct-card .ord-item-name .ct-card-num {
     font-size: 10px;
   }
+}
+
+/* ══ CARRELLO / POS — light mode final overrides ══════════════════ */
+body.light-mode {
+  --ct-bg: var(--bg);
+  --ct-card: var(--surface);
+  --ct-border: var(--border);
+  --ct-text: var(--text);
+  --ct-muted: var(--muted);
+  --ct-yellow: var(--accent);
+  --ct-yellow2: var(--accent2);
+}
+
+body.light-mode #tc,
+body.light-mode #cart-body,
+body.light-mode #ct-header-wrap,
+body.light-mode #cart-tabs-bar,
+body.light-mode #cart-action-btns,
+body.light-mode #cart-search-wrap {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+body.light-mode #ct-header-wrap {
+  background: var(--surface) !important;
+  border-bottom: 2px solid var(--accent) !important;
+  box-shadow: var(--shadow-soft);
+}
+
+body.light-mode .ct-card,
+body.light-mode #tc .ct-card {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+  box-shadow: var(--shadow-soft);
+}
+
+body.light-mode #tc .ct-card .ord-grid-row,
+body.light-mode #tc .ct-card .ord-grid-even,
+body.light-mode #tc .ct-card .ord-grid-odd {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+body.light-mode #tc .ct-card .ord-item-name,
+body.light-mode #tc .ct-card .ord-gc-sub,
+body.light-mode #tc .ct-card .ord-gc-sub-val,
+body.light-mode .ct-sticky-client {
+  color: var(--text) !important;
+}
+
+body.light-mode #tc .ct-card .ord-gc-price,
+body.light-mode #tc .ct-card .ord-gh,
+body.light-mode .ct-sticky-n,
+body.light-mode .ct-footer-sym {
+  color: var(--muted) !important;
+}
+
+body.light-mode #tc .ct-card .ord-gc-price .ct-punit,
+body.light-mode .ct-codf-inp,
+body.light-mode .ct-si,
+body.light-mode .ct-nota-inp,
+body.light-mode .pos-nota-ordine,
+body.light-mode .ct-pb-inp,
+body.light-mode .ct-mq-inp {
+  background: var(--field-bg) !important;
+  color: var(--field-text) !important;
+  -webkit-text-fill-color: var(--field-text) !important;
+  border-color: var(--border) !important;
+}
+
+body.light-mode #tc .ct-card .ord-code-mag,
+body.light-mode #tc .ct-card .ord-code-mag.ord-code-mag--toggle {
+  background: rgba(196,154,0,.16) !important;
+  color: var(--accent) !important;
+  border-color: rgba(196,154,0,.28) !important;
+}
+
+body.light-mode #tc .ct-card .ord-code-forn,
+body.light-mode #tc .ct-card .ord-code-forn.ord-code-forn--inp {
+  background: rgba(197,48,48,.10) !important;
+  color: var(--danger) !important;
+  border-color: rgba(197,48,48,.18) !important;
+}
+
+body.light-mode .ct-sticky-total,
+body.light-mode #cart-pos-footer,
+body.light-mode .ct-footer,
+body.light-mode .ct-panel,
+body.light-mode #ct-clienti-panel,
+body.light-mode .ct-color-popup,
+body.light-mode .tc-compare-area,
+body.light-mode .tc-compare-topbar {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+  box-shadow: var(--shadow-soft);
+}
+
+body.light-mode #cart-pos-footer {
+  border-top: 2px solid var(--accent) !important;
+}
+
+body.light-mode .ct-footer-tot {
+  color: var(--accent) !important;
 }
 
