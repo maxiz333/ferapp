@@ -763,6 +763,123 @@ button[touch-action="manipulation"],
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+/* ── Clienti dropdown — riga "ricca": anteprima articoli, totale, ora, badge FATT ── */
+.ct-clienti-btn--rich {
+  align-items: stretch;
+  padding: 10px 12px;
+  min-height: 58px;
+}
+.ct-clienti-btn--rich .ct-cli-row {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+.ct-cli-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+}
+.ct-cli-name-line {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.ct-cli-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ct-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.ct-clienti-btn--rich.active .ct-cli-name {
+  color: var(--ct-yellow);
+}
+.ct-cli-fatt {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .6px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(99,179,237,.18);
+  color: #90cdf4;
+  border: 1px solid rgba(99,179,237,.4);
+  flex-shrink: 0;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.ct-cli-items {
+  font-size: 11px;
+  color: var(--ct-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  letter-spacing: .1px;
+}
+.ct-cli-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  flex-shrink: 0;
+  text-align: right;
+}
+.ct-cli-tot {
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--ct-yellow);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .2px;
+  line-height: 1.1;
+}
+.ct-cli-meta {
+  font-size: 10px;
+  color: var(--ct-muted);
+  font-weight: 700;
+  white-space: nowrap;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.ct-cli-meta-sep { opacity: .5; }
+.ct-cli-time, .ct-cli-narts { color: var(--ct-muted); }
+
+/* Mobile (cell) — leggermente più compatto ma sempre leggibile */
+@media (max-width: 480px){
+  .ct-clienti-btn--rich { padding: 9px 10px; min-height: 54px; gap: 6px; }
+  .ct-cli-name      { font-size: 13px; }
+  .ct-cli-items     { font-size: 10.5px; }
+  .ct-cli-tot       { font-size: 12.5px; }
+  .ct-cli-meta      { font-size: 9.5px; }
+  .ct-cli-fatt      { font-size: 8.5px; padding: 1px 5px; }
+}
+
+/* Light mode */
+body.light-mode .ct-cli-name { color: #1f1f1f; }
+body.light-mode .ct-clienti-btn--rich.active .ct-cli-name { color: #b88200; }
+body.light-mode .ct-cli-items { color: #6b6b6b; }
+body.light-mode .ct-cli-tot   { color: #b88200; }
+body.light-mode .ct-cli-meta,
+body.light-mode .ct-cli-time,
+body.light-mode .ct-cli-narts { color: #777; }
+body.light-mode .ct-cli-fatt {
+  background: rgba(49,130,206,.14);
+  color: #2c5282;
+  border-color: rgba(49,130,206,.35);
+}
 .ct-clienti-close {
   display: flex;
   align-items: center;
@@ -1028,6 +1145,11 @@ button[touch-action="manipulation"],
 }
 #tc .ct-card .ord-item-codes-line .ord-code-mag {
   flex-shrink: 0;
+}
+/* Codice toggle iconbar: consenti selezione/copia testo (allineato a root carrello.css) */
+#tc .ct-card .ord-code-mag.ord-code-mag--toggle {
+  -webkit-user-select: text;
+  user-select: text;
 }
 #tc .ct-card .ord-item-codes-line .ord-code-forn.ord-code-forn--inp {
   flex: 1 1 auto;

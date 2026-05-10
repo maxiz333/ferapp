@@ -1,5 +1,16 @@
 // ordini.render-list.js - estratto da ordini.js
 
+// Barra strumenti riga ordine (Note, Cestino, …): toggle dal tap sul codice magazzino; stato volatile JS (non persistito).
+var _ordIconbarState = {};
+function ordToggleIconbar(ordId, gi, ii, ev){
+  if(ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+  var key = ordId + '-' + ii;
+  var willOpen = !_ordIconbarState[key];
+  _ordIconbarState[key] = willOpen;
+  var bar = document.getElementById('ord-iconbar-' + ordId + '-' + ii);
+  if(bar) bar.style.display = willOpen ? 'flex' : 'none';
+}
+
 // [SECTION: ORDINI] --------------------------------------------------------
 //  Render lista ordini, filtri, dettaglio ordine, vista cassa
 function renderOrdini(){
@@ -173,7 +184,15 @@ function renderOrdini(){
         if(isFz) h+='<div class="ord-congelato-badge">Rimosso dal banco</div>';
         var codes='';
         codes+='<div class="ord-item-codes-line">';
-        if(it.codM) codes+='<span class="ord-code-mag">'+esc(it.codM)+'</span>';
+        if(it.codM){
+          if(_canEdit && !isFz){
+            codes+='<span class="ord-code-mag ord-code-mag--toggle" role="button" tabindex="0" title="Mostra/nascondi azioni" onclick="event.stopPropagation();ordToggleIconbar(\''+ord.id+'\','+gi+','+ii+',event)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();ordToggleIconbar(\''+ord.id+'\','+gi+','+ii+',event);}">'+esc(it.codM)+'</span>';
+          } else {
+            codes+='<span class="ord-code-mag">'+esc(it.codM)+'</span>';
+          }
+        } else if(_canEdit && !isFz){
+          codes+='<span class="ord-code-mag ord-code-mag--toggle ord-code-mag--ph" role="button" tabindex="0" title="Mostra/nascondi azioni" onclick="event.stopPropagation();ordToggleIconbar(\''+ord.id+'\','+gi+','+ii+',event)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();ordToggleIconbar(\''+ord.id+'\','+gi+','+ii+',event);}">\u00b7\u00b7\u00b7</span>';
+        }
         codes+='<span class="ord-code-forn'+(_canEdit&&!isFz?' ord-editable':'')+'"'+(_canEdit&&!isFz?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'codF\')" title="Tap per modificare"':'')+'><span class="ord-code-forn-lbl">f.</span> '+esc(it.codF||'—')+'</span>';
         codes+='</div>';
         h+='<div class="ord-item-codes">'+codes+'</div>';
@@ -244,8 +263,10 @@ function renderOrdini(){
         var hasNota2 = !!(it.nota && it.nota.trim());
         var sc2 = it._scontoApplicato||0;
         var actClass = it._scaglionato ? 'ord-actions-scaglionato' : (it._tuttoRotolo||it.fineRotolo ? 'ord-actions-rotolo' : (it.scampolo ? 'ord-actions-scampolo' : ''));
+        var _obKey = ord.id + '-' + ii;
+        var _obOpen = typeof _ordIconbarState !== 'undefined' && _ordIconbarState[_obKey];
         if(_canEdit&&!isFz){
-          h+='<div class="ord-item-actions '+ actClass +'" style="display:flex;gap:4px;align-items:center;padding:2px 8px;">';
+          h+='<div class="ord-item-actions '+ actClass +'" id="ord-iconbar-'+ord.id+'-'+ii+'" style="display:'+(_obOpen?'flex':'none')+';gap:4px;align-items:center;padding:2px 8px;">';
           // Forbici — ciclo: OFF→SCA→ROT→SCAG→OFF
           var forbLbl2 = '';
           if(it._scaglionato){

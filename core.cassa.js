@@ -159,11 +159,11 @@ function _cassaModeApri(gi){
     h += '<div class="cassa-mode-item">';
     h += '<div style="flex:1;min-width:0;">';
     h += '<div style="font-size:15px;font-weight:700;color:var(--text);">'+esc(it.desc||'—')+'</div>';
-    h += '<div style="font-size:11px;color:#666;margin-top:2px;">';
+    h += '<div style="font-size:13px;color:#666;margin-top:2px;">';
     h += '<span class="cassa-mode-qty-pill">' + q + ' ' + esc(it.unit||'pz') + '</span>';
     h += '<span class="cassa-mode-unit-price">× €' + pu.toFixed(2) + '</span>';
-    if(it.codM) h += ' · <span style="color:var(--accent);">'+esc(it.codM)+'</span>';
-    if(it.codF) h += ' <span style="color:#888;">'+esc(it.codF)+'</span>';
+    if(it.codM) h += ' · <span style="color:var(--accent);font-size:14px;font-weight:700;">'+esc(it.codM)+'</span>';
+    if(it.codF) h += ' <span style="color:#888;font-size:13px;">'+esc(it.codF)+'</span>';
     h += ' <span class="ord-item-del" onclick="event.stopPropagation();_cassaModeDelItem(this,'+gi+','+i+')" title="Rimuovi">×</span>';
     h += '</div>';
     if(it.nota) h += '<div style="font-size:10px;color:#f6ad55;margin-top:2px;">📝 '+esc(it.nota)+'</div>';

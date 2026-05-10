@@ -245,10 +245,29 @@ function renderCartTabs(){
 
       // Colonna prodotto: nome + codici
       h += '<div class="ord-gc-desc">';
-      h += '<div class="ord-item-name">' + esc(it.desc || '—') + '</div>';
+      var _progNum = idx + 1;
+      var _canOpenEdit = it.rowIdx !== undefined && it.rowIdx !== null && it.rowIdx !== '' && rows && rows[parseInt(it.rowIdx, 10)];
+      var _nameAttrs = _canOpenEdit
+        ? ' role="button" tabindex="0" title="Apri scheda modifica articolo" style="cursor:pointer" onclick="ctOpenEditArticoloFromCart(\'' + cart.id + '\',' + idx + ',event)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();ctOpenEditArticoloFromCart(\'' + cart.id + '\',' + idx + ',event);}"'
+        : '';
+      h += '<div class="ord-item-name"' + _nameAttrs + '><span class="ct-card-num" aria-hidden="true">' + _progNum + '.</span> ' + esc(it.desc || '—') + '</div>';
       var codes = '';
       codes += '<div class="ord-item-codes-line">';
-      if(codM7) codes += '<span class="ord-code-mag">' + esc(codM7) + '</span>';
+      if(codM7){
+        codes += '<span class="ord-code-mag ord-code-mag--toggle" ' +
+                 'role="button" tabindex="0" ' +
+                 'title="Mostra/nascondi azioni" ' +
+                 'onclick="event.stopPropagation();ctToggleIconbar(\'' + cart.id + '\',' + idx + ',event)" ' +
+                 'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();ctToggleIconbar(\'' + cart.id + '\',' + idx + ',event);}">' +
+                 esc(codM7) + '</span>';
+      } else {
+        codes += '<span class="ord-code-mag ord-code-mag--toggle ord-code-mag--ph" ' +
+                 'role="button" tabindex="0" ' +
+                 'title="Mostra/nascondi azioni" ' +
+                 'onclick="event.stopPropagation();ctToggleIconbar(\'' + cart.id + '\',' + idx + ',event)" ' +
+                 'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();ctToggleIconbar(\'' + cart.id + '\',' + idx + ',event);}">' +
+                 '···</span>';
+      }
       codes += '<span class="ord-code-forn ord-code-forn--inp"><span class="ord-code-forn-lbl">f.</span>';
       codes += '<input class="ct-codf-inp" value="' + esc(codF) + '" placeholder="—" ' +
                'oninput="ctSetCodF(\'' + cart.id + '\',' + idx + ',this.value)" ' +
@@ -326,7 +345,11 @@ function renderCartTabs(){
       h += '</div>'; // fine ord-grid row
 
       // ── ICONBAR: Forbici+% | Note | Ordina | Cestino ─────────────────────
-      h += '<div class="ct-iconbar">';
+      // Nascosta di default (toggle dal codice magazzino sopra).
+      var _ibKey = cart.id + '-' + idx;
+      var _ibOpen = (typeof _ctIconbarState !== 'undefined') && _ctIconbarState[_ibKey];
+      h += '<div class="ct-iconbar" id="ct-iconbar-' + cart.id + '-' + idx + '"' +
+           (_ibOpen ? '' : ' style="display:none"') + '>';
 
       // FORBICI (tap=scampolo, doppio tap=rotolo) + input % inline
       var isScag = it._scaglionato || false;

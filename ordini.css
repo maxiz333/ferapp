@@ -22,6 +22,21 @@
   font-size:12px; font-weight:900; color:#888;
   letter-spacing:2px; text-transform:uppercase; white-space:nowrap;
 }
+/* Solo proprietari — etichetta data cliccabile per mostrare riepilogo incassi del giorno */
+.ord-date-label--toggle { cursor: pointer; user-select: none; }
+.ord-date-label--toggle:hover { color: #aaa; }
+.ord-date-sum {
+  display: none;
+  font-size: 11px;
+  font-weight: 700;
+  color: #777;
+  letter-spacing: .4px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+}
+.ord-date-sum.show { display: inline-block; }
+body.light-mode .ord-date-sum { color: #555; }
 
 /* ── Card ordine — blocco solido ── */
 .ord-card {
@@ -196,6 +211,16 @@
 .ord-code-mag {
   font-size:11px; font-weight:800; color:var(--accent);
   background:#2a2500; padding:1px 6px; border-radius:4px;
+}
+/* Toggle barra strumenti: tap sul codice; il testo resta selezionabile per copia */
+#to .ord-code-mag.ord-code-mag--toggle {
+  cursor: pointer;
+  -webkit-user-select: text;
+  user-select: text;
+}
+#to .ord-code-mag.ord-code-mag--toggle.ord-code-mag--ph {
+  -webkit-user-select: none;
+  user-select: none;
 }
 .ord-code-forn {
   font-size:11px; font-weight:800; color:#fc8181;
@@ -1228,6 +1253,21 @@ body.light-mode .ord-forn-line {
   text-transform: uppercase;
   letter-spacing: .35px;
 }
+.ord-storico-day-label--toggle { cursor: pointer; user-select: none; }
+.ord-storico-day-label--toggle:hover { color: #ddd6fe; }
+.ord-storico-day-sum {
+  display: none;
+  margin: 0 6px 0 auto;
+  font-size: 10px;
+  font-weight: 700;
+  color: #999;
+  letter-spacing: .3px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+}
+.ord-storico-day-sum.show { display: inline-block; }
+body.light-mode .ord-storico-day-sum { color: #555; }
 .ord-storico-day-sep b {
   min-width: 18px;
   height: 18px;

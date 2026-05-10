@@ -5,6 +5,28 @@ var _storicoSearch='';
 var _storicoShown=20;
 var STORICO_PAGE=20;
 
+// Riepilogo incassi per giorno nello storico (solo proprietari): tap sull'etichetta giorno
+// → mostra/nasconde "(Tot. € …)". Stato in memoria, sopravvive a re-render.
+var _storicoDaySumExpanded = {};
+function _storicoOwnerCanSeeTotali(){
+  return typeof _currentUser !== 'undefined' && !!_currentUser && _currentUser.ruolo === 'proprietario';
+}
+function _storicoFormatEurIT(n){
+  var v = Number(n||0);
+  try { return v.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+  catch(e){ return v.toFixed(2); }
+}
+function storicoToggleDaySum(el, dayKey, ev){
+  if(ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+  if(!_storicoOwnerCanSeeTotali()) return;
+  if(!el || !el.parentNode) return;
+  var sum = el.parentNode.querySelector('.ord-storico-day-sum');
+  if(!sum) return;
+  var willShow = !sum.classList.contains('show');
+  if(willShow) sum.classList.add('show'); else sum.classList.remove('show');
+  if(dayKey) _storicoDaySumExpanded[dayKey] = willShow;
+}
+
 function storicoSetMainSearchVisible(visible){
   var wrap=document.getElementById('ord-main-search-wrap');
   if(!wrap){
@@ -156,11 +178,28 @@ function renderStoricoOrdini(){
   }
 
   var lastDay=null;
+  var _stCanSeeTot = _storicoOwnerCanSeeTotali();
   slice.forEach(function(ord){
     var dayKey=_storicoDayKey(ord);
     if(dayKey!==lastDay){
       var groupCount=filtered.filter(function(x){return _storicoDayKey(x)===dayKey;}).length;
-      h+='<div class="ord-storico-day-sep"><span>'+esc(_storicoDayLabel(dayKey))+'</span><b>'+groupCount+'</b></div>';
+      if(_stCanSeeTot){
+        // Somma totale del giorno sull'intero filtered (non solo lo slice paginato),
+        // così il riepilogo è completo anche prima di "Carica altri".
+        var _dayTot = filtered.reduce(function(s,x){
+          if(_storicoDayKey(x)!==dayKey) return s;
+          return s + (typeof ordTotaleSenzaCongelati==='function' ? ordTotaleSenzaCongelati(x) : (parseFloat(x&&x.totale||0)||0));
+        }, 0);
+        var _dkAttr = String(dayKey).replace(/'/g,"\\'");
+        var _exp = !!_storicoDaySumExpanded[dayKey];
+        h+='<div class="ord-storico-day-sep">';
+        h+='<span class="ord-storico-day-label ord-storico-day-label--toggle" onclick="storicoToggleDaySum(this,\''+_dkAttr+'\',event)" title="Tap per mostrare/nascondere riepilogo incassi">'+esc(_storicoDayLabel(dayKey))+'</span>';
+        h+='<span class="ord-storico-day-sum'+(_exp?' show':'')+'" data-day="'+esc(dayKey)+'">(Tot. €&nbsp;'+_storicoFormatEurIT(_dayTot)+')</span>';
+        h+='<b>'+groupCount+'</b>';
+        h+='</div>';
+      } else {
+        h+='<div class="ord-storico-day-sep"><span>'+esc(_storicoDayLabel(dayKey))+'</span><b>'+groupCount+'</b></div>';
+      }
       lastDay=dayKey;
     }
     var oid=ord.id!=null?String(ord.id):'';

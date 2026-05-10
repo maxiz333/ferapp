@@ -5,6 +5,27 @@
 // Chiave localStorage per nomi fornitori per colore
 var CT_FORN_KEY = window.AppKeys.FORNI_COLORE;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ICONBAR A COMPARSA (FORBICI/% / NOTE / ORDINA / CESTINO)
+// Nascosta di default; toggle al click sul codice magazzino della riga.
+// Stato volatile in JS (non persistito), non tocca nessun calcolo/dato.
+//
+// ⚠ NON RIMUOVERE IN AGGIORNAMENTI ALLO STORICO / REFACTOR DEL CARRELLO:
+//    ctToggleIconbar e ctOpenEditArticoloFromCart sono il comportamento UX
+//    atteso (tap codice = mostra/nascondi barra azioni; tap nome = scheda articolo).
+// ─────────────────────────────────────────────────────────────────────────────
+var _ctIconbarState = {}; // chiave: cartId+'-'+idx → true se barra visibile
+function ctToggleIconbar(cartId, idx, ev){
+  if(ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+  var key = cartId + '-' + idx;
+  var willOpen = !_ctIconbarState[key];
+  _ctIconbarState[key] = willOpen;
+  var bar = document.getElementById('ct-iconbar-' + cartId + '-' + idx);
+  if(bar){
+    bar.style.display = willOpen ? '' : 'none';
+  }
+}
+
 // ctTogglePanel: mostra/nasconde pannello a comparsa (sconto|nota)
 // Stato salvato in _ctPanelState (JS puro, non nei dati carrello/Firebase)
 var _ctPanelState = {}; // chiave: cartId+'-'+idx → 'sconto'|'nota'|null
@@ -187,6 +208,20 @@ function ctSetCodF(cartId, idx, val){
     saveCarrelli(); // salva su localStorage + Firebase
     // NON chiama renderCartTabs() per non perdere il focus sull'input
   }, 600);
+}
+
+// ⚠ NON RIMUOVERE IN AGGIORNAMENTI ALLO STORICO / REFACTOR DEL CARRELLO (vedi blocco sopra).
+function ctOpenEditArticoloFromCart(cartId, idx, ev){
+  if(ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+  var cart = carrelli.find(function(c){ return c.id === cartId; });
+  if(!cart || !cart.items || !cart.items[idx]) return;
+  var it = cart.items[idx];
+  var ri = parseInt(it.rowIdx, 10);
+  if(isNaN(ri) || !rows || !rows[ri]){
+    if(typeof showToastGen === 'function') showToastGen('yellow', 'Articolo non collegato all\'inventario');
+    return;
+  }
+  if(typeof openEditProdotto === 'function') openEditProdotto(ri, false, { cartId: cartId, itemIdx: idx });
 }
 
 // ctCassaSingleClick: doppio tap per conferma (Safari iOS compatibile)

@@ -154,10 +154,20 @@ function avvisaUfficio(cartId){
   if(!cart||(!(cart.items||[]).length)){showToastGen('red','Aggiungi almeno un articolo prima');return;}
   if(typeof ensureFatturaState === 'function') ensureFatturaState(cart);
 
+  // Totale provvisorio (stesso calcolo usato da inviaOrdine) per il toast
+  var _totBozza = 0;
+  try{
+    _totBozza = (cart.items||[]).reduce(function(s,it){
+      return s + ((typeof _prezzoEffettivo==='function'?_prezzoEffettivo(it):parsePriceIT(it&&it.prezzoUnit)) * parseFloat(it&&it.qty||0));
+    }, 0);
+  }catch(e){ _totBozza = 0; }
+  var _nomeBozza = cart.nome || '—';
+
   if(cart.bozzaOrdId){
     // Bozza già attiva: aggiorna
     _aggiornaBozzaOrdine(cart);
-    showToastGen('green','📢 Ufficio aggiornato!');
+    if(typeof feedbackSend==='function') feedbackSend();
+    showToastGen('blue','📢 Bozza aggiornata! — '+_nomeBozza+' — €'+_totBozza.toFixed(2));
     return;
   }
 
@@ -190,7 +200,8 @@ function avvisaUfficio(cartId){
   cart.bozzaOrdId=bozzaId;
   saveCarrelli();
   renderCartTabs();
-  showToastGen('green','📢 Ufficio avvisato! Vedono già gli articoli.');
+  if(typeof feedbackSend==='function') feedbackSend();
+  showToastGen('blue','📢 Bozza inviata! — '+_nomeBozza+' — €'+_totBozza.toFixed(2));
 }
 
 // Aggiorna la bozza con gli articoli correnti del carrello (i congelati restano in coda)

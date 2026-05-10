@@ -9,6 +9,10 @@ var CT_FORN_KEY = window.AppKeys.FORNI_COLORE;
 // ICONBAR A COMPARSA (FORBICI/% / NOTE / ORDINA / CESTINO)
 // Nascosta di default; toggle al click sul codice magazzino della riga.
 // Stato volatile in JS (non persistito), non tocca nessun calcolo/dato.
+//
+// ⚠ NON RIMUOVERE IN AGGIORNAMENTI ALLO STORICO / REFACTOR DEL CARRELLO:
+//    ctToggleIconbar e ctOpenEditArticoloFromCart sono il comportamento UX
+//    atteso (tap codice = mostra/nascondi barra azioni; tap nome = scheda articolo).
 // ─────────────────────────────────────────────────────────────────────────────
 var _ctIconbarState = {}; // chiave: cartId+'-'+idx → true se aperta
 function ctToggleIconbar(cartId, idx, ev){
@@ -210,6 +214,7 @@ function ctSetCodF(cartId, idx, val){
   }, 600);
 }
 
+// ⚠ NON RIMUOVERE IN AGGIORNAMENTI ALLO STORICO / REFACTOR DEL CARRELLO (vedi blocco sopra).
 // ctOpenEditArticoloFromCart: apre la stessa scheda "Modifica articolo" di Inventario
 function ctOpenEditArticoloFromCart(cartId, idx, ev){
   if(ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();

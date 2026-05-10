@@ -1,5 +1,38 @@
 // ordini.render-list.js - estratto da ordini.js
 
+// Barra strumenti riga ordine (Note, Cestino, …): toggle dal tap sul codice magazzino; stato volatile JS (non persistito).
+var _ordIconbarState = {};
+function ordToggleIconbar(ordId, gi, ii, ev){
+  if(ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+  var key = ordId + '-' + ii;
+  var willOpen = !_ordIconbarState[key];
+  _ordIconbarState[key] = willOpen;
+  var bar = document.getElementById('ord-iconbar-' + ordId + '-' + ii);
+  if(bar) bar.style.display = willOpen ? 'flex' : 'none';
+}
+
+// Riepilogo incassi per data (solo proprietari): tap sulla scritta data → mostra/nasconde "(Tot. € …)".
+// Stato in memoria così il toggle sopravvive ai re-render frequenti (sync Firebase, save, ecc.).
+var _ordDateSumExpanded = {};
+function _ordOwnerCanSeeTotali(){
+  return typeof _currentUser !== 'undefined' && !!_currentUser && _currentUser.ruolo === 'proprietario';
+}
+function _ordFormatEurIT(n){
+  var v = Number(n||0);
+  try { return v.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+  catch(e){ return v.toFixed(2); }
+}
+function ordToggleDateSum(el, dk, ev){
+  if(ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+  if(!_ordOwnerCanSeeTotali()) return;
+  if(!el || !el.parentNode) return;
+  var sum = el.parentNode.querySelector('.ord-date-sum');
+  if(!sum) return;
+  var willShow = !sum.classList.contains('show');
+  if(willShow) sum.classList.add('show'); else sum.classList.remove('show');
+  if(dk) _ordDateSumExpanded[dk] = willShow;
+}
+
 // [SECTION: ORDINI] --------------------------------------------------------
 //  Render lista ordini, filtri, dettaglio ordine, vista cassa
 function renderOrdini(){
@@ -57,11 +90,23 @@ function renderOrdini(){
   });
 
   // Render ordini raggruppati per data (include bozze nel flusso)
+  var _canSeeTot = _ordOwnerCanSeeTotali();
   gruppiOrd.forEach(function(dk){
     // ── SEPARATORE DATA — banda piena ──
     h+='<div class="ord-date-sep">';
     h+='<span class="ord-date-line"></span>';
-    h+='<span class="ord-date-label">📅 '+esc(dk)+'</span>';
+    if(_canSeeTot){
+      // Somma totale del gruppo (stessa logica del totale per ordine: senza congelati)
+      var _grpTot = (gruppi[dk]||[]).reduce(function(s,o){
+        return s + (typeof ordTotaleSenzaCongelati==='function' ? ordTotaleSenzaCongelati(o) : (parseFloat(o&&o.totale||0)||0));
+      }, 0);
+      var _dkAttr = String(dk).replace(/'/g,"\\'");
+      var _exp = !!_ordDateSumExpanded[dk];
+      h+='<span class="ord-date-label ord-date-label--toggle" onclick="ordToggleDateSum(this,\''+_dkAttr+'\',event)" title="Tap per mostrare/nascondere riepilogo incassi">📅 '+esc(dk)+'</span>';
+      h+='<span class="ord-date-sum'+(_exp?' show':'')+'" data-dk="'+esc(dk)+'">(Tot. €&nbsp;'+_ordFormatEurIT(_grpTot)+')</span>';
+    } else {
+      h+='<span class="ord-date-label">📅 '+esc(dk)+'</span>';
+    }
     h+='<span class="ord-date-line"></span>';
     h+='</div>';
 
@@ -182,7 +227,15 @@ function renderOrdini(){
         else if(isSr) h+='<div class="ord-reso-badge" style="font-size:9px;font-weight:800;color:#fc8181;margin-top:4px;letter-spacing:.2px;">STORNO RESO</div>';
         var codes='';
         codes+='<div class="ord-item-codes-line">';
-        if(it.codM) codes+='<span class="ord-code-mag">'+esc(it.codM)+'</span>';
+        if(it.codM){
+          if(_canEdit && !isFz && !isSr){
+            codes+='<span class="ord-code-mag ord-code-mag--toggle" role="button" tabindex="0" title="Mostra/nascondi azioni" onclick="event.stopPropagation();ordToggleIconbar(\''+ord.id+'\','+gi+','+ii+',event)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();ordToggleIconbar(\''+ord.id+'\','+gi+','+ii+',event);}">'+esc(it.codM)+'</span>';
+          } else {
+            codes+='<span class="ord-code-mag">'+esc(it.codM)+'</span>';
+          }
+        } else if(_canEdit && !isFz && !isSr){
+          codes+='<span class="ord-code-mag ord-code-mag--toggle ord-code-mag--ph" role="button" tabindex="0" title="Mostra/nascondi azioni" onclick="event.stopPropagation();ordToggleIconbar(\''+ord.id+'\','+gi+','+ii+',event)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();ordToggleIconbar(\''+ord.id+'\','+gi+','+ii+',event);}">\u00b7\u00b7\u00b7</span>';
+        }
         codes+='<span class="ord-code-forn'+(_canEdit&&!isFz?' ord-editable':'')+'"'+(_canEdit&&!isFz?' onclick="ordInlineEdit(this,'+gi+','+ii+',\'codF\')" title="Tap per modificare"':'')+'><span class="ord-code-forn-lbl">f.</span> '+esc(it.codF||'—')+'</span>';
         codes+='</div>';
         h+='<div class="ord-item-codes">'+codes+'</div>';
@@ -297,8 +350,10 @@ function renderOrdini(){
         var hasNota2 = !!(it.nota && it.nota.trim());
         var sc2 = it._scontoApplicato||0;
         var actClass = it._scaglionato ? 'ord-actions-scaglionato' : (it._tuttoRotolo||it.fineRotolo ? 'ord-actions-rotolo' : (it.scampolo ? 'ord-actions-scampolo' : ''));
+        var _obKey = ord.id + '-' + ii;
+        var _obOpen = typeof _ordIconbarState !== 'undefined' && _ordIconbarState[_obKey];
         if(_canEdit&&!isFz&&!isSr){
-          h+='<div class="ord-item-actions '+ actClass +'" style="display:flex;gap:4px;align-items:center;padding:2px 8px;">';
+          h+='<div class="ord-item-actions '+ actClass +'" id="ord-iconbar-'+ord.id+'-'+ii+'" style="display:'+(_obOpen?'flex':'none')+';gap:4px;align-items:center;padding:2px 8px;">';
           // Forbici — ciclo: OFF→SCA→ROT→SCAG→OFF
           var forbLbl2 = '';
           if(it._scaglionato){

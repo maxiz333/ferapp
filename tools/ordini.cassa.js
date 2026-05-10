@@ -25,9 +25,9 @@ function openCassa(gi){
     tot+=pu*q;
     bodyH+='<div class="cassa-item" style="gap:10px;">';
     bodyH+='<div style="flex:1;min-width:0;">';
-    bodyH+='<div style="font-size:14px;font-weight:700;color:var(--text);">'+esc(it.desc||'')+'</div>';
-    bodyH+='<div style="font-size:11px;color:var(--muted);margin-top:2px;">';
-    if(it.codM)bodyH+='<span style="color:var(--accent);font-weight:700;">'+esc(it.codM)+'</span> ';
+    bodyH+='<div class="cassa-item-desc">'+esc(it.desc||'')+'</div>';
+    bodyH+='<div class="cassa-meta-line">';
+    if(it.codM)bodyH+='<span class="cassa-cod-prodotto">'+esc(it.codM)+'</span> ';
     if(it.codF)bodyH+='<span style="color:#fc8181;">'+esc(it.codF)+'</span>';
     if(it.nota)bodyH+='<div style="padding:3px 8px;margin-top:2px;background:#2a1800;border-left:3px solid #f6ad55;border-radius:3px;font-size:10px;color:#f6ad55;font-weight:600;">- '+esc(it.nota)+'</div>';
     bodyH+='</div>';
@@ -35,7 +35,7 @@ function openCassa(gi){
     bodyH+='</div>';
     bodyH+='<div style="text-align:right;flex-shrink:0;">';
     bodyH+='<div style="font-size:16px;font-weight:900;color:var(--accent);">- '+sub+'</div>';
-    bodyH+='<div style="font-size:11px;color:var(--muted);">'+q+' '+(it.unit||'pz')+' - -'+esc(it.prezzoUnit)+'</div>';
+    bodyH+='<div class="cassa-qty-line"><span class="cassa-qty-pill">'+q+' '+esc(it.unit||'pz')+'</span><span class="cassa-unit-price">× €'+esc(it.prezzoUnit)+'</span></div>';
     bodyH+='</div>';
     bodyH+='</div>';
   });
