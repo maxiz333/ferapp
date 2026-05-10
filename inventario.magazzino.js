@@ -262,6 +262,8 @@ function _doMagSearch(){
     scList.forEach(function(s){
       if(s && String(s.prezzo || '').trim()) scActiveCount++;
     });
+    var corrOpen = !!(_magCardUiState.corr && _magCardUiState.corr[String(i)]);
+    var scaglOpen = !!(_magCardUiState.scagl && _magCardUiState.scagl[String(i)]);
 
     html += '<div class="mag-card' + (hasChrono ? ' mag-card--chrono' : '') + '" style="position:relative;background:#1e1e1e;border:1px solid ' + borderCol + ';border-radius:10px;padding:10px 12px;margin-bottom:10px;' + (isLow ? 'box-shadow:0 0 0 1px #e53e3e33;' : '') + '">';
     if(hasChrono){
@@ -293,7 +295,6 @@ function _doMagSearch(){
     html += '<div class="mag-edit-row mag-edit-row--triple">';
     html += '<div class="mag-edit-col"><div class="mag-edit-label mag-edit-label--forn">Cod. Forn.</div><input type="text" class="mag-edit-input mag-edit-input--codef" value="' + esc(String(r.codF || '')) + '" onblur="magCardSaveField(' + i + ',\'codF\',this.value)"></div>';
     html += '<div class="mag-edit-col"><div class="mag-edit-label mag-edit-label--mag">Mio Cod.</div><input type="text" class="mag-edit-input mag-edit-input--codem" value="' + esc(String(r.codM || '')) + '" onblur="magCardSaveField(' + i + ',\'codM\',this.value)"></div>';
-    html += '<div class="mag-edit-col"><div class="mag-edit-label">Acq.</div><input type="text" class="mag-edit-input mag-edit-input--meta" value="' + esc(String(prezzoAcq === '—' ? '' : prezzoAcq)) + '" onblur="magCardSaveField(' + i + ',\'prezzoAcquisto\',this.value)"></div>';
     html += '</div>';
     var dotHtml = '';
     if(freshnessRow && freshnessRow.dot){
@@ -301,17 +302,17 @@ function _doMagSearch(){
       dotHtml = '<span title="' + esc(ttl) + '" class="mag-price-dot" style="background:' + freshnessRow.color + ';"></span>';
     }
     html += '<div class="mag-edit-row mag-edit-row--triple">';
-    html += '<div class="mag-edit-col"><div class="mag-edit-label mag-edit-label--vend">Vend.</div><div class="mag-edit-price-wrap">' + dotHtml + '<input type="text" class="mag-edit-input mag-edit-input--price" value="' + esc(String(prezzoVend || '')) + '" onblur="magCardSaveField(' + i + ',\'prezzo\',this.value)"><button type="button" class="mag-price-check-btn" title="Aggiorna solo il timestamp prezzo" onclick="magCardPrezzoVerificato(' + i + ')">✓</button></div></div>';
+    html += '<div class="mag-edit-col"><div class="mag-edit-label mag-edit-label--vend">Vend.</div><div class="mag-edit-price-wrap"><button type="button" class="mag-price-check-btn" title="Aggiorna solo il timestamp prezzo" onclick="magCardPrezzoVerificato(' + i + ')">✓</button>' + dotHtml + '<input type="text" class="mag-edit-input mag-edit-input--price" value="' + esc(String(prezzoVend || '')) + '" onblur="magCardSaveField(' + i + ',\'prezzo\',this.value)"><button type="button" class="mag-promo-toggle mag-promo-toggle--inline' + ((r.isPromo===true && String(r.promoTipo||'')==='G') ? ' is-on' : '') + '" onclick="magCardTogglePromoG(' + i + ')">[G]</button></div></div>';
     html += '<div class="mag-edit-col"><div class="mag-edit-label">Vec.</div><input type="text" class="mag-edit-input mag-edit-input--meta" value="' + esc(String(prezzoVec === '—' ? '' : prezzoVec)) + '" onblur="magCardSaveField(' + i + ',\'prezzoOld\',this.value)"></div>';
-    html += '<div class="mag-edit-col"><div class="mag-edit-label">Promo</div><button type="button" class="mag-promo-toggle' + ((r.isPromo===true && String(r.promoTipo||'')==='G') ? ' is-on' : '') + '" onclick="magCardTogglePromoG(' + i + ')">[G]</button></div>';
+    html += '<div class="mag-edit-col"><div class="mag-edit-label">Acq.</div><input type="text" class="mag-edit-input mag-edit-input--meta" value="' + esc(String(prezzoAcq === '—' ? '' : prezzoAcq)) + '" onblur="magCardSaveField(' + i + ',\'prezzoAcquisto\',this.value)"></div>';
     html += '</div>';
     html += '</div>';
-    html += '<div class="mag-card-side-col' + (hasChrono ? ' mag-card-side-col--chrono' : '') + '">';
+    html += '<div class="mag-card-side-col mag-card-side-col--photo' + (hasChrono ? ' mag-card-side-col--chrono' : '') + '">';
     if(hasFoto){
-      html += '<img src="' + _idbCache[i] + '" onclick="magZoomFoto(' + i + ')" style="width:52px;height:52px;object-fit:cover;border-radius:8px;border:2px solid var(--accent);cursor:pointer;">';
+      html += '<img src="' + _idbCache[i] + '" onclick="magZoomFoto(' + i + ')" style="width:82px;height:82px;object-fit:cover;border-radius:8px;border:2px solid var(--accent);cursor:pointer;">';
       html += '<button onclick="magRimoviFoto(' + i + ')" style="font-size:9px;color:#e53e3e;background:transparent;border:none;cursor:pointer;padding:0;">rimuovi</button>';
     } else {
-      html += '<button onclick="document.getElementById(\'mag-foto-inp-' + i + '\').click()" style="width:52px;height:52px;border-radius:8px;border:1px dashed #444;background:#111;color:#555;font-size:10px;cursor:pointer;line-height:1.3;">📷<br>foto</button>';
+      html += '<button onclick="document.getElementById(\'mag-foto-inp-' + i + '\').click()" style="width:82px;height:82px;border-radius:8px;border:1px dashed #444;background:#111;color:#555;font-size:10px;cursor:pointer;line-height:1.3;">📷<br>foto</button>';
       html += '<input type="file" id="mag-foto-inp-' + i + '" accept="image/*" capture="environment" style="display:none;" onchange="magSalvaFoto(' + i + ',this)">';
     }
     html += '</div>';
@@ -322,6 +323,7 @@ function _doMagSearch(){
     html += '<div class="mag-card-section mag-card-section--b">';
     html += '<div class="mag-edit-row mag-edit-row--logistics">';
     html += '<div class="mag-edit-col mag-edit-col--qty"><div class="mag-edit-label">Qtà</div><div class="mag-edit-qty-wrap"><button type="button" class="mag-edit-qty-btn" onclick="magCardDeltaQty(' + i + ',-1)">−</button><input type="number" min="0" id="mag-qty-' + i + '" value="' + esc(String(qty)) + '" placeholder="Qtà" class="mag-edit-input mag-edit-input--qty" onblur="magCardSaveField(' + i + ',\'qty\',this.value)"><button type="button" class="mag-edit-qty-btn" onclick="magCardDeltaQty(' + i + ',1)">+</button></div></div>';
+    html += '<div class="mag-edit-col mag-edit-col--scagl"><div class="mag-edit-label">Scagl.</div><button type="button" class="mag-log-scagl-btn' + (scaglOpen ? ' is-on' : '') + '" onclick="magCardToggleScaglInline(' + i + ')">Scagl</button></div>';
     html += '<div class="mag-edit-col mag-edit-col--unit"><div class="mag-edit-label">Unità</div><select id="mag-unit-' + i + '" class="mag-edit-select mag-edit-select--unit" onchange="magCardSaveField(' + i + ',\'unit\',this.value)">';
     var umList = (typeof UM_STANDARD !== 'undefined' && UM_STANDARD && UM_STANDARD.length) ? UM_STANDARD : ['pz','kg','MQ','mt','conf','CT','RT','FG'];
     umList.forEach(function(u){
@@ -329,7 +331,51 @@ function _doMagSearch(){
     });
     html += '</select></div>';
     html += '<div class="mag-edit-col mag-edit-col--scorta"><div class="mag-edit-label">Scorta</div><input type="number" min="0" class="mag-edit-input mag-edit-input--danger" value="' + esc(sogliaTxt) + '" onblur="magCardSaveField(' + i + ',\'soglia\',this.value)"></div>';
+    html += '<div class="mag-edit-col mag-edit-col--corr"><div class="mag-edit-label">Correl.</div><button type="button" class="mag-log-corr-btn' + (corrOpen ? ' is-on' : '') + '" onclick="magCardToggleCorrInline(' + i + ')" title="Apri correlati">🔄<span>' + corrCount + '</span></button></div>';
     html += '</div>';
+    if(scaglOpen){
+      html += '<div class="mag-inline-panel mag-inline-panel--scagl">';
+      html += '<div class="mag-inline-head"><div class="mag-edit-label">Scaglioni</div><button type="button" class="mag-edit-adv-btn" onclick="magCardAddScaglione(' + i + ')">+ Scaglione</button></div>';
+      if(scList.length){
+        scList.forEach(function(s, si){
+          var daV = (s && s.da != null) ? s.da : '';
+          var aV = (s && s.a != null) ? s.a : '';
+          var pV = (s && s.prezzo != null) ? s.prezzo : '';
+          html += '<div class="mag-sc-row">';
+          html += '<input type="number" class="mag-edit-input mag-edit-input--mini" placeholder="Da" value="' + esc(String(daV)) + '" onblur="magCardUpdScaglione(' + i + ',' + si + ',\'da\',this.value)">';
+          html += '<input type="number" class="mag-edit-input mag-edit-input--mini" placeholder="A" value="' + esc(String(aV)) + '" onblur="magCardUpdScaglione(' + i + ',' + si + ',\'a\',this.value)">';
+          html += '<input type="text" class="mag-edit-input mag-edit-input--mini" placeholder="Prezzo" value="' + esc(String(pV)) + '" onblur="magCardUpdScaglione(' + i + ',' + si + ',\'prezzo\',this.value)">';
+          html += '<button type="button" class="mag-edit-adv-btn mag-edit-adv-btn--danger" onclick="magCardDelScaglione(' + i + ',' + si + ')">×</button>';
+          html += '</div>';
+        });
+      }else{
+        html += '<div class="mag-inline-empty">Nessuno scaglione</div>';
+      }
+      html += '</div>';
+    }
+    if(corrOpen){
+      html += '<div class="mag-inline-panel mag-inline-panel--corr">';
+      html += '<div class="mag-inline-head"><div class="mag-edit-label">Correlati</div></div>';
+      html += '<div class="mag-corr-search-wrap">';
+      html += '<input type="text" id="mag-correlati-add-' + i + '" class="mag-edit-input" placeholder="Cerca per nome o codice (min 2)..." autocomplete="off" oninput="magCardOnCorrelatiInput(' + i + ')" onfocus="magCardOnCorrelatiInput(' + i + ')" onblur="setTimeout(function(){magCardCloseCorrelatiSearch(' + i + ')},120)" onkeydown="if(event.keyCode===13){event.preventDefault();magCardAddCorrelato(' + i + ');}">';
+      html += '<div id="mag-correlati-results-' + i + '" class="mag-corr-results" role="listbox" aria-label="Risultati correlati"></div>';
+      html += '</div>';
+      if(correlatiRows.length){
+        html += '<div class="mag-corr-mini-list">';
+        correlatiRows.forEach(function(cr){
+          html += '<div class="mag-corr-mini-row">';
+          html += '<div class="mag-corr-mini-main">';
+          html += '<div class="mag-corr-mini-name">' + esc(cr.desc) + '</div>';
+          html += '<div class="mag-corr-mini-code">' + esc(cr.codM || '—') + ' · ' + esc(cr.codF || '—') + '</div>';
+          html += '</div>';
+          html += '<div class="mag-corr-mini-price">€ ' + esc(cr.prezzo) + '</div>';
+          html += '<button type="button" class="mag-corr-mini-remove" onclick="magCardRemoveCorrelato(' + i + ',' + cr.ri + ')">×</button>';
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      html += '</div>';
+    }
     html += '</div>';
 
     // Sezione C: anagrafica
@@ -365,59 +411,16 @@ function _doMagSearch(){
 
     // Sezione E: avanzate correlati + scaglioni
     html += '<div class="mag-card-section mag-card-section--e">';
-    var advOpen = !!(_magCardUiState.adv && _magCardUiState.adv[String(i)]);
     html += '<div class="mag-meta-band mag-meta-band--cat">';
     html += '<div class="mag-meta-pair"><span class="mag-meta-label">Cat</span><span class="mag-meta-value">' + esc(catLabel || '—') + ' / ' + esc(sub || '—') + '</span></div>';
     html += '<div style="display:flex;gap:6px;align-items:center;">';
-    html += '<span class="mag-badge-inline" title="Articoli correlati in scheda prodotto">🔄 ' + corrCount + '</span>';
     if(scActiveCount > 0) html += '<span class="mag-badge-inline" title="Scaglioni prezzo configurati">📦 ' + scActiveCount + '</span>';
-    html += '<button type="button" class="mag-edit-adv-btn" onclick="magCardToggleAdvanced(' + i + ')">' + (advOpen ? 'Nascondi' : 'Avanzate') + '</button>';
     html += '</div>';
     html += '</div>';
-    if(advOpen){
-      html += '<div class="mag-card-adv">';
-      html += '<div class="mag-edit-label">Correlati</div>';
-      html += '<div class="mag-meta-band" style="margin-top:0;">';
-      html += '<div class="mag-corr-search-wrap">';
-      html += '<input type="text" id="mag-correlati-add-' + i + '" class="mag-edit-input" placeholder="Cerca per nome o codice (min 2)..." autocomplete="off" oninput="magCardOnCorrelatiInput(' + i + ')" onfocus="magCardOnCorrelatiInput(' + i + ')" onblur="setTimeout(function(){magCardCloseCorrelatiSearch(' + i + ')},120)" onkeydown="if(event.keyCode===13){event.preventDefault();magCardAddCorrelato(' + i + ');}">';
-      html += '<div id="mag-correlati-results-' + i + '" class="mag-corr-results" role="listbox" aria-label="Risultati correlati"></div>';
-      html += '</div>';
-      html += '</div>';
-      if(correlatiRows.length){
-        html += '<div class="mag-corr-mini-list">';
-        correlatiRows.forEach(function(cr){
-          html += '<div class="mag-corr-mini-row">';
-          html += '<div class="mag-corr-mini-main">';
-          html += '<div class="mag-corr-mini-name">' + esc(cr.desc) + '</div>';
-          html += '<div class="mag-corr-mini-code">' + esc(cr.codM || '—') + ' · ' + esc(cr.codF || '—') + '</div>';
-          html += '</div>';
-          html += '<div class="mag-corr-mini-price">€ ' + esc(cr.prezzo) + '</div>';
-          html += '<button type="button" class="mag-corr-mini-remove" onclick="magCardRemoveCorrelato(' + i + ',' + cr.ri + ')">×</button>';
-          html += '</div>';
-        });
-        html += '</div>';
-      }
-      html += '<div class="mag-edit-label" style="margin-top:6px;">Scaglioni</div>';
-      html += '<div class="mag-meta-band" style="margin-top:0;"><button type="button" class="mag-edit-adv-btn" onclick="magCardAddScaglione(' + i + ')">+ Scaglione</button></div>';
-      if(scList.length){
-        scList.forEach(function(s, si){
-          var daV = (s && s.da != null) ? s.da : '';
-          var aV = (s && s.a != null) ? s.a : '';
-          var pV = (s && s.prezzo != null) ? s.prezzo : '';
-          html += '<div class="mag-sc-row">';
-          html += '<input type="number" class="mag-edit-input mag-edit-input--mini" placeholder="Da" value="' + esc(String(daV)) + '" onblur="magCardUpdScaglione(' + i + ',' + si + ',\'da\',this.value)">';
-          html += '<input type="number" class="mag-edit-input mag-edit-input--mini" placeholder="A" value="' + esc(String(aV)) + '" onblur="magCardUpdScaglione(' + i + ',' + si + ',\'a\',this.value)">';
-          html += '<input type="text" class="mag-edit-input mag-edit-input--mini" placeholder="Prezzo" value="' + esc(String(pV)) + '" onblur="magCardUpdScaglione(' + i + ',' + si + ',\'prezzo\',this.value)">';
-          html += '<button type="button" class="mag-edit-adv-btn mag-edit-adv-btn--danger" onclick="magCardDelScaglione(' + i + ',' + si + ')">×</button>';
-          html += '</div>';
-        });
-      }
-      html += '</div>';
-    }
     html += '</div>';
     html += '<div class="mag-card-footer-actions">';
     html += '<button type="button" class="mag-quick-save-btn" onclick="magCardSaveBatch(' + i + ')">💾 Salva rapido</button>';
-    html += '<button type="button" onclick="openEditProdotto(' + i + ')" style="flex:1;padding:8px;border-radius:7px;border:1px solid var(--accent)44;background:transparent;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;">✏️ Modifica articolo</button>';
+    html += '<button type="button" onclick="openEditProdotto(' + i + ')" style="flex:1;padding:6px 8px;border-radius:7px;border:1px solid var(--accent)44;background:transparent;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;touch-action:manipulation;">✏️ Modifica articolo</button>';
     var footDelClick = (hasChrono && chronoMode === 'modified')
       ? 'magRemoveFromModifiedChronoView(' + i + ')'
       : 'magDeleteArticolo(' + i + ',' + codMJson + ')';
@@ -439,7 +442,7 @@ function _doMagSearch(){
   list.innerHTML = html;
 }
 
-var _magCardUiState = { adv: {} };
+var _magCardUiState = { corr: {}, scagl: {} };
 
 function _magCardClearCorrelatiSearchTimer(i){
   var k = String(i);
@@ -720,9 +723,15 @@ function magCardTogglePromoG(i){
   _magCardPersist(i, { rerender:true });
 }
 
-function magCardToggleAdvanced(i){
+function magCardToggleCorrInline(i){
   var k = String(i);
-  _magCardUiState.adv[k] = !_magCardUiState.adv[k];
+  _magCardUiState.corr[k] = !_magCardUiState.corr[k];
+  renderMagazzino();
+}
+
+function magCardToggleScaglInline(i){
+  var k = String(i);
+  _magCardUiState.scagl[k] = !_magCardUiState.scagl[k];
   renderMagazzino();
 }
 

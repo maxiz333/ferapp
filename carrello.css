@@ -3183,14 +3183,18 @@ body.light-mode .ct-mq-inp:focus {
   flex-wrap:wrap;
 }
 #mag-list .mag-card-section{
-  margin-top:7px;
-  padding-top:7px;
+  margin-top:5px;
+  padding-top:5px;
   border-top:1px solid rgba(255,255,255,.06);
 }
 #mag-list .mag-card-section--a{
   margin-top:5px;
   padding-top:0;
   border-top:none;
+}
+#mag-list .mag-card-section--e{
+  margin-top:2px;
+  padding-top:2px;
 }
 #mag-list .mag-card-top{
   display:flex;
@@ -3202,12 +3206,15 @@ body.light-mode .ct-mq-inp:focus {
   min-width:0;
 }
 #mag-list .mag-card-side-col{
-  width:56px;
+  width:88px;
   display:flex;
   flex-direction:column;
   align-items:center;
   gap:4px;
   flex-shrink:0;
+}
+#mag-list .mag-card-side-col--photo{
+  align-items:flex-end;
 }
 #mag-list .mag-card-side-col--chrono{
   margin-top:26px;
@@ -3226,15 +3233,23 @@ body.light-mode .ct-mq-inp:focus {
 #mag-list .mag-edit-row--logistics{
   flex-wrap:nowrap;
   align-items:flex-end;
+  gap:5px;
 }
 #mag-list .mag-edit-row--logistics .mag-edit-col--qty{
-  flex:1 1 180px;
+  flex:1 1 150px;
+}
+#mag-list .mag-edit-row--logistics .mag-edit-col--scagl{
+  flex:0 0 62px;
+  margin-left:auto;
 }
 #mag-list .mag-edit-row--logistics .mag-edit-col--unit{
-  flex:0 0 76px;
+  flex:0 0 64px;
 }
 #mag-list .mag-edit-row--logistics .mag-edit-col--scorta{
-  flex:0 0 92px;
+  flex:0 0 72px;
+}
+#mag-list .mag-edit-row--logistics .mag-edit-col--corr{
+  flex:0 0 64px;
 }
 #mag-list .mag-edit-row--anag .mag-edit-col{
   flex:1 1 calc(33.333% - 4px);
@@ -3257,15 +3272,15 @@ body.light-mode .ct-mq-inp:focus {
 #mag-list .mag-edit-input,
 #mag-list .mag-edit-select{
   width:100%;
-  height:30px;
+  height:28px;
   box-sizing:border-box;
-  padding:0 9px;
+  padding:0 8px;
   border:1px solid var(--border);
   border-radius:8px;
   background:#111;
   color:var(--text);
-  font-size:12px;
-  line-height:30px;
+  font-size:11px;
+  line-height:28px;
 }
 #mag-list .mag-edit-select{
   padding-right:22px;
@@ -3290,6 +3305,7 @@ body.light-mode .ct-mq-inp:focus {
 #mag-list .mag-edit-input--vend{ color:var(--accent); font-weight:700; }
 #mag-list .mag-edit-input--codef{ color:#fc8181; font-weight:700; border-color:rgba(252,129,129,.35); }
 #mag-list .mag-edit-input--codem{ color:var(--accent); font-weight:700; border-color:rgba(245,196,0,.35); }
+#mag-list .mag-edit-input--desc{ font-size:13px; font-weight:800; color:var(--text); }
 #mag-list .mag-edit-input--price{ color:var(--accent); font-weight:800; border-color:rgba(245,196,0,.42); }
 #mag-list .mag-edit-input--meta{ color:var(--text); }
 #mag-list .mag-edit-input--italic{ color:#888; font-style:italic; }
@@ -3300,8 +3316,8 @@ body.light-mode .ct-mq-inp:focus {
   font-weight:800;
 }
 #mag-list .mag-edit-input--qty{
-  width:58px;
-  min-width:58px;
+  width:46px;
+  min-width:46px;
   text-align:center;
   font-weight:800;
 }
@@ -3322,13 +3338,13 @@ body.light-mode .ct-mq-inp:focus {
   align-items:center;
 }
 #mag-list .mag-edit-qty-btn{
-  width:26px;
-  height:30px;
+  width:24px;
+  height:28px;
   border:1px solid var(--border);
-  border-radius:8px;
+  border-radius:7px;
   background:#1e1e1e;
   color:var(--muted);
-  font-size:17px;
+  font-size:15px;
   line-height:1;
   cursor:pointer;
   flex-shrink:0;
@@ -3346,6 +3362,74 @@ body.light-mode .ct-mq-inp:focus {
   padding:0;
   cursor:pointer;
   flex-shrink:0;
+}
+#mag-list .mag-promo-toggle--inline{
+  width:34px;
+  min-width:34px;
+  height:22px;
+  border-radius:6px;
+  font-size:9px;
+}
+#mag-list .mag-log-scagl-btn{
+  width:100%;
+  height:28px;
+  border:1px solid var(--border);
+  border-radius:7px;
+  background:#151515;
+  color:var(--muted);
+  font-size:10px;
+  font-weight:700;
+  cursor:pointer;
+}
+#mag-list .mag-log-scagl-btn.is-on{
+  border-color:rgba(245,196,0,.35);
+  color:var(--accent);
+  background:rgba(245,196,0,.08);
+}
+#mag-list .mag-log-corr-btn{
+  width:100%;
+  height:28px;
+  border:1px solid var(--border);
+  border-radius:7px;
+  background:#151515;
+  color:#9ca3af;
+  font-size:10px;
+  font-weight:700;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+}
+#mag-list .mag-log-corr-btn span{
+  font-size:9px;
+  color:var(--accent);
+}
+#mag-list .mag-log-corr-btn.is-on{
+  border-color:rgba(245,196,0,.35);
+  color:var(--accent);
+  background:rgba(245,196,0,.08);
+}
+#mag-list .mag-inline-panel{
+  margin-top:4px;
+  padding:5px 6px 4px;
+  border:1px dashed rgba(255,255,255,.12);
+  border-radius:8px;
+  background:rgba(0,0,0,.12);
+  position:relative;
+  z-index:70;
+}
+#mag-list .mag-inline-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+  margin-bottom:4px;
+}
+#mag-list .mag-inline-empty{
+  font-size:10px;
+  color:#7d8796;
+  padding:4px 2px 2px;
 }
 #mag-list .mag-promo-toggle{
   width:100%;
@@ -3539,12 +3623,12 @@ body.light-mode .ct-mq-inp:focus {
   align-items:center;
 }
 #mag-list .mag-quick-save-btn{
-  padding:8px 10px;
+  padding:6px 8px;
   border-radius:7px;
   border:1px solid #38a169;
   background:rgba(56,161,105,.08);
   color:#68d391;
-  font-size:11px;
+  font-size:10px;
   font-weight:700;
   cursor:pointer;
   white-space:nowrap;
@@ -3557,9 +3641,9 @@ body.light-mode .ct-mq-inp:focus {
   gap:10px;
 }
 #mag-list .mag-meta-band--cat{
-  margin-top:7px;
-  padding-top:5px;
-  border-top:1px solid rgba(255,255,255,.06);
+  margin-top:0;
+  padding-top:0;
+  border-top:none;
 }
 #mag-list .mag-meta-band--scaglioni{
   margin-top:4px;
@@ -3661,10 +3745,14 @@ body.light-mode .ct-mq-inp:focus {
     flex-wrap:wrap;
   }
   #mag-list .mag-edit-row--logistics .mag-edit-col--qty{
-    flex:1 1 100%;
+    flex:1 1 calc(50% - 3px);
+  }
+  #mag-list .mag-edit-row--logistics .mag-edit-col--scagl{
+    flex:1 1 calc(50% - 3px);
   }
   #mag-list .mag-edit-row--logistics .mag-edit-col--unit,
-  #mag-list .mag-edit-row--logistics .mag-edit-col--scorta{
+  #mag-list .mag-edit-row--logistics .mag-edit-col--scorta,
+  #mag-list .mag-edit-row--logistics .mag-edit-col--corr{
     flex:1 1 calc(50% - 3px);
   }
   #mag-list .mag-meta-grid{
@@ -3704,7 +3792,7 @@ body.light-mode .ct-mq-inp:focus {
   pointer-events: auto;
   display: flex;
   gap: 6px;
-  margin-top: 8px;
+  margin-top: 1px;
   align-items: stretch;
 }
 
