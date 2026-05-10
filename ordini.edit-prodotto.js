@@ -69,6 +69,7 @@ function openEditProdotto(i, isNew, cartEditContext){
     prezzoInp.oninput = function(){ epRefreshPrezzoBaseUi(); };
   }
   epRefreshPrezzoBaseUi();
+  _epRefreshPrezzoDot();
 
   // Popola categorie
   var catSel = document.getElementById('ep-cat');
@@ -129,6 +130,38 @@ function epRefreshPrezzoBaseUi(){
     hintEl.style.display = isBase ? 'block' : 'none';
     hintEl.textContent = isBase ? ('Prezzo Base collegato (' + suff + ') e usato nel magazzino') : '';
   }
+}
+
+// ── Semaforo Prezzi: bollino + tasto "Prezzo Verificato" ─────────────────────
+function _epRefreshPrezzoDot(){
+  var dot = document.getElementById('ep-prezzo-dot');
+  if(!dot) return;
+  if(_epIdx == null || !rows[_epIdx] || typeof getPriceFreshnessInfo !== 'function'){
+    dot.style.display = 'none';
+    return;
+  }
+  var info = getPriceFreshnessInfo(rows[_epIdx]);
+  if(!info || !info.dot){
+    dot.style.display = 'none';
+    return;
+  }
+  dot.style.display = 'inline-block';
+  dot.style.background = info.color;
+  var ttl = info.label;
+  if(info.days != null) ttl += ' (' + info.days + ' gg dall\u2019ultimo aggiornamento)';
+  dot.title = ttl;
+}
+
+function epPrezzoVerificato(){
+  if(_epIdx == null || !rows[_epIdx]) return;
+  if(typeof touchRowPriceUpdate !== 'function') return;
+  touchRowPriceUpdate(rows[_epIdx]);
+  if(_epSnapshot && _epSnapshot.row) _epSnapshot.row.priceUpdatedAt = rows[_epIdx].priceUpdatedAt;
+  if(typeof lsSet === 'function' && typeof SK !== 'undefined') lsSet(SK, rows);
+  if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(_epIdx);
+  _epRefreshPrezzoDot();
+  if(typeof renderMagazzino === 'function') renderMagazzino();
+  if(typeof showToastGen === 'function') showToastGen('green','\u2705 Prezzo verificato \u2014 timestamp aggiornato');
 }
 
 function epRenderPromoGBtn(){
@@ -223,6 +256,7 @@ function saveEditProdotto(){
     if(oldPromoTipoEdit) histEntry.tipo = oldPromoTipoEdit;
     rows[i].priceHistory.unshift(histEntry);
     if(rows[i].priceHistory.length > 30) rows[i].priceHistory.length = 30;
+    if(typeof touchRowPriceUpdate === 'function') touchRowPriceUpdate(rows[i]);
   }
 
   rows[i].desc      = gf('ep-desc');

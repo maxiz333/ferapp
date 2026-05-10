@@ -44,6 +44,7 @@ function _syncPrezziOrdineAlDB(ord){
       r.data = new Date().toLocaleDateString('it-IT');
       r.size = (typeof autoSize === 'function') ? autoSize(prezzoDaSalvare) : r.size;
       if(typeof touchRowProductChangeAt === 'function') touchRowProductChangeAt(r);
+      if(typeof touchRowPriceUpdate === 'function') touchRowPriceUpdate(r);
       changed = true;
       productTouched = true;
       aggiornatiPrezzi++;

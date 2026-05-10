@@ -114,6 +114,36 @@ function getRowModifiedChronoAt(r, idx){
   return getRowProductChangeAt(r);
 }
 
+// ── Semaforo Prezzi ────────────────────────────────────────────────────────────
+// Timestamp dell'ultimo "evento prezzo" su un articolo: viene aggiornato sia
+// quando il prezzo cambia davvero, sia quando l'utente clicca "Prezzo Verificato".
+// Indipendente da `lastProductChangeAt` (che include anche qty/promo).
+
+function getRowPriceUpdateAt(r){
+  if(!r || r.priceUpdatedAt == null) return 0;
+  var n = Number(r.priceUpdatedAt);
+  return isFinite(n) && n > 0 ? n : 0;
+}
+
+function touchRowPriceUpdate(r){
+  if(r) r.priceUpdatedAt = Date.now();
+}
+
+/** Restituisce { bucket, days, color, label, dot } per il semaforo prezzi.
+ *  bucket: 'verde' | 'giallo' | 'arancio' | 'rosso' | 'neutro'
+ *  dot: true se va mostrato il pallino (false per 'verde'). */
+function getPriceFreshnessInfo(r){
+  var t = getRowPriceUpdateAt(r);
+  if(!t){
+    return { bucket:'neutro', days:null, color:'#6b7280', label:'Prezzo mai verificato', dot:true };
+  }
+  var days = Math.floor((Date.now() - t) / 86400000);
+  if(days > 270) return { bucket:'rosso',   days:days, color:'#e53e3e', label:'> 9 mesi',   dot:true };
+  if(days > 180) return { bucket:'arancio', days:days, color:'#dd6b20', label:'> 6 mesi',   dot:true };
+  if(days >  90) return { bucket:'giallo',  days:days, color:'#f6e05e', label:'> 3 mesi',   dot:true };
+  return            { bucket:'verde',   days:days, color:'#48bb78', label:'Aggiornato', dot:false };
+}
+
 // Sconti forbice: rotolo = % fissa sul listino (non azzerare)
 var SCONTO_ROTOLO_DEFAULT_PCT = 10;
 var SCONTO_SCAMPOLO_DEFAULT_PCT = 30;

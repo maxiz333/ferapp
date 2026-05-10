@@ -401,6 +401,7 @@ body.light-mode #confirm-overlay > div { background:#fff; }
       <button id="mag-mode-prod" onclick="setMagMode('prod')" style="padding:7px 12px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#111;font-size:12px;font-weight:700;cursor:pointer;">🏷️ Prodotto</button>
       <button id="mag-mode-spec" onclick="setMagMode('spec')" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:#1e1e1e;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;">📐 Specifiche</button>
       <button id="mag-scorta-btn" onclick="toggleMagSottoScorta()" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:#1e1e1e;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;">🔴 Sotto scorta</button>
+      <button id="mag-revprz-btn" onclick="toggleMagRevisionePrezzi()" title="Mostra solo articoli con prezzo da rivedere (Giallo/Arancio/Rosso/Mai verificato)" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:#1e1e1e;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;">🚦 Revisione Prezzi</button>
       <button id="mag-recenti-btn" onclick="toggleMagRecentiDueSettimane()" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:#1e1e1e;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;">📅</button>
       <button onclick="magScanDuplicati()" style="padding:7px 12px;border-radius:8px;border:1px solid #dd6b20;background:#1e1e1e;color:#f6ad55;font-size:12px;font-weight:700;cursor:pointer;">🔎 Duplicati</button>
       <button onclick="magAddArticoloManuale()" style="padding:7px 12px;border-radius:8px;border:1px solid #38a169;background:#1e1e1e;color:#68d391;font-size:12px;font-weight:700;cursor:pointer;">+ Aggiungi Articolo</button>
@@ -1327,146 +1328,151 @@ body.light-mode #confirm-overlay > div { background:#fff; }
 
 <!-- OVERLAY MODIFICA PRODOTTO COMPLETO -->
 <div class="overlay" id="ep">
-  <div class="ob" style="width:520px;max-height:90vh;overflow-y:auto;">
+  <div class="ob" style="width:min(520px,95vw);max-height:90vh;overflow-y:auto;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
       <h2 style="font-size:15px;color:var(--accent);margin:0;">✏️ Modifica articolo</h2>
       <button onclick="cancelEditProdotto()" style="background:transparent;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;">×</button>
     </div>
 
-    <!-- Descrizione -->
-    <div style="margin-bottom:10px;">
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">📝 Descrizione</div>
-      <input type="text" id="ep-desc" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:#111;color:var(--text);font-size:13px;font-weight:600;">
-    </div>
-
-    <!-- Codici -->
-    <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <div style="flex:1;">
-        <div style="font-size:10px;color:#fc8181;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">🔖 Cod. Fornitore</div>
-        <input type="text" id="ep-codf" style="width:100%;padding:7px 10px;border:1px solid #fc818144;border-radius:8px;background:#111;color:#fc8181;font-size:12px;font-weight:700;">
+    <div class="ep-grid">
+      <!-- Descrizione -->
+      <div>
+        <div class="ep-label">Descrizione</div>
+        <input type="text" id="ep-desc" class="ep-field">
       </div>
-      <div style="flex:1;">
-        <div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">🏷️ Mio Codice</div>
-        <input type="text" id="ep-codm" style="width:100%;padding:7px 10px;border:1px solid var(--accent)44;border-radius:8px;background:#111;color:var(--accent);font-size:12px;font-weight:700;">
-      </div>
-    </div>
 
-    <!-- Prezzi -->
-    <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <div style="flex:1;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px;">
-          <div id="ep-prezzo-label" style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;">💰 Prezzo vendita</div>
-          <button type="button" id="ep-promo-g-btn" onclick="epTogglePromoG(event)" title="Promo giornalino [G]" style="display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:18px;padding:0 4px;border-radius:6px;border:1px solid #3a3108;background:#111;cursor:pointer;opacity:.55;">
-            <span class="promo-g-badge" style="opacity:.35;filter:grayscale(1);" title="Promo giornalino">[G]</span>
-          </button>
+      <!-- Codici -->
+      <div class="ep-row">
+        <div class="ep-col ep-col-2">
+          <div class="ep-label" style="color:#fc8181;">Cod. Forn.</div>
+          <input type="text" id="ep-codf" class="ep-field ep-field-rose">
         </div>
-        <input type="text" id="ep-prezzo" style="width:100%;padding:7px 10px;border:1px solid var(--accent)44;border-radius:8px;background:#111;color:var(--accent);font-size:15px;font-weight:900;">
-        <div id="ep-prezzo-base-hint" style="display:none;font-size:10px;color:#63b3ed;margin-top:4px;">Prezzo Base collegato (usato nel magazzino)</div>
-      </div>
-      <div style="flex:1;">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">↩️ Prezzo vecchio</div>
-        <input type="text" id="ep-prezzoold" readonly style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px 8px 0 0;background:#111;color:var(--muted);font-size:13px;cursor:pointer;" onclick="togglePriceHistory()">
-        <div id="ep-price-history" style="display:none;background:#0d0d0d;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;padding:4px 8px;">
-          <div id="ep-ph-2" style="font-size:11px;color:#666;padding:3px 0;border-bottom:1px solid #1a1a1a;">—</div>
-          <div id="ep-ph-3" style="font-size:11px;color:#555;padding:3px 0;border-bottom:1px solid #1a1a1a;">—</div>
-          <div id="ep-ph-4" style="font-size:11px;color:#4a4a4a;padding:3px 0;border-bottom:1px solid #1a1a1a;">—</div>
-          <div id="ep-ph-5" style="font-size:11px;color:#3a3a3a;padding:3px 0;">—</div>
+        <div class="ep-col ep-col-2">
+          <div class="ep-label" style="color:var(--accent);">Mio Cod.</div>
+          <input type="text" id="ep-codm" class="ep-field ep-field-accent">
         </div>
       </div>
-      <div style="width:90px;">
-        <div style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">🔒 Acq.</div>
-        <input type="text" id="ep-acq" style="width:100%;padding:7px 8px;border:1px solid #333;border-radius:8px;background:#0d0d0d;color:#555;font-size:12px;font-style:italic;text-align:right;" title="Prezzo acquisto (riservato)">
-      </div>
-    </div>
 
-    <!-- Specifiche + Marca -->
-    <div style="margin-bottom:10px;">
-      <div style="font-size:10px;color:#2dd4bf;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">📐 Specifiche tecniche</div>
-      <textarea id="ep-specs" rows="2" style="width:100%;padding:8px 10px;border:1px solid #2dd4bf44;border-radius:8px;background:#111;color:#2dd4bf;font-size:12px;resize:vertical;font-family:inherit;" placeholder="Es: M6x30mm, Inox A2, IP44, 1000W..."></textarea>
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:10px;">
-      <div style="flex:1;">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">🏭 Marca</div>
-        <input type="text" id="ep-marca" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:#111;color:var(--text);font-size:12px;">
-      </div>
-      <div style="flex:1;">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">📍 Posizione</div>
-        <input type="text" id="ep-pos" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:#111;color:#888;font-size:12px;font-style:italic;" placeholder="Scaffale A3...">
-      </div>
-    </div>
-
-    <!-- Quantità + UM + Scorta minima -->
-    <div class="ep-stock-row">
-      <div class="ep-stock-field ep-stock-qty">
-        <div class="ep-stock-label">📦 Quantità</div>
-        <div class="ep-qty-control">
-          <button type="button" onclick="epDeltaQty(-1)" class="ep-qty-btn">−</button>
-          <input type="number" min="0" id="ep-qty" class="ep-stock-input ep-stock-input-qty">
-          <button type="button" onclick="epDeltaQty(1)" class="ep-qty-btn">+</button>
+      <!-- Prezzi -->
+      <div class="ep-row">
+        <div class="ep-col ep-col-3">
+          <div class="ep-price-head">
+            <div class="ep-price-title">
+              <span id="ep-prezzo-dot" class="ep-price-dot" title=""></span>
+              <div id="ep-prezzo-label" class="ep-label" style="margin:0;color:var(--accent);">Prezzo vend.</div>
+            </div>
+            <div class="ep-price-actions">
+              <button type="button" id="ep-prezzo-verify-btn" onclick="epPrezzoVerificato()" class="ep-btn-xs" title="Conferma che il prezzo è ancora valido — aggiorna solo il timestamp, non modifica il prezzo">Verificato</button>
+              <button type="button" id="ep-promo-g-btn" onclick="epTogglePromoG(event)" class="ep-btn-xs" title="Promo giornalino [G]">
+                <span class="promo-g-badge" style="opacity:.35;filter:grayscale(1);" title="Promo giornalino">[G]</span>
+              </button>
+            </div>
+          </div>
+          <input type="text" id="ep-prezzo" class="ep-field ep-field-accent">
+          <div id="ep-prezzo-base-hint" style="display:none;font-size:9px;color:#63b3ed;margin-top:2px;">Prezzo Base collegato</div>
+        </div>
+        <div class="ep-col ep-col-3">
+          <div class="ep-label">Prezzo vecchio</div>
+          <input type="text" id="ep-prezzoold" readonly class="ep-field ep-field-muted" onclick="togglePriceHistory()" style="cursor:pointer;">
+          <div id="ep-price-history" style="display:none;background:#0d0d0d;border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;padding:4px 8px;">
+            <div id="ep-ph-2" style="font-size:11px;color:#666;padding:3px 0;border-bottom:1px solid #1a1a1a;">—</div>
+            <div id="ep-ph-3" style="font-size:11px;color:#555;padding:3px 0;border-bottom:1px solid #1a1a1a;">—</div>
+            <div id="ep-ph-4" style="font-size:11px;color:#4a4a4a;padding:3px 0;border-bottom:1px solid #1a1a1a;">—</div>
+            <div id="ep-ph-5" style="font-size:11px;color:#3a3a3a;padding:3px 0;">—</div>
+          </div>
+        </div>
+        <div class="ep-col ep-col-3">
+          <div class="ep-label">Acq.</div>
+          <input type="text" id="ep-acq" class="ep-field ep-field-italic ep-field-center" title="Prezzo acquisto (riservato)">
         </div>
       </div>
-      <div class="ep-stock-field ep-stock-unit">
-        <div class="ep-stock-label">Unità</div>
-        <select id="ep-unit" class="ep-stock-select">
-          <option value="pz">pz</option><option value="kg">kg</option><option value="MQ">MQ</option><option value="mt">mt</option><option value="conf">conf</option>
-        </select>
-      </div>
-      <div class="ep-stock-field ep-stock-min">
-        <div class="ep-stock-label ep-stock-label-danger">🔔 Scorta min.</div>
-        <input type="number" min="0" id="ep-soglia" class="ep-stock-input ep-stock-input-min" placeholder="0">
-      </div>
-    </div>
 
-    <!-- Nome fornitore -->
-    <div style="margin-bottom:10px;">
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">🏢 Nome fornitore</div>
-      <input type="text" id="ep-fornitore" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:#111;color:var(--text);font-size:12px;" placeholder="Es: Hufirma, Vigor, Boston...">
-    </div>
-
-    <!-- Categoria -->
-    <div style="display:flex;gap:8px;margin-bottom:14px;">
-      <div style="flex:1;">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">🗂️ Categoria</div>
-        <select id="ep-cat" onchange="epFillSubcat()" style="width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:6px;background:#111;color:var(--text);font-size:12px;">
-          <option value="">— Nessuna —</option>
-        </select>
+      <!-- Specifiche -->
+      <div>
+        <div class="ep-label" style="color:#2dd4bf;">Specifiche tecniche</div>
+        <textarea id="ep-specs" rows="2" class="ep-field" style="border-color:#2dd4bf44;color:#2dd4bf;" placeholder="Es: M6x30mm, Inox A2, IP44, 1000W..."></textarea>
       </div>
-      <div style="flex:1;">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">↳ Sottocategoria</div>
-        <select id="ep-subcat" style="width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:6px;background:#111;color:var(--text);font-size:12px;">
-          <option value="">—</option>
-        </select>
+
+      <!-- Correlati -->
+      <div>
+        <div class="ep-label">🔄 Correlati</div>
+        <div id="ep-correlati-list" style="margin-bottom:4px;font-size:11px;"></div>
+        <div class="ep-row" style="flex-wrap:nowrap;">
+          <div class="ep-col">
+            <select id="ep-correlati-add" class="ep-field ep-select">
+              <option value="">Aggiungi correlato...</option>
+            </select>
+          </div>
+          <button onclick="aggiungiCorrelato(_epIdx)" class="ep-inline-action">+ Aggiungi</button>
+        </div>
       </div>
-    </div>
 
-
-    <!-- Prezzi a scaglioni -->
-    <div style="margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">📊 Prezzi a scaglioni</div>
-        <button onclick="addSc(_epIdx)" style="padding:3px 10px;border-radius:6px;border:1px solid #3182ce;background:transparent;color:#3182ce;font-size:11px;font-weight:700;cursor:pointer;">+ Aggiungi</button>
+      <!-- Logistica/Fornitura riga unica -->
+      <div class="ep-row">
+        <div class="ep-col ep-col-wide">
+          <div class="ep-label">Quantità</div>
+          <div class="ep-qty-control">
+            <button type="button" onclick="epDeltaQty(-1)" class="ep-qty-btn">−</button>
+            <input type="number" min="0" id="ep-qty" class="ep-field ep-field-center">
+            <button type="button" onclick="epDeltaQty(1)" class="ep-qty-btn">+</button>
+          </div>
+        </div>
+        <div class="ep-col ep-col-narrow">
+          <div class="ep-label">Unità</div>
+          <select id="ep-unit" class="ep-field ep-select">
+            <option value="pz">pz</option><option value="kg">kg</option><option value="MQ">MQ</option><option value="mt">mt</option><option value="conf">conf</option>
+          </select>
+        </div>
+        <div class="ep-col ep-col-narrow">
+          <div class="ep-label" style="color:#e53e3e;">Scorta Min.</div>
+          <input type="number" min="0" id="ep-soglia" class="ep-field ep-field-danger" placeholder="0">
+        </div>
+        <div class="ep-col ep-col-3">
+          <div class="ep-label">Marca</div>
+          <input type="text" id="ep-marca" class="ep-field">
+        </div>
+        <div class="ep-col ep-col-3">
+          <div class="ep-label">Posizione</div>
+          <input type="text" id="ep-pos" class="ep-field ep-field-italic" placeholder="Scaffale A3...">
+        </div>
+        <div class="ep-col ep-col-3">
+          <div class="ep-label">Fornitore</div>
+          <input type="text" id="ep-fornitore" class="ep-field" placeholder="Es: Hufirma, Vigor, Boston...">
+        </div>
       </div>
-      <div id="ep-scaglioni-list" style="margin-bottom:4px;"></div>
-      <div style="font-size:10px;color:#555;font-style:italic;">Es: 1–9 pz → €1,20 / 10+ pz → €1,00</div>
-    </div>
 
-    <!-- Articoli correlati -->
-    <div style="margin-bottom:14px;">
-      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">🔗 Vedi anche (articoli correlati)</div>
-      <div id="ep-correlati-list" style="margin-bottom:6px;"></div>
-      <div style="display:flex;gap:6px;">
-        <select id="ep-correlati-add" style="flex:1;padding:5px 6px;border:1px solid var(--border);border-radius:6px;background:#111;color:var(--text);font-size:11px;">
-          <option value="">+ Collega un articolo...</option>
-        </select>
-        <button onclick="aggiungiCorrelato(_epIdx)" style="padding:5px 12px;border-radius:6px;border:none;background:#3182ce;color:#fff;font-size:11px;font-weight:700;cursor:pointer;">+ Aggiungi</button>
+      <!-- Classificazione -->
+      <div class="ep-row">
+        <div class="ep-col ep-col-2">
+          <div class="ep-label">Categoria</div>
+          <select id="ep-cat" onchange="epFillSubcat()" class="ep-field ep-select">
+            <option value="">— Nessuna —</option>
+          </select>
+        </div>
+        <div class="ep-col ep-col-2">
+          <div class="ep-label">Sottocategoria</div>
+          <select id="ep-subcat" class="ep-field ep-select">
+            <option value="">—</option>
+          </select>
+        </div>
       </div>
-    </div>
 
-    <!-- Bottoni -->
-    <div style="display:flex;gap:8px;">
-      <button onclick="saveEditProdotto()" style="flex:1;padding:11px;border-radius:10px;border:none;background:var(--accent);color:#111;font-size:14px;font-weight:900;cursor:pointer;">💾 Salva</button>
-      <button onclick="duplicaArticolo(_epIdx)" style="padding:11px 14px;border-radius:10px;border:1px solid #3182ce;background:transparent;color:#3182ce;font-size:13px;font-weight:700;cursor:pointer;" title="Crea copia di questo articolo">📋 Duplica</button>
-      <button onclick="cancelEditProdotto()" style="padding:11px 18px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:14px;font-weight:700;cursor:pointer;">← Annulla</button>
+      <!-- Prezzi a scaglioni -->
+      <div>
+        <div class="ep-row" style="align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div class="ep-label" style="margin-bottom:0;">Prezzi a Scaglioni</div>
+          <button onclick="addSc(_epIdx)" class="ep-inline-action-outline">+ Aggiungi</button>
+        </div>
+        <div id="ep-scaglioni-list" style="margin-bottom:2px;"></div>
+        <div style="font-size:9px;color:#555;font-style:italic;">Es: 1–9 pz → €1,20 / 10+ pz → €1,00</div>
+      </div>
+
+      <!-- Bottoni -->
+      <div class="ep-actions">
+        <button onclick="saveEditProdotto()" style="flex:1;border-radius:9px;border:none;background:var(--accent);color:#111;font-size:13px;font-weight:900;cursor:pointer;">💾 Salva</button>
+        <button onclick="duplicaArticolo(_epIdx)" style="border-radius:9px;border:1px solid #3182ce;background:transparent;color:#3182ce;font-size:12px;font-weight:700;cursor:pointer;" title="Crea copia di questo articolo">📋 Duplica</button>
+        <button onclick="cancelEditProdotto()" style="border-radius:9px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;">← Annulla</button>
+      </div>
     </div>
   </div>
 </div>

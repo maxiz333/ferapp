@@ -185,6 +185,7 @@ function updPrice(i){
   if(oldPrezzo && oldPrezzo!==rows[i].prezzo){
     if(!rows[i].priceHistory) rows[i].priceHistory=[];
     rows[i].priceHistory.unshift({prezzo:oldPrezzo, data:new Date().toLocaleDateString('it-IT')});
+    if(typeof touchRowPriceUpdate === 'function') touchRowPriceUpdate(rows[i]);
   }
   var s=document.getElementById('s'+i);
   if(s){s.value=autoSize(rows[i].prezzo);rows[i].size=s.value;}
@@ -475,7 +476,10 @@ function quickEditPrice(idx){
     rows[idx]._updatedAt = nowQ;
     if(!magazzino[idx]) magazzino[idx] = {};
     magazzino[idx]._updatedAt = nowQ;
-    if(String(prevPrezzo||'') !== String(newP||'') && typeof touchRowProductChangeAt === 'function') touchRowProductChangeAt(rows[idx]);
+    if(String(prevPrezzo||'') !== String(newP||'')){
+      if(typeof touchRowProductChangeAt === 'function') touchRowProductChangeAt(rows[idx]);
+      if(typeof touchRowPriceUpdate === 'function') touchRowPriceUpdate(rows[idx]);
+    }
     // aggiorna input nella tabella se visibile
     var inp2=document.getElementById('p'+idx);
     if(inp2) inp2.value=newP;

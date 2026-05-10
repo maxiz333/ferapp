@@ -105,6 +105,83 @@ select{padding:3px 4px;border:1px solid var(--border);border-radius:3px;font-siz
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:2000;align-items:center;justify-content:center;}
 .overlay.open{display:flex;}
 .ob{background:var(--panel);border-radius:12px;padding:20px;max-height:88vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 8px 40px rgba(0,0,0,.6);width:95vw;max-width:600px;border:1px solid var(--border);}
+#ep .ob{padding:14px 14px 12px;max-height:92vh;}
+#ep .ep-grid{display:flex;flex-direction:column;gap:8px;}
+#ep .ep-row{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;}
+#ep .ep-col{flex:1;min-width:0;}
+#ep .ep-col-2{flex:1 1 calc(50% - 4px);min-width:150px;}
+#ep .ep-col-3{flex:1 1 calc(33.333% - 6px);min-width:120px;}
+#ep .ep-col-wide{flex:1.6 1 190px;}
+#ep .ep-col-narrow{flex:.8 1 95px;}
+#ep .ep-label{
+  height:17px;display:flex;align-items:center;
+  font-size:9px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.35px;
+  margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+#ep .ep-field{
+  width:100%;height:32px;box-sizing:border-box;
+  padding:0 10px;border:1px solid var(--border);border-radius:8px;
+  background:#111;color:var(--text);font-size:12px;line-height:32px;
+}
+#ep textarea.ep-field{height:auto;line-height:1.25;padding:7px 10px;min-height:48px;resize:vertical;font-family:inherit;}
+#ep .ep-field-accent{color:var(--accent);font-weight:700;border-color:color-mix(in oklab, var(--accent) 28%, transparent);}
+#ep .ep-field-rose{color:#fc8181;font-weight:700;border-color:rgba(252,129,129,.35);}
+#ep .ep-field-muted{color:var(--muted);}
+#ep .ep-field-italic{font-style:italic;color:#888;}
+#ep .ep-field-danger{border-color:#e53e3e;color:#ff4d4d;font-weight:800;text-align:center;}
+#ep .ep-field-center{text-align:center;}
+#ep .ep-select{
+  appearance:none;-webkit-appearance:none;-moz-appearance:none;
+  padding-right:28px;padding-left:12px;text-overflow:ellipsis;
+  background-image:
+    linear-gradient(45deg,transparent 50%,#888 50%),
+    linear-gradient(135deg,#888 50%,transparent 50%);
+  background-position:calc(100% - 13px) 14px,calc(100% - 8px) 14px;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat;
+}
+#ep .ep-price-head{
+  display:flex;align-items:center;justify-content:space-between;gap:4px;
+  min-width:0;height:17px;margin-bottom:2px;
+}
+#ep .ep-price-title{display:flex;align-items:center;gap:4px;min-width:0;flex:1;}
+#ep .ep-price-dot{
+  width:8px;height:8px;border-radius:50%;display:none;flex-shrink:0;
+  background:#6b7280;box-shadow:0 0 0 1px #0008;
+}
+#ep .ep-price-actions{display:flex;align-items:center;gap:3px;flex-shrink:0;}
+#ep .ep-btn-xs{
+  height:18px;box-sizing:border-box;padding:0 6px;border-radius:5px;
+  border:1px solid var(--border);background:#1e1e1e;color:var(--muted);
+  font-size:9px;font-weight:700;line-height:1;display:inline-flex;align-items:center;
+  cursor:pointer;white-space:nowrap;
+}
+#ep #ep-prezzo-verify-btn{border-color:#38a169;background:rgba(56,161,105,.08);color:#68d391;}
+#ep #ep-promo-g-btn{min-width:24px;justify-content:center;border-color:#3a3108;background:#111;}
+#ep .ep-qty-control{display:flex;gap:4px;align-items:center;}
+#ep .ep-qty-btn{
+  width:32px;height:32px;box-sizing:border-box;border:1px solid var(--border);
+  border-radius:8px;background:#1e1e1e;color:var(--muted);font-size:18px;line-height:1;
+  cursor:pointer;
+}
+#ep .ep-inline-action{height:32px;padding:0 12px;border-radius:8px;border:none;background:#3182ce;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+#ep .ep-inline-action-outline{height:26px;padding:0 10px;border-radius:7px;border:1px solid #3182ce;background:transparent;color:#3182ce;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;}
+#ep .ep-actions{display:flex;gap:6px;}
+#ep .ep-actions button{height:36px;padding:0 12px;box-sizing:border-box;}
+
+@media (max-width:520px){
+  #ep .ob{padding:10px 10px 10px;}
+  #ep .ep-grid{gap:6px;}
+  #ep .ep-row{gap:6px;}
+  #ep .ep-col-2,#ep .ep-col-3,#ep .ep-col-wide,#ep .ep-col-narrow{flex:1 1 100%;min-width:0;}
+  #ep .ep-label{font-size:8px;letter-spacing:.2px;height:16px;}
+  #ep .ep-field{height:30px;font-size:11px;line-height:30px;padding:0 8px;}
+  #ep textarea.ep-field{min-height:44px;padding:6px 8px;}
+  #ep .ep-select{padding-right:24px;padding-left:10px;background-position:calc(100% - 11px) 13px,calc(100% - 7px) 13px;}
+  #ep .ep-qty-btn{width:30px;height:30px;}
+  #ep .ep-inline-action{height:30px;font-size:11px;padding:0 10px;}
+  #ep .ep-actions button{height:34px;}
+}
 .ep-stock-row{display:flex;gap:6px;align-items:flex-end;margin-bottom:8px;width:100%;}
 .ep-stock-field{min-width:0;}
 .ep-stock-qty{flex:1 1 170px;}

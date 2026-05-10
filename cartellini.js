@@ -605,6 +605,7 @@ function ct_closePromoOnDelete(ct, deferCommit){
   if(commitNow){
     try{
       if(typeof touchRowProductChangeAt === 'function') touchRowProductChangeAt(r);
+      if(typeof touchRowPriceUpdate === 'function') touchRowPriceUpdate(r);
       lsSet(SK, rows);
     }catch(e2){
       // rollback prudente
@@ -990,6 +991,7 @@ function ct_syncDB(){
         r.size = (typeof autoSize === 'function') ? autoSize(prezzo) : r.size;
         changed = true;
         productTouched = true;
+        if(typeof touchRowPriceUpdate === 'function') touchRowPriceUpdate(r);
         stats.prezzi++;
       }
 

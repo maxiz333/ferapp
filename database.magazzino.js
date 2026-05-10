@@ -559,6 +559,20 @@ function toggleMagSottoScorta(){
   renderMagazzino();
 }
 
+// Filtro "Revisione Prezzi" nel magazzino: mostra solo articoli con bollino
+// Giallo/Arancio/Rosso/Neutro (esclude solo i Verdi = aggiornati di recente).
+var magRevisionePrezzi = false;
+function toggleMagRevisionePrezzi(){
+  magRevisionePrezzi = !magRevisionePrezzi;
+  var btn = document.getElementById('mag-revprz-btn');
+  if(btn){
+    btn.style.background  = magRevisionePrezzi ? '#dd6b20' : '#1e1e1e';
+    btn.style.color       = magRevisionePrezzi ? '#fff'    : 'var(--muted)';
+    btn.style.borderColor = magRevisionePrezzi ? '#dd6b20' : 'var(--border)';
+  }
+  renderMagazzino();
+}
+
 // -----------------------------------------------
 //  MAGAZZINO
 // -----------------------------------------------
