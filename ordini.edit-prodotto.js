@@ -81,6 +81,12 @@ function openEditProdotto(i, isNew, cartEditContext){
     catSel.appendChild(opt);
   });
   epFillSubcat(m.subcat);
+  if(typeof epResetCorrelatiUi === 'function'){
+    epResetCorrelatiUi();
+  }else{
+    var corrSearchEl = document.getElementById('ep-correlati-search');
+    if(corrSearchEl) corrSearchEl.value = '';
+  }
 
   document.getElementById('ep').classList.add('open');
   setTimeout(function(){ document.getElementById('ep-desc').focus(); renderCorrelati(_epIdx); renderScaglioni(_epIdx); }, 100);

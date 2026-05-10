@@ -1394,16 +1394,21 @@ body.light-mode #confirm-overlay > div { background:#fff; }
       </div>
 
       <!-- Correlati -->
-      <div>
-        <div class="ep-label">🔄 Correlati</div>
-        <div id="ep-correlati-list" style="margin-bottom:4px;font-size:11px;"></div>
-        <div class="ep-row" style="flex-wrap:nowrap;">
-          <div class="ep-col">
-            <select id="ep-correlati-add" class="ep-field ep-select">
-              <option value="">Aggiungi correlato...</option>
-            </select>
+      <div id="ep-correlati-sec" class="ep-correlati-sec">
+        <div class="ep-correlati-head" role="button" tabindex="0" onclick="epToggleCorrelati()" onkeydown="if(event.key==='Enter' || event.key===' '){ event.preventDefault(); epToggleCorrelati(); }" aria-label="Mostra o nascondi correlati">
+          <div class="ep-label" id="ep-correlati-title">🔄 Correlati (0)</div>
+          <button type="button" id="ep-correlati-toggle" class="ep-correlati-toggle" onclick="event.stopPropagation();epToggleCorrelati();" aria-label="Mostra o nascondi correlati" title="Mostra o nascondi correlati">▾</button>
+        </div>
+        <div id="ep-correlati-body" class="ep-correlati-body">
+          <div id="ep-correlati-list" class="ep-correlati-list"></div>
+          <div class="ep-row" style="margin-bottom:4px;">
+            <div class="ep-col">
+              <div class="ep-correlati-search-wrap">
+                <input type="text" id="ep-correlati-search" class="ep-field" placeholder="Cerca per nome o codice..." autocomplete="off" oninput="if(typeof _epIdx==='number' && _epIdx!==null) renderCorrelati(_epIdx);">
+                <div id="ep-correlati-results" class="ep-correlati-results" role="listbox" aria-label="Risultati correlati"></div>
+              </div>
+            </div>
           </div>
-          <button onclick="aggiungiCorrelato(_epIdx)" class="ep-inline-action">+ Aggiungi</button>
         </div>
       </div>
 

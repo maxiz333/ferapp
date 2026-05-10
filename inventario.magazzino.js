@@ -14,6 +14,25 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 var _magSearchTimer = null;
+var _magCardCorrelatiSearchTimer = {};
+
+function _magCardNormalizedCorrelati(i){
+  if(typeof normalizeCorrelati === 'function') return normalizeCorrelati(i);
+  if(!magazzino[i]) magazzino[i] = {};
+  var src = Array.isArray(magazzino[i].correlati) ? magazzino[i].correlati : [];
+  var seen = {};
+  var out = [];
+  src.forEach(function(ri){
+    var n = parseInt(ri, 10);
+    if(isNaN(n) || n === i || !rows[n]) return;
+    if(removed && typeof removed.has === 'function' && removed.has(String(n))) return;
+    if(seen[n]) return;
+    seen[n] = true;
+    out.push(n);
+  });
+  magazzino[i].correlati = out;
+  return out;
+}
 
 function renderMagazzino(){
   // Popola filtro categorie una-tantum
@@ -225,11 +244,19 @@ function _doMagSearch(){
     var posizione = m.posizione || '—';
     var fornitore = m.nomeFornitore || '—';
     var sogliaTxt = (m.soglia !== undefined && m.soglia !== null && m.soglia !== '') ? String(m.soglia) : '0';
-    var correlati = Array.isArray(m.correlati) ? m.correlati : [];
-    var corrCount = 0;
+    var correlati = _magCardNormalizedCorrelati(i);
+    var correlatiRows = [];
     correlati.forEach(function(ri){
-      if(rows && rows[ri]) corrCount++;
+      if(!rows[ri]) return;
+      correlatiRows.push({
+        ri: ri,
+        desc: rows[ri].desc || ('#' + ri),
+        codM: rows[ri].codM || '',
+        codF: rows[ri].codF || '',
+        prezzo: rows[ri].prezzo || '-'
+      });
     });
+    var corrCount = correlatiRows.length;
     var scList = Array.isArray(m.scaglioni) ? m.scaglioni : [];
     var scActiveCount = 0;
     scList.forEach(function(s){
@@ -351,14 +378,22 @@ function _doMagSearch(){
       html += '<div class="mag-card-adv">';
       html += '<div class="mag-edit-label">Correlati</div>';
       html += '<div class="mag-meta-band" style="margin-top:0;">';
-      html += '<input type="text" id="mag-correlati-add-' + i + '" class="mag-edit-input" placeholder="Codice o descrizione...">';
-      html += '<button type="button" class="mag-edit-adv-btn" onclick="magCardAddCorrelato(' + i + ')">+ Collega</button>';
+      html += '<div class="mag-corr-search-wrap">';
+      html += '<input type="text" id="mag-correlati-add-' + i + '" class="mag-edit-input" placeholder="Cerca per nome o codice (min 2)..." autocomplete="off" oninput="magCardOnCorrelatiInput(' + i + ')" onfocus="magCardOnCorrelatiInput(' + i + ')" onblur="setTimeout(function(){magCardCloseCorrelatiSearch(' + i + ')},120)" onkeydown="if(event.keyCode===13){event.preventDefault();magCardAddCorrelato(' + i + ');}">';
+      html += '<div id="mag-correlati-results-' + i + '" class="mag-corr-results" role="listbox" aria-label="Risultati correlati"></div>';
       html += '</div>';
-      if(correlati.length){
-        html += '<div class="mag-chip-wrap">';
-        correlati.forEach(function(ri){
-          if(!rows[ri]) return;
-          html += '<span class="mag-chip">' + esc(rows[ri].desc || ('#' + ri)) + '<button type="button" onclick="magCardRemoveCorrelato(' + i + ',' + ri + ')">×</button></span>';
+      html += '</div>';
+      if(correlatiRows.length){
+        html += '<div class="mag-corr-mini-list">';
+        correlatiRows.forEach(function(cr){
+          html += '<div class="mag-corr-mini-row">';
+          html += '<div class="mag-corr-mini-main">';
+          html += '<div class="mag-corr-mini-name">' + esc(cr.desc) + '</div>';
+          html += '<div class="mag-corr-mini-code">' + esc(cr.codM || '—') + ' · ' + esc(cr.codF || '—') + '</div>';
+          html += '</div>';
+          html += '<div class="mag-corr-mini-price">€ ' + esc(cr.prezzo) + '</div>';
+          html += '<button type="button" class="mag-corr-mini-remove" onclick="magCardRemoveCorrelato(' + i + ',' + cr.ri + ')">×</button>';
+          html += '</div>';
         });
         html += '</div>';
       }
@@ -405,6 +440,137 @@ function _doMagSearch(){
 }
 
 var _magCardUiState = { adv: {} };
+
+function _magCardClearCorrelatiSearchTimer(i){
+  var k = String(i);
+  if(_magCardCorrelatiSearchTimer[k]){
+    clearTimeout(_magCardCorrelatiSearchTimer[k]);
+    delete _magCardCorrelatiSearchTimer[k];
+  }
+}
+
+function _magCardSetCorrelatiLayerOpen(i, isOpen){
+  var inputEl = document.getElementById('mag-correlati-add-' + i);
+  if(!inputEl || typeof inputEl.closest !== 'function') return;
+  var cardEl = inputEl.closest('.mag-card');
+  if(!cardEl) return;
+  cardEl.classList.toggle('mag-card--corr-open', !!isOpen);
+}
+
+function magCardCloseCorrelatiSearch(i){
+  _magCardClearCorrelatiSearchTimer(i);
+  var resultsEl = document.getElementById('mag-correlati-results-' + i);
+  if(!resultsEl) return;
+  resultsEl.classList.remove('is-open');
+  resultsEl.innerHTML = '';
+  _magCardSetCorrelatiLayerOpen(i, false);
+}
+
+function _magCardGetCorrelatiSearchMatches(i, q){
+  var corr = _magCardNormalizedCorrelati(i);
+  if(typeof getCorrelatiSearchMatches === 'function'){
+    return getCorrelatiSearchMatches(i, q, {
+      existingCorrelati: corr,
+      minChars: 2,
+      maxOptions: 200
+    });
+  }
+  var query = String(q || '').trim().toLowerCase();
+  var out = { query:query, minChars:2, maxOptions:200, tooShort:(query.length < 2), matches:[] };
+  if(out.tooShort) return out;
+  for(var ri = 0; ri < rows.length; ri++){
+    var r = rows[ri];
+    if(!r || ri === i) continue;
+    if(removed && typeof removed.has === 'function' && removed.has(String(ri))) continue;
+    if(corr.indexOf(ri) >= 0) continue;
+    var desc = String(r.desc || '');
+    var codF = String(r.codF || '');
+    var codM = String(r.codM || '');
+    var hay = (desc + ' ' + codF + ' ' + codM).toLowerCase();
+    if(hay.indexOf(query) < 0) continue;
+    out.matches.push({ ri:ri, desc:desc, codF:codF, codM:codM, prezzo:(r.prezzo || '-') });
+    if(out.matches.length >= out.maxOptions) break;
+  }
+  return out;
+}
+
+function magCardOnCorrelatiInput(i){
+  _magCardClearCorrelatiSearchTimer(i);
+  _magCardCorrelatiSearchTimer[String(i)] = setTimeout(function(){
+    magCardRenderCorrelatiResults(i);
+  }, 130);
+}
+
+function magCardRenderCorrelatiResults(i){
+  _magCardClearCorrelatiSearchTimer(i);
+  if(!rows || !rows[i]) return;
+  var inputEl = document.getElementById('mag-correlati-add-' + i);
+  var resultsEl = document.getElementById('mag-correlati-results-' + i);
+  if(!inputEl || !resultsEl) return;
+  var q = String(inputEl.value || '');
+  var searchRes = _magCardGetCorrelatiSearchMatches(i, q);
+  resultsEl.innerHTML = '';
+  resultsEl.classList.remove('is-open');
+  if(searchRes.tooShort) return;
+  var frag = document.createDocumentFragment();
+  var optionCount = 0;
+  searchRes.matches.forEach(function(match){
+    var rowEl = document.createElement('div');
+    rowEl.className = 'mag-corr-result';
+    rowEl.setAttribute('role', 'option');
+    rowEl.onmousedown = function(ev){ ev.preventDefault(); };
+    rowEl.onclick = function(){ magCardAddCorrelatoByIdx(i, match.ri); };
+    var mainEl = document.createElement('div');
+    mainEl.className = 'mag-corr-result-main';
+    var nameEl = document.createElement('div');
+    nameEl.className = 'mag-corr-result-name';
+    nameEl.textContent = match.desc || '-';
+    var metaEl = document.createElement('div');
+    metaEl.className = 'mag-corr-result-meta';
+    metaEl.textContent = (match.codM || '—') + ' · ' + (match.codF || '—');
+    mainEl.appendChild(nameEl);
+    mainEl.appendChild(metaEl);
+    var priceEl = document.createElement('div');
+    priceEl.className = 'mag-corr-result-price';
+    priceEl.textContent = '€ ' + (match.prezzo || '-');
+    rowEl.appendChild(mainEl);
+    rowEl.appendChild(priceEl);
+    frag.appendChild(rowEl);
+    optionCount++;
+  });
+  resultsEl.appendChild(frag);
+  if(optionCount <= 0){
+    var none = document.createElement('div');
+    none.className = 'mag-corr-result-empty';
+    none.textContent = 'Nessun risultato';
+    resultsEl.appendChild(none);
+  }
+  resultsEl.classList.add('is-open');
+  _magCardSetCorrelatiLayerOpen(i, true);
+}
+
+function magCardAddCorrelatoByIdx(i, target){
+  target = parseInt(target, 10);
+  if(isNaN(target) || !rows || !rows[i] || !rows[target]) return;
+  if(!magazzino[i]) magazzino[i] = {};
+  var linked = false;
+  if(typeof linkCorrelatiBidirectional === 'function'){
+    linked = linkCorrelatiBidirectional(i, target);
+  }else{
+    if(!magazzino[i].correlati) magazzino[i].correlati = [];
+    if(magazzino[i].correlati.indexOf(target) < 0){ magazzino[i].correlati.push(target); linked = true; }
+    if(!magazzino[target]) magazzino[target] = {};
+    if(!magazzino[target].correlati) magazzino[target].correlati = [];
+    if(magazzino[target].correlati.indexOf(i) < 0){ magazzino[target].correlati.push(i); linked = true; }
+  }
+  var inp = document.getElementById('mag-correlati-add-' + i);
+  if(inp) inp.value = '';
+  magCardCloseCorrelatiSearch(i);
+  if(linked){
+    _magCardPersist(i, { rerender:true });
+    if(target !== i && typeof _fbSaveArticolo === 'function') _fbSaveArticolo(target);
+  }
+}
 
 function _magCardPersist(i, opts){
   if(!rows || !rows[i]) return;
@@ -562,40 +728,38 @@ function magCardToggleAdvanced(i){
 
 function magCardAddCorrelato(i){
   if(!rows || !rows[i]) return;
-  if(!magazzino[i]) magazzino[i] = {};
   var inp = document.getElementById('mag-correlati-add-' + i);
   var raw = inp ? String(inp.value || '').trim() : '';
   if(!raw) return;
-  var target = -1;
-  var norm = raw.toLowerCase();
-  for(var ri = 0; ri < rows.length; ri++){
-    if(ri === i || !rows[ri]) continue;
-    var cod = String(rows[ri].codM || '').toLowerCase();
-    var desc = String(rows[ri].desc || '').toLowerCase();
-    if(cod === norm || desc.indexOf(norm) >= 0){ target = ri; break; }
-  }
-  if(target < 0){
+  var searchRes = _magCardGetCorrelatiSearchMatches(i, raw);
+  if(searchRes.tooShort || !searchRes.matches.length){
     if(typeof showToastGen === 'function') showToastGen('orange', 'Correlato non trovato');
     return;
   }
-  if(!magazzino[i].correlati) magazzino[i].correlati = [];
-  if(magazzino[i].correlati.indexOf(target) < 0) magazzino[i].correlati.push(target);
-  if(!magazzino[target]) magazzino[target] = {};
-  if(!magazzino[target].correlati) magazzino[target].correlati = [];
-  if(magazzino[target].correlati.indexOf(i) < 0) magazzino[target].correlati.push(i);
-  if(inp) inp.value = '';
-  _magCardPersist(i, { rerender:true });
-  if(target !== i && typeof _fbSaveArticolo === 'function') _fbSaveArticolo(target);
+  magCardAddCorrelatoByIdx(i, searchRes.matches[0].ri);
 }
 
 function magCardRemoveCorrelato(i, ri){
-  if(!magazzino[i] || !Array.isArray(magazzino[i].correlati)) return;
-  magazzino[i].correlati = magazzino[i].correlati.filter(function(x){ return x !== ri; });
-  if(magazzino[ri] && Array.isArray(magazzino[ri].correlati)){
-    magazzino[ri].correlati = magazzino[ri].correlati.filter(function(x){ return x !== i; });
+  ri = parseInt(ri, 10);
+  if(isNaN(ri)) return;
+  var changed = false;
+  if(typeof unlinkCorrelatiBidirectional === 'function'){
+    changed = unlinkCorrelatiBidirectional(i, ri);
+  }else{
+    if(!magazzino[i] || !Array.isArray(magazzino[i].correlati)) return;
+    var lenI = magazzino[i].correlati.length;
+    magazzino[i].correlati = magazzino[i].correlati.filter(function(x){ return x !== ri; });
+    changed = lenI !== magazzino[i].correlati.length;
+    if(magazzino[ri] && Array.isArray(magazzino[ri].correlati)){
+      var lenR = magazzino[ri].correlati.length;
+      magazzino[ri].correlati = magazzino[ri].correlati.filter(function(x){ return x !== i; });
+      changed = changed || (lenR !== magazzino[ri].correlati.length);
+    }
   }
-  _magCardPersist(i, { rerender:true });
-  if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(ri);
+  if(changed){
+    _magCardPersist(i, { rerender:true });
+    if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(ri);
+  }
 }
 
 function magCardAddScaglione(i){

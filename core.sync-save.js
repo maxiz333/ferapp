@@ -74,7 +74,8 @@ function saveOrdini(){
 // ══ SALVATAGGIO SINGOLO ARTICOLO SU FIREBASE ═════════════════════
 // Salva l'articolo modificato CON i dati magazzino (qty, prezzoAcquisto, ecc.)
 var _MAG_FIELDS = ['qty','soglia','prezzoAcquisto','marca','specs',
-                   'posizione','cat','subcat','nomeFornitore','descrizione','note_tecniche'];
+                   'posizione','cat','subcat','nomeFornitore','descrizione','note_tecniche',
+                   'correlati','scaglioni'];
 
 function _fbSaveArticolo(idx){
   if(!_fbReady || !_fbDb || !rows[idx]) return;

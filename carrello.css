@@ -3381,11 +3381,128 @@ body.light-mode .ct-mq-inp:focus {
   border-color:rgba(229,62,62,.45);
 }
 #mag-list .mag-card-adv{
+  position:relative;
+  z-index:70;
+  overflow:visible;
   margin-top:6px;
   padding:6px 7px 4px;
   border:1px dashed rgba(255,255,255,.12);
   border-radius:8px;
   background:rgba(0,0,0,.12);
+}
+#mag-list .mag-card.mag-card--corr-open{
+  z-index:120;
+}
+#mag-list .mag-corr-search-wrap{
+  position:relative;
+  width:100%;
+  z-index:85;
+}
+#mag-list .mag-corr-results{
+  display:none;
+  position:absolute;
+  left:0;
+  right:0;
+  top:calc(100% + 4px);
+  max-height:230px;
+  overflow-y:auto;
+  background:#151515;
+  border:1px solid #2f3642;
+  border-radius:8px;
+  box-shadow:0 12px 30px rgba(0,0,0,.58);
+  z-index:90;
+}
+#mag-list .mag-corr-results.is-open{display:block;}
+#mag-list .mag-corr-result{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:space-between;
+  padding:6px 8px;
+  border-bottom:1px solid #232323;
+  cursor:pointer;
+}
+#mag-list .mag-corr-result:last-child{border-bottom:none;}
+#mag-list .mag-corr-result:hover{background:#1d1d1d;}
+#mag-list .mag-corr-result-main{min-width:0;flex:1;}
+#mag-list .mag-corr-result-name{
+  font-size:11px;
+  font-weight:700;
+  color:var(--text);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#mag-list .mag-corr-result-meta{
+  font-size:10px;
+  color:#7d8796;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#mag-list .mag-corr-result-price{
+  font-size:11px;
+  font-weight:800;
+  color:var(--accent);
+  white-space:nowrap;
+}
+#mag-list .mag-corr-result-empty{
+  padding:7px 8px;
+  font-size:10px;
+  color:#7d8796;
+  text-align:left;
+}
+#mag-list .mag-corr-mini-list{
+  margin-top:4px;
+  max-height:132px;
+  overflow-y:auto;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:7px;
+  background:#141414;
+}
+#mag-list .mag-corr-mini-row{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:4px 6px;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+#mag-list .mag-corr-mini-row:last-child{
+  border-bottom:none;
+}
+#mag-list .mag-corr-mini-main{
+  min-width:0;
+  flex:1;
+}
+#mag-list .mag-corr-mini-name{
+  font-size:12px;
+  color:var(--text);
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#mag-list .mag-corr-mini-code{
+  font-size:10px;
+  color:#7d8796;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#mag-list .mag-corr-mini-price{
+  font-size:12px;
+  font-weight:800;
+  color:var(--accent);
+  white-space:nowrap;
+}
+#mag-list .mag-corr-mini-remove{
+  border:none;
+  background:transparent;
+  color:#fc8181;
+  cursor:pointer;
+  font-size:12px;
+  line-height:1;
+  padding:0 2px;
 }
 #mag-list .mag-chip-wrap{
   display:flex;
