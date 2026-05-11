@@ -264,8 +264,9 @@ function _doMagSearch(){
     });
     var corrOpen = !!(_magCardUiState.corr && _magCardUiState.corr[String(i)]);
     var scaglOpen = !!(_magCardUiState.scagl && _magCardUiState.scagl[String(i)]);
+    var detailsOpen = !!(_magCardUiState.details && _magCardUiState.details[String(i)]);
 
-    html += '<div class="mag-card' + (hasChrono ? ' mag-card--chrono' : '') + '" style="position:relative;background:#1e1e1e;border:1px solid ' + borderCol + ';border-radius:10px;padding:10px 12px;margin-bottom:10px;' + (isLow ? 'box-shadow:0 0 0 1px #e53e3e33;' : '') + '">';
+    html += '<div class="mag-card' + (hasChrono ? ' mag-card--chrono' : '') + '" style="position:relative;background:#1e1e1e;border:1px solid ' + borderCol + ';border-radius:10px;padding:8px 9px;margin-bottom:8px;' + (isLow ? 'box-shadow:0 0 0 1px #e53e3e33;' : '') + '">';
     if(hasChrono){
       var chronoXClick = (chronoMode === 'modified')
         ? 'magRemoveFromModifiedChronoView(' + i + ')'
@@ -376,59 +377,60 @@ function _doMagSearch(){
       }
       html += '</div>';
     }
+    html += '<div class="mag-card-section mag-card-section--specs">';
+    html += '<div class="mag-edit-label">Specifiche</div>';
+    html += '<textarea class="mag-edit-textarea mag-edit-textarea--compact" onblur="magCardSaveField(' + i + ',\'specs\',this.value)" placeholder="Specifiche tecniche...">' + esc(specs) + '</textarea>';
+    html += '</div>';
+    html += '<button type="button" class="mag-details-toggle' + (detailsOpen ? ' is-open' : '') + '" onclick="magCardToggleDetails(' + i + ')"><span>' + (detailsOpen ? 'Nascondi dettagli' : 'Mostra dettagli') + '</span><span class="mag-details-toggle-arrow">▾</span></button>';
     html += '</div>';
 
     // Sezione C: anagrafica
-    html += '<div class="mag-card-section mag-card-section--c">';
-    html += '<div class="mag-edit-row mag-edit-row--anag">';
-    html += '<div class="mag-edit-col"><div class="mag-edit-label">Marca</div><input type="text" class="mag-edit-input mag-edit-input--meta" value="' + esc(marca) + '" onblur="magCardSaveField(' + i + ',\'marca\',this.value)"></div>';
-    html += '<div class="mag-edit-col"><div class="mag-edit-label">Posizione</div><input type="text" class="mag-edit-input mag-edit-input--italic" value="' + esc(posizione === '—' ? '' : posizione) + '" onblur="magCardSaveField(' + i + ',\'posizione\',this.value)"></div>';
-    html += '<div class="mag-edit-col"><div class="mag-edit-label">Fornitore</div><input type="text" class="mag-edit-input mag-edit-input--meta" value="' + esc(fornitore === '—' ? '' : fornitore) + '" onblur="magCardSaveField(' + i + ',\'nomeFornitore\',this.value)"></div>';
-    html += '</div>';
-    html += '</div>';
-
-    // Sezione D: classificazione + specifiche
-    html += '<div class="mag-card-section mag-card-section--d">';
-    html += '<div class="mag-edit-row">';
-    html += '<div class="mag-edit-col"><div class="mag-edit-label">Categoria</div><select class="mag-edit-select" onchange="magCardSaveField(' + i + ',\'cat\',this.value)">';
-    html += '<option value="">— Categoria —</option>';
-    if(typeof categorie !== 'undefined') categorie.forEach(function(cat){
-      html += '<option value="' + cat.id + '"' + (m.cat === cat.id ? ' selected' : '') + '>' + esc(cat.nome) + '</option>';
-    });
-    html += '</select>';
-    html += '</div>';
-    html += '<div class="mag-edit-col"><div class="mag-edit-label">Sottocategoria</div><select class="mag-edit-select" onchange="magCardSaveField(' + i + ',\'subcat\',this.value)">';
-    html += '<option value="">— Sotto-categoria —</option>';
-    subsForCat.forEach(function(s){
-      html += '<option' + (m.subcat === s ? ' selected' : '') + '>' + esc(s) + '</option>';
-    });
-    html += '</select>';
-    html += '</div>';
-    html += '</div>';
-    html += '<div class="mag-edit-label">Specifiche</div>';
-    html += '<textarea class="mag-edit-textarea" onblur="magCardSaveField(' + i + ',\'specs\',this.value)" placeholder="Specifiche tecniche...">' + esc(specs) + '</textarea>';
-    html += '</div>';
-
-    // Sezione E: avanzate correlati + scaglioni
-    html += '<div class="mag-card-section mag-card-section--e">';
-    html += '<div class="mag-meta-band mag-meta-band--cat">';
-    html += '<div class="mag-meta-pair"><span class="mag-meta-label">Cat</span><span class="mag-meta-value">' + esc(catLabel || '—') + ' / ' + esc(sub || '—') + '</span></div>';
-    html += '<div style="display:flex;gap:6px;align-items:center;">';
-    if(scActiveCount > 0) html += '<span class="mag-badge-inline" title="Scaglioni prezzo configurati">📦 ' + scActiveCount + '</span>';
-    html += '</div>';
-    html += '</div>';
-    html += '</div>';
-    html += '<div class="mag-card-footer-actions">';
-    html += '<button type="button" class="mag-quick-save-btn" onclick="magCardSaveBatch(' + i + ')">💾 Salva rapido</button>';
-    html += '<button type="button" onclick="openEditProdotto(' + i + ')" style="flex:1;padding:6px 8px;border-radius:7px;border:1px solid var(--accent)44;background:transparent;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;touch-action:manipulation;">✏️ Modifica articolo</button>';
-    var footDelClick = (hasChrono && chronoMode === 'modified')
-      ? 'magRemoveFromModifiedChronoView(' + i + ')'
-      : 'magDeleteArticolo(' + i + ',' + codMJson + ')';
-    var footDelTitle = (hasChrono && chronoMode === 'modified')
-      ? 'Nascondi dalla lista modificati (non elimina dal database)'
-      : 'Elimina articolo dal database';
-    html += '<button type="button" class="mag-del-btn mag-del-btn--footer" onclick=\'' + footDelClick + '\' title="' + esc(footDelTitle) + '">🗑</button>';
-    html += '</div>';
+    if(detailsOpen){
+      html += '<div class="mag-card-section mag-card-section--c">';
+      html += '<div class="mag-edit-row mag-edit-row--anag">';
+      html += '<div class="mag-edit-col"><div class="mag-edit-label">Marca</div><input type="text" class="mag-edit-input mag-edit-input--meta" value="' + esc(marca) + '" onblur="magCardSaveField(' + i + ',\'marca\',this.value)"></div>';
+      html += '<div class="mag-edit-col"><div class="mag-edit-label">Posizione</div><input type="text" class="mag-edit-input mag-edit-input--italic" value="' + esc(posizione === '—' ? '' : posizione) + '" onblur="magCardSaveField(' + i + ',\'posizione\',this.value)"></div>';
+      html += '<div class="mag-edit-col"><div class="mag-edit-label">Fornitore</div><input type="text" class="mag-edit-input mag-edit-input--meta" value="' + esc(fornitore === '—' ? '' : fornitore) + '" onblur="magCardSaveField(' + i + ',\'nomeFornitore\',this.value)"></div>';
+      html += '</div>';
+      html += '</div>';
+      html += '<div class="mag-card-section mag-card-section--d">';
+      html += '<div class="mag-edit-row">';
+      html += '<div class="mag-edit-col"><div class="mag-edit-label">Categoria</div><select class="mag-edit-select" onchange="magCardSaveField(' + i + ',\'cat\',this.value)">';
+      html += '<option value="">— Categoria —</option>';
+      if(typeof categorie !== 'undefined') categorie.forEach(function(cat){
+        html += '<option value="' + cat.id + '"' + (m.cat === cat.id ? ' selected' : '') + '>' + esc(cat.nome) + '</option>';
+      });
+      html += '</select>';
+      html += '</div>';
+      html += '<div class="mag-edit-col"><div class="mag-edit-label">Sottocategoria</div><select class="mag-edit-select" onchange="magCardSaveField(' + i + ',\'subcat\',this.value)">';
+      html += '<option value="">— Sotto-categoria —</option>';
+      subsForCat.forEach(function(s){
+        html += '<option' + (m.subcat === s ? ' selected' : '') + '>' + esc(s) + '</option>';
+      });
+      html += '</select>';
+      html += '</div>';
+      html += '</div>';
+      html += '</div>';
+      html += '<div class="mag-card-section mag-card-section--e">';
+      html += '<div class="mag-meta-band mag-meta-band--cat">';
+      html += '<div class="mag-meta-pair"><span class="mag-meta-label">Cat</span><span class="mag-meta-value">' + esc(catLabel || '—') + ' / ' + esc(sub || '—') + '</span></div>';
+      html += '<div style="display:flex;gap:6px;align-items:center;">';
+      if(scActiveCount > 0) html += '<span class="mag-badge-inline" title="Scaglioni prezzo configurati">📦 ' + scActiveCount + '</span>';
+      html += '</div>';
+      html += '</div>';
+      html += '</div>';
+      html += '<div class="mag-card-footer-actions">';
+      html += '<button type="button" class="mag-quick-save-btn" onclick="magCardSaveBatch(' + i + ')">💾 Salva rapido</button>';
+      html += '<button type="button" onclick="openEditProdotto(' + i + ')" style="flex:1;padding:6px 8px;border-radius:7px;border:1px solid var(--accent)44;background:transparent;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;touch-action:manipulation;">✏️ Modifica articolo</button>';
+      var footDelClick = (hasChrono && chronoMode === 'modified')
+        ? 'magRemoveFromModifiedChronoView(' + i + ')'
+        : 'magDeleteArticolo(' + i + ',' + codMJson + ')';
+      var footDelTitle = (hasChrono && chronoMode === 'modified')
+        ? 'Nascondi dalla lista modificati (non elimina dal database)'
+        : 'Elimina articolo dal database';
+      html += '<button type="button" class="mag-del-btn mag-del-btn--footer" onclick=\'' + footDelClick + '\' title="' + esc(footDelTitle) + '">🗑</button>';
+      html += '</div>';
+    }
     html += '</div>'; // fine card
   });
 
@@ -442,7 +444,7 @@ function _doMagSearch(){
   list.innerHTML = html;
 }
 
-var _magCardUiState = { corr: {}, scagl: {} };
+var _magCardUiState = { corr: {}, scagl: {}, details: {} };
 
 function _magCardClearCorrelatiSearchTimer(i){
   var k = String(i);
@@ -732,6 +734,12 @@ function magCardToggleCorrInline(i){
 function magCardToggleScaglInline(i){
   var k = String(i);
   _magCardUiState.scagl[k] = !_magCardUiState.scagl[k];
+  renderMagazzino();
+}
+
+function magCardToggleDetails(i){
+  var k = String(i);
+  _magCardUiState.details[k] = !_magCardUiState.details[k];
   renderMagazzino();
 }
 

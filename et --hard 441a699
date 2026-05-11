@@ -1,0 +1,103 @@
+[33mafd9a63[m[33m ([m[1;36mHEAD[m[33m)[m HEAD@{0}: reset: moving to ORIG_HEAD
+[33mbf3b6fb[m HEAD@{1}: reset: moving to HEAD~1
+[33mafd9a63[m[33m ([m[1;36mHEAD[m[33m)[m HEAD@{2}: checkout: moving from e5ad4f7891349128732e6ae0cdbcde275903f57b to afd9a634b85c4c5623806a119062cf2b0ac7e7e0
+[33me5ad4f7[m HEAD@{3}: checkout: moving from 9c1f355ade770bed015c9b42ce327cae44972496 to e5ad4f7891349128732e6ae0cdbcde275903f57b
+[33m9c1f355[m HEAD@{4}: checkout: moving from master to 9c1f355ade770bed015c9b42ce327cae44972496
+[33m441a699[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m HEAD@{5}: commit: magazzino bho
+[33m9c1f355[m HEAD@{6}: commit: magazzino correlati
+[33me5ad4f7[m HEAD@{7}: commit: prezzi rossi
+[33mafd9a63[m[33m ([m[1;36mHEAD[m[33m)[m HEAD@{8}: commit: tot prez schda clienti
+[33mbf3b6fb[m HEAD@{9}: commit: occhio
+[33mbd33b93[m HEAD@{10}: commit: tante cose
+[33m0951a8e[m HEAD@{11}: commit: cartt
+[33m0391ba1[m HEAD@{12}: commit: template fatture
+[33m227d237[m HEAD@{13}: commit: unita di misura
+[33m6fdf4a7[m HEAD@{14}: commit: 5 ordini
+[33mff6c4d1[m HEAD@{15}: commit: fatture fatto
+[33m367cf29[m HEAD@{16}: commit: nuova fatt
+[33m39c3e8d[m HEAD@{17}: commit: fattura template
+[33m9b1003d[m HEAD@{18}: commit: fatture 2
+[33m0d549c9[m HEAD@{19}: commit: fattura clinete
+[33mec6a1e9[m HEAD@{20}: commit: CAREL NUM
+[33m3418748[m HEAD@{21}: commit: cell001
+[33mda201b1[m HEAD@{22}: commit: cell00
+[33mc2a8c29[m HEAD@{23}: commit: CART NOME
+[33m6ad5217[m HEAD@{24}: commit: celllll
+[33m6e967bd[m HEAD@{25}: checkout: moving from master to master
+[33m6e967bd[m HEAD@{26}: branch: Reset to HEAD
+[33m6e967bd[m HEAD@{27}: reset: moving to 6e967bd
+[33m17d6318[m HEAD@{28}: checkout: moving from 17d63182351cac39c7395525dda137b6e6782e07 to master
+[33m17d6318[m HEAD@{29}: reset: moving to 17d6318
+[33me1f99fd[m HEAD@{30}: reset: moving to e1f99fd
+[33m6c895ff[m HEAD@{31}: checkout: moving from 17d63182351cac39c7395525dda137b6e6782e07 to 6c895ff639d12beb7f363fe8d8bb4f656388ebdf
+[33m17d6318[m HEAD@{32}: checkout: moving from master to 17d63182351cac39c7395525dda137b6e6782e07
+[33me1f99fd[m HEAD@{33}: reset: moving to e1f99fd
+[33m2427fc0[m HEAD@{34}: Branch: renamed refs/heads/temp_branch to refs/heads/master
+[33m2427fc0[m HEAD@{36}: commit (initial): Versione Definitiva cell3 Pulita
+[33me1f99fd[m HEAD@{37}: checkout: moving from master to e1f99fdbd8789f92c8ac4513adfb273075f08b59
+[33m17ad4ba[m[33m ([m[1;32mpulizia[m[33m)[m HEAD@{38}: checkout: moving from pulizia to master
+[33m17ad4ba[m[33m ([m[1;32mpulizia[m[33m)[m HEAD@{39}: checkout: moving from master to pulizia
+[33m17ad4ba[m[33m ([m[1;32mpulizia[m[33m)[m HEAD@{40}: reset: moving to 17ad4ba9
+[33mb1efd98[m HEAD@{41}: checkout: moving from 17ad4ba9f61c07ea83c0ece72b56cd5ae40f52f2 to master
+[33m17ad4ba[m[33m ([m[1;32mpulizia[m[33m)[m HEAD@{42}: checkout: moving from master to 17ad4ba9f61c07ea83c0ece72b56cd5ae40f52f2
+[33mb1efd98[m HEAD@{43}: pull --tags origin master: Fast-forward
+[33m17ad4ba[m[33m ([m[1;32mpulizia[m[33m)[m HEAD@{44}: reset: moving to 17ad4ba9
+[33m17ad4ba[m[33m ([m[1;32mpulizia[m[33m)[m HEAD@{45}: checkout: moving from 17ad4ba9f61c07ea83c0ece72b56cd5ae40f52f2 to master
+[33m17ad4ba[m[33m ([m[1;32mpulizia[m[33m)[m HEAD@{46}: checkout: moving from 808a8a218661309b450e2eedcf52a18501b1d1b4 to 17ad4ba9f61c07ea83c0ece72b56cd5ae40f52f2
+[33m808a8a2[m HEAD@{47}: checkout: moving from master to 808a8a218661309b450e2eedcf52a18501b1d1b4
+[33mb1efd98[m HEAD@{48}: commit: cell9
+[33m223d8b5[m HEAD@{49}: commit: cell8
+[33m16532e9[m HEAD@{50}: commit: cell7
+[33m22521c2[m HEAD@{51}: commit: cell6
+[33m808a8a2[m HEAD@{52}: commit: cell5
+[33m17ad4ba[m[33m ([m[1;32mpulizia[m[33m)[m HEAD@{53}: commit: cell4
+[33me1f99fd[m HEAD@{54}: commit: cell3
+[33m17d6318[m HEAD@{55}: commit: CELL2S
+[33m6e967bd[m HEAD@{56}: commit: cell
+[33m6c895ff[m HEAD@{57}: commit: reso
+[33m2ecf243[m HEAD@{58}: commit: robine
+[33m50fcc0a[m HEAD@{59}: commit: Ripristino post-crash e implementazione fatturazione
+[33m6106c46[m HEAD@{60}: reset: moving to origin/master
+[33m6106c46[m HEAD@{61}: commit: ROBEEE
+[33m6f85372[m HEAD@{62}: commit: note
+[33m58a85de[m HEAD@{63}: commit: fix notifica ordine
+[33me643148[m HEAD@{64}: commit: H X L
+[33m3c11dc2[m HEAD@{65}: commit: FIX BOZZE QUASI
+[33m818ae6d[m HEAD@{66}: commit: fix ultimi agg
+[33m8f137cd[m HEAD@{67}: commit: occ
+[33m384b2c5[m HEAD@{68}: commit: tante cose
+[33mcedac53[m HEAD@{69}: commit: g di gigi
+[33m5c340e6[m HEAD@{70}: commit: tante cose confr
+[33m8c2c348[m HEAD@{71}: commit: cell
+[33mc067d31[m HEAD@{72}: commit: occhio
+[33m0792b36[m HEAD@{73}: commit: non vaaa
+[33m92fa930[m HEAD@{74}: commit: hop
+[33m1abc30d[m HEAD@{75}: commit: bho
+[33m87f4a45[m HEAD@{76}: commit: non so che fare
+[33m5a463f7[m HEAD@{77}: commit: fix daiii
+[33m87375f7[m HEAD@{78}: commit: fix dai cazzo
+[33m66c5e13[m HEAD@{79}: commit: fix ordini
+[33m9326842[m HEAD@{80}: commit: fix carr ordd
+[33m2f76a06[m HEAD@{81}: commit: fix carrello
+[33m672226f[m HEAD@{82}: commit: scampolo e fix bozze
+[33m7f4512d[m HEAD@{83}: commit: fatto fore fix cell
+[33m7c8a95f[m HEAD@{84}: commit: fix piu meno carrello
+[33m8a60cc0[m HEAD@{85}: commit: cel piu e meno
+[33m63eb80e[m HEAD@{86}: commit: fatto cell
+[33m0d022e5[m HEAD@{87}: commit: fatto cel fix
+[33mcaa1492[m HEAD@{88}: commit: quasi fix call
+[33mf4c945c[m HEAD@{89}: commit: cell fix
+[33m3a61ac4[m HEAD@{90}: commit: modfiche generali ordini/carello
+[33maf75a2d[m HEAD@{91}: commit: modifche generali
+[33mc822660[m HEAD@{92}: commit: sistema tab bozze ordini
+[33mc7d679b[m HEAD@{93}: commit: sync universale firebase tutti i dati
+[33m468be85[m HEAD@{94}: commit: lock uguale per ordini e bozze
+[33mbadc7a9[m HEAD@{95}: commit: lock automatico su ordini inline edit
+[33m4e8f38c[m HEAD@{96}: commit: lock automatico su ordini inline edit
+[33mab7f861[m HEAD@{97}: commit: fix lock ordini senza popup
+[33m59662d2[m HEAD@{98}: commit: fix lock ordini senza popup
+[33mf9daf1f[m HEAD@{99}: commit: rimozione file temporanei
+[33me015baa[m HEAD@{100}: commit: refactor completo split moduli
+[33mef32576[m HEAD@{101}: commit: refactor split moduli
+[33m66a0fe9[m HEAD@{102}: commit: fix lock ordini
+[33me8ee196[m HEAD@{103}: commit (initial): aggiornamenti sconti e blocco ordini

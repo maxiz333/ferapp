@@ -3860,6 +3860,178 @@ body.light-mode .ct-mq-inp:focus {
   z-index: 0;
 }
 
+/* ════════════════════════════════════════════════════════════════
+   MAGAZZINO — card compatta stile v0 (solo presentazione)
+   ════════════════════════════════════════════════════════════════ */
+#mag-list .mag-card{
+  overflow:hidden;
+}
+#mag-list .mag-card .mag-card-section{
+  margin-top:4px;
+  padding-top:4px;
+}
+#mag-list .mag-card .mag-card-section--a{
+  margin-top:0;
+  padding-top:0;
+}
+#mag-list .mag-card-top{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 84px;
+  grid-template-areas:"main photo";
+  gap:8px;
+  align-items:start;
+}
+#mag-list .mag-card-main-col{
+  grid-area:main;
+  min-width:0;
+}
+#mag-list .mag-card-side-col--photo{
+  grid-area:photo;
+  width:84px;
+  align-items:flex-end;
+  gap:2px;
+}
+#mag-list .mag-card-side-col--photo img,
+#mag-list .mag-card-side-col--photo button{
+  width:78px !important;
+  height:78px !important;
+  border-radius:8px !important;
+}
+#mag-list .mag-card-side-col--photo button{
+  font-size:10px !important;
+  line-height:1.2;
+}
+#mag-list .mag-edit-input--desc{
+  font-size:14px;
+  font-weight:800;
+  height:30px;
+  margin-bottom:3px;
+}
+#mag-list .mag-edit-row--triple{
+  display:flex;
+  gap:4px;
+  margin-top:4px;
+}
+#mag-list .mag-edit-row--triple .mag-edit-col{
+  min-width:0;
+  flex:1 1 0;
+}
+#mag-list .mag-edit-label{
+  font-size:9px;
+  margin-bottom:1px;
+}
+#mag-list .mag-edit-row--logistics{
+  display:flex;
+  flex-wrap:nowrap;
+  gap:4px;
+  align-items:flex-end;
+  overflow:hidden;
+}
+#mag-list .mag-edit-row--logistics .mag-edit-col{
+  min-width:0;
+}
+#mag-list .mag-edit-row--logistics .mag-edit-col--qty{
+  flex:1 1 132px;
+}
+#mag-list .mag-edit-row--logistics .mag-edit-col--scagl{
+  flex:0 0 58px;
+}
+#mag-list .mag-edit-row--logistics .mag-edit-col--unit{
+  flex:0 0 58px;
+}
+#mag-list .mag-edit-row--logistics .mag-edit-col--scorta{
+  flex:0 0 58px;
+}
+#mag-list .mag-edit-row--logistics .mag-edit-col--corr{
+  display:none;
+}
+#mag-list .mag-edit-input,
+#mag-list .mag-edit-select{
+  height:26px;
+  line-height:26px;
+  padding:0 6px;
+  font-size:12px;
+}
+#mag-list .mag-edit-input--price{
+  font-size:12px;
+}
+#mag-list .mag-edit-input--qty{
+  width:40px;
+  min-width:40px;
+}
+#mag-list .mag-edit-qty-btn{
+  width:20px;
+  height:26px;
+}
+#mag-list .mag-log-scagl-btn{
+  height:26px;
+  font-size:10px;
+}
+#mag-list .mag-edit-textarea--compact{
+  min-height:34px;
+  max-height:52px;
+  font-size:11px;
+  padding:5px 7px;
+  margin-top:2px;
+}
+#mag-list .mag-details-toggle{
+  margin-top:5px;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  border:0;
+  border-top:1px solid rgba(255,255,255,.12);
+  padding:6px 0 2px;
+  background:transparent;
+  color:#9aa1ad;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+#mag-list .mag-details-toggle-arrow{
+  display:inline-block;
+  transition:transform .14s ease;
+}
+#mag-list .mag-details-toggle.is-open .mag-details-toggle-arrow{
+  transform:rotate(180deg);
+}
+
+@media (max-width:560px){
+  #mag-list .mag-card{
+    padding:8px !important;
+    border-radius:10px !important;
+  }
+  #mag-list .mag-card-top{
+    grid-template-columns:minmax(0,1fr) 74px;
+    gap:6px;
+  }
+  #mag-list .mag-card-side-col--photo{
+    width:74px;
+  }
+  #mag-list .mag-card-side-col--photo img,
+  #mag-list .mag-card-side-col--photo button{
+    width:70px !important;
+    height:70px !important;
+  }
+  #mag-list .mag-edit-row--logistics{
+    gap:3px;
+  }
+  #mag-list .mag-edit-row--logistics .mag-edit-col--qty{
+    flex:1 1 112px;
+  }
+  #mag-list .mag-edit-row--logistics .mag-edit-col--scagl,
+  #mag-list .mag-edit-row--logistics .mag-edit-col--unit,
+  #mag-list .mag-edit-row--logistics .mag-edit-col--scorta{
+    flex:0 0 50px;
+  }
+  #mag-list .mag-edit-input,
+  #mag-list .mag-edit-select{
+    font-size:11px;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────────────────
    CARRELLO — Toggle iconbar dal codice magazzino + numero progressivo riga
    (Modifica chirurgica: solo presentazione, nessuna logica di calcolo.)
