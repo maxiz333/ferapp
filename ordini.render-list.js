@@ -11,6 +11,90 @@ function ordToggleIconbar(ordId, gi, ii, ev){
   if(bar) bar.style.display = willOpen ? 'flex' : 'none';
 }
 
+function ordApriColori(ordId, gi, ii){
+  var ord = ordini[gi];
+  if(!ord || !ord.items || !ord.items[ii]) return;
+  var it = ord.items[ii];
+  if(typeof ordItemStornoReso === 'function' && ordItemStornoReso(it)) return;
+  var slots = typeof ctHexSlotsOrdineFornitore === 'function'
+    ? ctHexSlotsOrdineFornitore()
+    : ['#e53e3e', '#38a169', '#3182ce', '#e2c400'];
+  var card = document.querySelector('.ord-card[onclick*="' + ordId + '"]');
+  if(typeof ctOpenOrdinaPopup === 'function'){
+    ctOpenOrdinaPopup({
+      key: 'ord:' + ord.id + ':' + ii,
+      slots: slots,
+      activeColor: it._ordColore || '',
+      anchorEl: card,
+      onSelectColor: function(color){
+        ordSetColore(gi, ii, color);
+      }
+    });
+    return;
+  }
+  // Fallback difensivo: se l'helper condiviso non è disponibile, prova il popup carrello.
+  if(typeof ctApriColori === 'function'){
+    var linkedCart = (typeof carrelli !== 'undefined' && carrelli)
+      ? (carrelli.find(function(c){ return c && c.ordId === ord.id; }) || carrelli.find(function(c){ return c && c.bozzaOrdId === ord.id; }))
+      : null;
+    if(linkedCart){
+      ctApriColori(linkedCart.id, ii);
+      return;
+    }
+  }
+}
+
+function ordSetColore(gi, ii, colore){
+  var ord = ordini[gi];
+  if(!ord || !ord.items || !ord.items[ii]) return;
+  var it = ord.items[ii];
+  if(typeof ordItemStornoReso === 'function' && ordItemStornoReso(it)) return;
+  var cNorm = (colore && typeof ctNormalizeHex === 'function') ? ctNormalizeHex(colore) : (colore || '');
+  if(colore && typeof ctNormalizeHex === 'function' && !cNorm){
+    if(typeof showToastGen === 'function') showToastGen('yellow', 'Colore non valido');
+    return;
+  }
+  if(cNorm) it._ordColore = cNorm;
+  else delete it._ordColore;
+  it.daOrdinare = !!it._ordColore;
+  if(it._ordColore){
+    var map = typeof ctGetForniColore === 'function' ? ctGetForniColore() : {};
+    if(map[it._ordColore]) it._ordFornitoreNome = map[it._ordColore];
+    else delete it._ordFornitoreNome;
+  } else {
+    delete it._ordFornitoreNome;
+  }
+  if(typeof saveOrdini === 'function') saveOrdini();
+  var linkedCart = (typeof carrelli !== 'undefined' && carrelli)
+    ? (carrelli.find(function(c){ return c && c.ordId === ord.id; }) || carrelli.find(function(c){ return c && c.bozzaOrdId === ord.id; }))
+    : null;
+  if(linkedCart && linkedCart.items && linkedCart.items[ii]){
+    var lcIt = linkedCart.items[ii];
+    if(cNorm) lcIt._ordColore = cNorm;
+    else delete lcIt._ordColore;
+    lcIt.daOrdinare = !!cNorm;
+    if(cNorm){
+      var lMap = typeof ctGetForniColore === 'function' ? ctGetForniColore() : {};
+      if(lMap[cNorm]) lcIt._ordFornitoreNome = lMap[cNorm];
+      else delete lcIt._ordFornitoreNome;
+    } else {
+      delete lcIt._ordFornitoreNome;
+    }
+    if(typeof saveCarrelli === 'function') saveCarrelli();
+  }
+  if(typeof ctCloseOrdinaPopup === 'function') ctCloseOrdinaPopup();
+  else{
+    var p = document.getElementById('ct-color-popup') || document.getElementById('ord-color-popup');
+    var b = document.getElementById('ct-color-bd') || document.getElementById('ord-color-bd');
+    if(p) p.remove();
+    if(b) b.remove();
+  }
+  if(typeof renderOrdini === 'function') renderOrdini();
+  if(typeof renderCartTabs === 'function') renderCartTabs();
+  if(typeof renderOrdFor === 'function') renderOrdFor();
+  if(typeof renderDaOrdinareView === 'function') renderDaOrdinareView();
+}
+
 // Riepilogo incassi per data (solo proprietari): tap sulla scritta data → mostra/nasconde "(Tot. € …)".
 // Stato in memoria così il toggle sopravvive ai re-render frequenti (sync Firebase, save, ecc.).
 var _ordDateSumExpanded = {};
@@ -377,8 +461,13 @@ function renderOrdini(){
             h+='<input type="number" min="1" value="'+(it._scaglioneQta||10)+'" placeholder="qty" class="ord-mini-pct" style="color:#63b3ed;border-color:#63b3ed44;" onchange="ordSetScaglioneQta('+gi+','+ii+',this.value)" onclick="event.stopPropagation();this.select()">';
             h+='<span style="font-size:9px;color:#63b3ed;">pz</span>';
           }
+          // ORDINA (stessa UX del carrello: carrello + label + scelta fornitore/colore)
+          var ordBtnStyle = it._ordColore
+            ? 'margin-left:auto;background:' + it._ordColore + '33;border-color:' + it._ordColore + ';color:' + it._ordColore + ';'
+            : 'margin-left:auto;';
+          h+='<button class="ord-mini-btn'+(it.daOrdinare?' ord-mini-on':'')+'" style="'+ordBtnStyle+'" onclick="event.stopPropagation();ordApriColori(\''+ord.id+'\','+gi+','+ii+')" title="Ordina da fornitore">🛒 ORDINA</button>';
           // Nota articolo
-          h+='<button class="ord-mini-btn'+(hasNota2?' ord-mini-on':'')+'" onclick="ordEditNota('+gi+','+ii+')" title="Nota" style="margin-left:auto">📝</button>';
+          h+='<button class="ord-mini-btn'+(hasNota2?' ord-mini-on':'')+'" onclick="ordEditNota('+gi+','+ii+')" title="Nota">📝</button>';
           h+='<span class="ord-item-del" onclick="event.stopPropagation();ordDelItem(this,'+gi+','+ii+')" title="Rimuovi articolo">×</span>';
           if(!isBozza){
             h+='<button type="button" class="ord-abtn ord-abtn--del" style="min-width:30px;height:28px;padding:0 8px;font-weight:900;font-size:14px;color:#e53e3e;margin-left:2px;" onclick="event.stopPropagation();ordApplicaResoDaTab('+gi+','+ii+')" title="Reso merce">R</button>';

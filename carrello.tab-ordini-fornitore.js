@@ -328,18 +328,81 @@ function daoSetDaOrdQty(cartId, idx, val){
 }
 
 /** Articoli "da ordinare" raggruppati per colore (con cartId + idx per azioni). Include carrelli nel cestino. */
+function _daoNormalizeKeyToken(v){
+  return String(v == null ? '' : v).trim().toLowerCase().replace(/\s+/g, ' ');
+}
+function _daoProdKeyFromItem(it){
+  if(!it) return '';
+  if(it.rowIdx != null && String(it.rowIdx).trim() !== '') return 'ri:' + _daoNormalizeKeyToken(it.rowIdx);
+  if(it.codM) return 'cm:' + _daoNormalizeKeyToken(it.codM);
+  if(it.codF) return 'cf:' + _daoNormalizeKeyToken(it.codF);
+  return 'ds:' + _daoNormalizeKeyToken(it.desc || '');
+}
+function _daoSumQty(a, b){
+  var na = parseFloat(a);
+  var nb = parseFloat(b);
+  if(!isFinite(na)) na = 0;
+  if(!isFinite(nb)) nb = 0;
+  return Math.round((na + nb) * 1000) / 1000;
+}
+function _daoIsOrderMirrorOfLinkedCart(refId, idx, it, prodKey){
+  if(String(refId || '').indexOf('ord:') !== 0) return false;
+  var ordId = String(refId).slice(4);
+  if(!ordId) return false;
+  var col = _daoColorFromItem(it);
+  var lists = [
+    (typeof carrelli !== 'undefined' ? carrelli : []),
+    (typeof carrelliCestino !== 'undefined' ? carrelliCestino : [])
+  ];
+  for(var li = 0; li < lists.length; li++){
+    var list = lists[li] || [];
+    for(var ci = 0; ci < list.length; ci++){
+      var c = list[ci];
+      if(!c || (c.ordId !== ordId && c.bozzaOrdId !== ordId)) continue;
+      var mirror = (c.items || [])[idx];
+      if(!mirror || !mirror.daOrdinare) continue;
+      if(_daoProdKeyFromItem(mirror) !== prodKey) continue;
+      var mirrorCol = _daoColorFromItem(mirror);
+      if(mirrorCol && col && mirrorCol !== col) continue;
+      return true;
+    }
+  }
+  return false;
+}
 function daoCollectDaOrdinareByColor(){
   var byColor = {};
-  var seen = {};
+  var upsertMap = {};
   function addEntry(it, idx, refId, cartNome){
     if(!it || !it.daOrdinare) return;
     var col = _daoColorFromItem(it);
     if(!col) return;
-    var key = String(it.codM || it.codF || it.desc || '') + '|' + String(refId || '') + '|' + idx;
-    if(seen[key]) return;
-    seen[key] = true;
+    var prodKey = _daoProdKeyFromItem(it);
+    if(!prodKey) return;
+    // Evita il doppione "specchio" carrello↔ordine dello stesso flusso.
+    if(_daoIsOrderMirrorOfLinkedCart(refId, idx, it, prodKey)) return;
+    var dedupKey = col + '|' + prodKey;
+    if(!upsertMap[col]) upsertMap[col] = {};
     if(!byColor[col]) byColor[col] = [];
-    byColor[col].push({ it: it, cartNome: cartNome || '', cartId: refId, idx: idx });
+    var existing = upsertMap[col][dedupKey];
+    if(!existing){
+      var copy = JSON.parse(JSON.stringify(it));
+      copy.qty = _daoSumQty(0, copy.qty);
+      var entry = { it: copy, cartNome: cartNome || '', cartId: refId, idx: idx };
+      upsertMap[col][dedupKey] = entry;
+      byColor[col].push(entry);
+      return;
+    }
+    existing.it.qty = _daoSumQty(existing.it.qty, it.qty);
+    if(!existing.it.codM && it.codM) existing.it.codM = it.codM;
+    if(!existing.it.codF && it.codF) existing.it.codF = it.codF;
+    if(!existing.it.nota && it.nota) existing.it.nota = it.nota;
+    if(!existing.it._ordFornitoreNome && it._ordFornitoreNome) existing.it._ordFornitoreNome = it._ordFornitoreNome;
+    // Preferisci riferimento carrello (azioni più coerenti) rispetto a riferimento ordine.
+    if(String(existing.cartId || '').indexOf('ord:') === 0 && String(refId || '').indexOf('ord:') !== 0){
+      existing.cartId = refId;
+      existing.idx = idx;
+      existing.cartNome = cartNome || existing.cartNome;
+    }
   }
   function scanList(list){
     (list||[]).forEach(function(cart){

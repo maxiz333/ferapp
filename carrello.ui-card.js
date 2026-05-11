@@ -116,11 +116,93 @@ function ctTuttoRotolo(cartId, idx){
 }
 
 // ctApriColori: popup colore ordine fornitore
-function ctApriColori(cartId, idx){
-  // Rimuove popup precedente se esiste
+var _ctOrdinaPopupCtxKey = null;
+function ctCloseOrdinaPopup(){
+  var p = document.getElementById('ct-color-popup');
+  var b = document.getElementById('ct-color-bd');
+  if(p) p.remove();
+  if(b) b.remove();
+  _ctOrdinaPopupCtxKey = null;
+}
+function ctOpenOrdinaPopup(opts){
+  opts = opts || {};
+  var key = String(opts.key || '');
   var ex = document.getElementById('ct-color-popup');
-  if(ex){ ex.remove(); document.getElementById('ct-color-bd')&&document.getElementById('ct-color-bd').remove(); return; }
+  if(ex){
+    if(_ctOrdinaPopupCtxKey === key){
+      ctCloseOrdinaPopup();
+      return false;
+    }
+    ctCloseOrdinaPopup();
+  }
 
+  var slots = Array.isArray(opts.slots) ? opts.slots : [];
+  var activeColor = String(opts.activeColor || '');
+  var popup = document.createElement('div');
+  popup.id = 'ct-color-popup';
+  popup.className = 'ct-color-popup';
+
+  var html = '<div class="ct-color-title">Ordina da fornitore</div>';
+  slots.forEach(function(hex){
+    var nome = typeof ctEtichettaFornitore === 'function' ? ctEtichettaFornitore(hex) : hex;
+    var isActive = activeColor === hex && hex !== '';
+    html += '<button type="button" class="ct-color-opt' + (isActive ? ' ct-color-opt--active' : '') + '" data-ord-color="' + esc(hex) + '"';
+    html += ' style="border-color:' + hex + '">';
+    html += '<span class="ct-color-opt-inner"><span class="ct-color-dot" style="background:' + hex + '"></span>';
+    html += '<span>' + esc(nome) + '</span></span>';
+    if(isActive) html += ' ✓';
+    html += '</button>';
+  });
+  html += '<div class="ct-color-custom"><span class="ct-color-custom-lbl">Altro colore</span>';
+  html += '<input type="color" id="ct-ord-col-pick" class="ct-ord-col-pick" value="#718096">';
+  html += '<button type="button" class="ct-color-opt ct-color-opt--mini" id="ct-ord-col-use">Usa</button></div>';
+  html += '<button type="button" class="ct-color-opt ct-color-opt--clear" id="ct-ord-col-clear">✕ Rimuovi da ordinare</button>';
+  popup.innerHTML = html;
+
+  function applyColor(color){
+    if(typeof opts.onSelectColor === 'function') opts.onSelectColor(color);
+    ctCloseOrdinaPopup();
+  }
+  popup.querySelectorAll('[data-ord-color]').forEach(function(btn){
+    btn.addEventListener('click', function(ev){
+      ev.preventDefault();
+      applyColor(btn.getAttribute('data-ord-color') || '');
+    });
+  });
+  var useBtn = popup.querySelector('#ct-ord-col-use');
+  if(useBtn){
+    useBtn.addEventListener('click', function(ev){
+      ev.preventDefault();
+      var inp = popup.querySelector('#ct-ord-col-pick');
+      applyColor(inp ? inp.value : '');
+    });
+  }
+  var clearBtn = popup.querySelector('#ct-ord-col-clear');
+  if(clearBtn){
+    clearBtn.addEventListener('click', function(ev){
+      ev.preventDefault();
+      applyColor('');
+    });
+  }
+
+  var anchor = opts.anchorEl || null;
+  if(anchor){
+    var r = anchor.getBoundingClientRect();
+    popup.style.top  = (r.bottom + window.scrollY + 4) + 'px';
+    popup.style.left = Math.min(r.left, window.innerWidth - 180) + 'px';
+  }
+
+  var bd = document.createElement('div');
+  bd.id = 'ct-color-bd';
+  bd.style.cssText = 'position:fixed;inset:0;z-index:7990';
+  bd.onclick = function(){ ctCloseOrdinaPopup(); };
+  document.body.appendChild(bd);
+  document.body.appendChild(popup);
+  _ctOrdinaPopupCtxKey = key;
+  return true;
+}
+
+function ctApriColori(cartId, idx){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
   if(!cart || !cart.items[idx]) return;
   var it = cart.items[idx];
@@ -129,44 +211,16 @@ function ctApriColori(cartId, idx){
   var slots = typeof ctHexSlotsOrdineFornitore === 'function'
     ? ctHexSlotsOrdineFornitore()
     : (typeof CT_FORN_CANON_HEX !== 'undefined' ? CT_FORN_CANON_HEX : ['#e53e3e', '#38a169', '#3182ce', '#e2c400']);
-
-  var popup = document.createElement('div');
-  popup.id = 'ct-color-popup';
-  popup.className = 'ct-color-popup';
-
-  var html = '<div class="ct-color-title">Ordina da fornitore</div>';
-  slots.forEach(function(hex){
-    var nome = typeof ctEtichettaFornitore === 'function' ? ctEtichettaFornitore(hex) : hex;
-    var isActive = it._ordColore === hex && hex !== '';
-    html += '<button type="button" class="ct-color-opt' + (isActive ? ' ct-color-opt--active' : '') + '"';
-    html += ' style="border-color:' + hex + '"';
-    html += ' onclick="ctSetColore(\'' + cartId + '\',' + idx + ',\'' + hex + '\')">';
-    html += '<span class="ct-color-opt-inner"><span class="ct-color-dot" style="background:' + hex + '"></span>';
-    html += '<span>' + esc(nome) + '</span></span>';
-    if(isActive) html += ' ✓';
-    html += '</button>';
-  });
-  html += '<div class="ct-color-custom"><span class="ct-color-custom-lbl">Altro colore</span>';
-  html += '<input type="color" id="ct-ord-col-pick" class="ct-ord-col-pick" value="#718096">';
-  html += '<button type="button" class="ct-color-opt ct-color-opt--mini" onclick="ctSetColore(\'' + cartId + '\',' + idx + ',document.getElementById(\'ct-ord-col-pick\').value)">Usa</button></div>';
-  html += '<button type="button" class="ct-color-opt ct-color-opt--clear" onclick="ctSetColore(\'' + cartId + '\',' + idx + ',\'\')">✕ Rimuovi da ordinare</button>';
-  popup.innerHTML = html;
-
-  // Posizionamento vicino alla card
   var card = document.getElementById('cart-row-' + idx);
-  if(card){
-    var r = card.getBoundingClientRect();
-    popup.style.top  = (r.bottom + window.scrollY + 4) + 'px';
-    popup.style.left = Math.min(r.left, window.innerWidth - 180) + 'px';
-  }
-
-  var bd = document.createElement('div');
-  bd.id = 'ct-color-bd';
-  bd.style.cssText = 'position:fixed;inset:0;z-index:7990';
-  bd.onclick = function(){ popup.remove(); bd.remove(); };
-
-  document.body.appendChild(bd);
-  document.body.appendChild(popup);
+  ctOpenOrdinaPopup({
+    key: 'cart:' + cartId + ':' + idx,
+    slots: slots,
+    activeColor: it._ordColore || '',
+    anchorEl: card,
+    onSelectColor: function(color){
+      ctSetColore(cartId, idx, color);
+    }
+  });
 }
 
 // ctSetColore: salva il colore e aggiorna la card
@@ -190,9 +244,13 @@ function ctSetColore(cartId, idx, colore){
   } else {
     delete it._ordFornitoreNome;
   }
-  var p = document.getElementById('ct-color-popup');
-  var b = document.getElementById('ct-color-bd');
-  if(p) p.remove(); if(b) b.remove();
+  if(typeof ctCloseOrdinaPopup === 'function') ctCloseOrdinaPopup();
+  else{
+    var p = document.getElementById('ct-color-popup');
+    var b = document.getElementById('ct-color-bd');
+    if(p) p.remove();
+    if(b) b.remove();
+  }
   if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(cart);
   saveCarrelli();
   renderCartTabs();

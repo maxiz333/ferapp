@@ -156,6 +156,19 @@ function runDbMaintenanceNow(){
 // --- Notifiche Ordine -----------------------------------------------------
 var _notifPermesso = false;
 var _pendingOrdineModal = null;
+var _lastOrdineNotificaId = null;
+var _lastBozzaNotificaId = null;
+
+function _isCarrelloTabActive(){
+  var tc = document.getElementById('tc');
+  return !!(tc && tc.classList.contains('active'));
+}
+
+function _forceVistoFromNotification(targetId){
+  if(!targetId) return;
+  if(typeof ordineSegnaVistoSeUfficio === 'function') ordineSegnaVistoSeUfficio(targetId);
+  if(typeof renderOrdini === 'function') renderOrdini();
+}
 
 function isPC(){
   // Pi- permissivo: considera PC anche touch con schermo grande
@@ -174,8 +187,8 @@ function richediNotifPermesso(){
   }
 }
 
-function openOrdiniNuovoFromNotification(){
-  _openOrdiniFromNotificationSequence('nuovo');
+function openOrdiniNuovoFromNotification(targetId){
+  _openOrdiniFromNotificationSequence('nuovo', targetId || _lastOrdineNotificaId);
 }
 
 /**
@@ -185,17 +198,20 @@ function openOrdiniNuovoFromNotification(){
  * C: filterOrdini (imposta ordFiltro e render interno).
  * D: renderOrdini() esplicito (refresh completo, dati già in ordini[] da Firebase).
  */
-function _openOrdiniFromNotificationSequence(filtro){
+function _openOrdiniFromNotificationSequence(filtro, targetId){
   if(typeof goTab === 'function') goTab('to');
   setTimeout(function(){
     console.log('NOTIFICA: Forzo caricamento ordini nuovi');
     var f = filtro === 'bozza' ? 'nuovo' : filtro;
     if(typeof filterOrdini === 'function') filterOrdini(f);
     if(typeof renderOrdini === 'function') renderOrdini();
+    _forceVistoFromNotification(targetId);
+    setTimeout(function(){ _forceVistoFromNotification(targetId); }, 220);
   }, 300);
 }
 
 function mostraNotificaOrdine(ord){
+  _lastOrdineNotificaId = ord && ord.id ? ord.id : null;
   // -- 1. Notifica di sistema -------------------------------------------
   if(_notifPermesso && 'Notification' in window && Notification.permission === 'granted'){
     var righeText = (ord.items||[]).map(function(it){
@@ -209,7 +225,7 @@ function mostraNotificaOrdine(ord){
       });
       notif.onclick = function(){
         window.focus();
-        openOrdiniNuovoFromNotification();
+        openOrdiniNuovoFromNotification(ord && ord.id ? ord.id : null);
         notif.close();
       };
     } catch(e){ console.warn('Notifica sistema fallita:', e); }
@@ -227,6 +243,7 @@ function mostraNotificaOrdine(ord){
 var _pendingBozzaModal = null;
 
 function mostraNotificaBozza(bozza){
+  _lastBozzaNotificaId = bozza && bozza.id ? bozza.id : null;
   // -- 1. Notifica di sistema (browser) -----------------------------------
   if(_notifPermesso && 'Notification' in window && Notification.permission === 'granted'){
     var righeText = (bozza.items||[]).filter(function(it){ return !ordItemCongelato(it); }).map(function(it){
@@ -240,13 +257,14 @@ function mostraNotificaBozza(bozza){
       });
       notif.onclick = function(){
         window.focus();
-        _openOrdiniFromNotificationSequence('bozza');
+        _openOrdiniFromNotificationSequence('bozza', bozza && bozza.id ? bozza.id : null);
         notif.close();
       };
     } catch(e){ console.warn('Notifica bozza fallita:', e); }
   }
 
-  // -- 2. Modal in-app (sempre) -------------------------------------------
+  // -- 2. Modal in-app (silenziata in tab Carrello) -----------------------
+  if(_isCarrelloTabActive()) return;
   if(document.hidden){
     _pendingBozzaModal = bozza;
   } else {
@@ -257,6 +275,7 @@ function mostraNotificaBozza(bozza){
 function _apriBozzaModal(bozza){
   var bd = document.getElementById('bozza-modal-backdrop');
   if(!bd) return;
+  _lastBozzaNotificaId = bozza && bozza.id ? bozza.id : _lastBozzaNotificaId;
 
   document.getElementById('bmd-cliente').textContent = bozza.nomeCliente || 'Cliente';
   document.getElementById('bmd-ora').textContent = bozza.data + ' — ' + bozza.ora;
@@ -308,7 +327,7 @@ function closeBozzaModal(){
 
 function bozzaModalVaiOrdini(){
   closeBozzaModal();
-  _openOrdiniFromNotificationSequence('bozza');
+  _openOrdiniFromNotificationSequence('bozza', _lastBozzaNotificaId);
 }
 
 // Chiudi bozza modal cliccando fuori
@@ -376,7 +395,9 @@ document.addEventListener('visibilitychange', function(){
   if(!document.hidden && _pendingBozzaModal){
     var bozza = _pendingBozzaModal;
     _pendingBozzaModal = null;
-    setTimeout(function(){ _apriBozzaModal(bozza); }, 400);
+    if(!_isCarrelloTabActive()){
+      setTimeout(function(){ _apriBozzaModal(bozza); }, 400);
+    }
   }
 });
 
@@ -411,6 +432,7 @@ function _apriOrdineModal(ord){
   }
 
   bd.classList.add('open');
+  _lastOrdineNotificaId = ord && ord.id ? ord.id : _lastOrdineNotificaId;
   // Non segnare "visto" qui: stesso motivo della bozza — altrimenti l'ordine
   // risulta "visto" non appena appare il popup, anche senza azione ufficio.
 
@@ -438,7 +460,7 @@ function closeOrdineModal(){
 
 function ordineModalVaiOrdini(){
   closeOrdineModal();
-  openOrdiniNuovoFromNotification();
+  openOrdiniNuovoFromNotification(_lastOrdineNotificaId);
 }
 
 // Chiudi cliccando fuori
