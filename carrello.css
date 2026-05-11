@@ -3955,6 +3955,36 @@ body.light-mode .ct-mq-inp:focus {
 #mag-list .mag-edit-input--price{
   font-size:12px;
 }
+#mag-list .mag-edit-row--prices{
+  display:flex;
+  flex-wrap:nowrap;
+  gap:4px;
+  align-items:flex-end;
+}
+#mag-list .mag-edit-row--prices .mag-edit-col{
+  min-width:0;
+}
+#mag-list .mag-edit-row--prices .mag-edit-col--vend{
+  flex:1.65 1 0;
+}
+#mag-list .mag-edit-row--prices .mag-edit-col--old{
+  flex:0.72 1 0;
+}
+#mag-list .mag-edit-row--prices .mag-edit-col--acq{
+  flex:0.63 1 0;
+}
+#mag-list .mag-edit-row--prices .mag-edit-price-wrap{
+  min-width:0;
+  gap:3px;
+}
+#mag-list .mag-edit-row--prices .mag-edit-input--price{
+  min-width:0;
+}
+#mag-list .mag-edit-row--prices .mag-promo-toggle--inline{
+  width:30px;
+  min-width:30px;
+  font-size:8px;
+}
 #mag-list .mag-edit-input--qty{
   width:68px;
   min-width:68px;
@@ -4037,6 +4067,27 @@ body.light-mode .ct-mq-inp:focus {
   #mag-list .mag-edit-input,
   #mag-list .mag-edit-select{
     font-size:11px;
+  }
+  #mag-list .mag-edit-row--prices{
+    gap:2px;
+  }
+  #mag-list .mag-edit-row--prices .mag-edit-col--vend{
+    flex:1.9 1 0;
+  }
+  #mag-list .mag-edit-row--prices .mag-edit-col--old{
+    flex:0.55 1 0;
+  }
+  #mag-list .mag-edit-row--prices .mag-edit-col--acq{
+    flex:0.55 1 0;
+  }
+  #mag-list .mag-edit-row--prices .mag-edit-price-wrap{
+    gap:2px;
+  }
+  #mag-list .mag-edit-row--prices .mag-promo-toggle--inline{
+    width:28px;
+    min-width:28px;
+    height:20px;
+    font-size:8px;
   }
 }
 
