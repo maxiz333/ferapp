@@ -214,6 +214,11 @@ function renderCartTabs(){
       var idx = _ri;
       var it = _items[idx];
       var displayPos = _items.length - 1 - idx;
+      var explicitCorrCount = 0;
+      var rowIdxCorr = parseInt(it && it.rowIdx, 10);
+      if(!isNaN(rowIdxCorr) && typeof cartGetExplicitCorrelati === 'function'){
+        explicitCorrCount = cartGetExplicitCorrelati(rowIdxCorr).length;
+      }
       var pListino     = listinoPrezzoNum(it);
       var pVendita     = ordItemLineUnitSelling(it);
       var q            = parseFloat(it.qty) || 0;
@@ -398,6 +403,9 @@ function renderCartTabs(){
       } else {
         var subColor = isTuttoRotolo ? '#fc8181' : (isFR ? '#f6ad55' : 'var(--accent)');
         h += '<div class="ord-gc-sub-val" style="color:' + subColor + '">€' + sub + '</div>';
+      }
+      if(explicitCorrCount > 0){
+        h += '<button type="button" class="ct-corr-mini" title="Apri correlati" onclick="event.stopPropagation();openCorrelatiCarrello(\'' + cart.id + '\',' + idx + ')">🔄<span>' + explicitCorrCount + '</span></button>';
       }
       h += '</div>';
 

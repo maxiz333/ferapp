@@ -1403,6 +1403,25 @@ body.light-mode .ct-fattura-badge {
   line-height: 1.2;
   letter-spacing: 0.02em;
 }
+#tc .ct-card .ord-gc-sub .ct-corr-mini{
+  margin-left:auto;
+  display:inline-flex;
+  align-items:center;
+  gap:2px;
+  padding:0;
+  border:none;
+  background:transparent;
+  color:#7f8a9c;
+  font-size:11px;
+  font-weight:700;
+  line-height:1;
+  cursor:pointer;
+}
+#tc .ct-card .ord-gc-sub .ct-corr-mini span{
+  font-size:9px;
+  color:#a6adba;
+  transform:translateY(-1px);
+}
 /* Codici: mag giallo e f. fornitore affiancati (niente seconda “pillola”) */
 #tc .ct-card .ord-item-codes-line {
   flex-wrap: nowrap;
@@ -2540,6 +2559,14 @@ body.light-mode .ct-mq-inp:focus {
   }
   #tc .ct-card .ord-gc-sub-val {
     font-size: 16px;
+  }
+  #tc .ct-card .ord-gc-sub .ct-corr-mini{
+    font-size:10px;
+    min-width:24px;
+    min-height:22px;
+  }
+  #tc .ct-card .ord-gc-sub .ct-corr-mini span{
+    font-size:8px;
   }
   #tc .ct-card .ord-gc-price .ct-punit {
     font-size: 14px;

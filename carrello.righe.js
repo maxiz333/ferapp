@@ -700,6 +700,29 @@ function cartToggleCheck(cartId,idx,checked){
 }
 
 // --- CORRELATI NEL CARRELLO -----------------------------------
+function cartGetExplicitCorrelati(rowIdx){
+  rowIdx = parseInt(rowIdx, 10);
+  if(isNaN(rowIdx) || !rows || !rows[rowIdx]) return [];
+  if(typeof normalizeCorrelati === 'function'){
+    var norm = normalizeCorrelati(rowIdx);
+    return Array.isArray(norm) ? norm.slice() : [];
+  }
+  if(!magazzino[rowIdx]) magazzino[rowIdx] = {};
+  var src = Array.isArray(magazzino[rowIdx].correlati) ? magazzino[rowIdx].correlati : [];
+  var seen = {};
+  var out = [];
+  src.forEach(function(ri){
+    var n = parseInt(ri, 10);
+    if(isNaN(n) || n === rowIdx || !rows[n]) return;
+    if(typeof removed !== 'undefined' && removed && typeof removed.has === 'function' && removed.has(String(n))) return;
+    if(seen[n]) return;
+    seen[n] = true;
+    out.push(n);
+  });
+  magazzino[rowIdx].correlati = out;
+  return out;
+}
+
 function cartToggleCorrelati(cartId,idx){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
