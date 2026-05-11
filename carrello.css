@@ -4135,6 +4135,111 @@ body.light-mode .ct-mq-inp:focus {
   outline-offset: 1px;
 }
 
+/* ════════════════════════════════════════════════════════════════
+   POPUP MODIFICA PRODOTTO (#ep) — mobile come desktop
+   ════════════════════════════════════════════════════════════════ */
+@media (max-width:560px){
+  #ep .ob{
+    width:min(520px,95vw) !important;
+    padding:8px 8px 10px !important;
+    overflow-x:hidden !important;
+  }
+  #ep .ep-grid{
+    gap:5px !important;
+  }
+  #ep .ep-row{
+    gap:4px !important;
+  }
+  #ep .ep-label{
+    font-size:10px !important;
+    height:14px !important;
+    margin-bottom:1px !important;
+  }
+  #ep .ep-field,
+  #ep .ep-select{
+    height:30px !important;
+    min-height:30px !important;
+    padding:0 7px !important;
+    font-size:11px !important;
+  }
+  #ep textarea.ep-field{
+    min-height:46px !important;
+    padding:6px 7px !important;
+    line-height:1.2 !important;
+  }
+
+  #ep .ep-row--codes,
+  #ep .ep-row--prices,
+  #ep .ep-row--qty,
+  #ep .ep-row--info{
+    display:flex !important;
+    flex-direction:row !important;
+    flex-wrap:nowrap !important;
+    align-items:flex-start !important;
+    overflow:hidden !important;
+  }
+  #ep .ep-row--codes .ep-col-2{
+    flex:1 1 50% !important;
+    min-width:0 !important;
+  }
+
+  #ep .ep-row--prices .ep-col-3{
+    min-width:0 !important;
+  }
+  #ep .ep-row--prices .ep-col-3:nth-child(1){
+    flex:1.8 1 0 !important;
+  }
+  #ep .ep-row--prices .ep-col-3:nth-child(2),
+  #ep .ep-row--prices .ep-col-3:nth-child(3){
+    flex:0.6 1 0 !important;
+  }
+  #ep .ep-row--prices .ep-price-head{
+    margin-bottom:2px !important;
+    min-height:14px !important;
+    gap:4px !important;
+  }
+  #ep .ep-row--prices .ep-price-actions{
+    flex-shrink:0 !important;
+    gap:2px !important;
+  }
+  #ep #ep-prezzo-verify-btn{
+    max-width:58px !important;
+    padding:0 5px !important;
+    font-size:10px !important;
+    white-space:nowrap !important;
+    overflow:hidden !important;
+    text-overflow:ellipsis !important;
+  }
+  #ep #ep-promo-g-btn{
+    width:30px !important;
+    min-width:30px !important;
+    padding:0 4px !important;
+  }
+
+  #ep .ep-row--qty .ep-col{
+    min-width:0 !important;
+  }
+  #ep .ep-row--qty .ep-col-wide{
+    flex:1.35 1 0 !important;
+  }
+  #ep .ep-row--qty .ep-col-narrow{
+    flex:0.82 1 0 !important;
+  }
+  #ep .ep-row--qty .ep-qty-control{
+    gap:3px !important;
+  }
+  #ep .ep-row--qty .ep-qty-btn{
+    width:26px !important;
+    min-width:26px !important;
+    height:30px !important;
+  }
+
+  #ep .ep-row--info .ep-col-3{
+    flex:1 1 33.333% !important;
+    min-width:0 !important;
+  }
+}
+
 /* Mobile: padding leggermente maggiore per garantire un'area di tap comoda
    senza alterare la disposizione verticale (font/dimensioni invariati) */
 @media (max-width: 768px) {

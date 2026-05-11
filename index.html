@@ -1342,7 +1342,7 @@ body.light-mode #confirm-overlay > div { background:#fff; }
       </div>
 
       <!-- Codici -->
-      <div class="ep-row">
+      <div class="ep-row ep-row--codes">
         <div class="ep-col ep-col-2">
           <div class="ep-label" style="color:#fc8181;">Cod. Forn.</div>
           <input type="text" id="ep-codf" class="ep-field ep-field-rose">
@@ -1354,7 +1354,7 @@ body.light-mode #confirm-overlay > div { background:#fff; }
       </div>
 
       <!-- Prezzi -->
-      <div class="ep-row">
+      <div class="ep-row ep-row--prices">
         <div class="ep-col ep-col-3">
           <div class="ep-price-head">
             <div class="ep-price-title">
@@ -1413,7 +1413,7 @@ body.light-mode #confirm-overlay > div { background:#fff; }
       </div>
 
       <!-- Logistica/Fornitura riga unica -->
-      <div class="ep-row">
+      <div class="ep-row ep-row--qty">
         <div class="ep-col ep-col-wide">
           <div class="ep-label">Quantità</div>
           <div class="ep-qty-control">
@@ -1432,6 +1432,8 @@ body.light-mode #confirm-overlay > div { background:#fff; }
           <div class="ep-label" style="color:#e53e3e;">Scorta Min.</div>
           <input type="number" min="0" id="ep-soglia" class="ep-field ep-field-danger" placeholder="0">
         </div>
+      </div>
+      <div class="ep-row ep-row--info">
         <div class="ep-col ep-col-3">
           <div class="ep-label">Marca</div>
           <input type="text" id="ep-marca" class="ep-field">
