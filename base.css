@@ -159,6 +159,14 @@ select{padding:3px 4px;border:1px solid var(--border);border-radius:3px;font-siz
 #ep #ep-prezzo-verify-btn{border-color:#38a169;background:rgba(56,161,105,.08);color:#68d391;}
 #ep #ep-promo-g-btn{min-width:24px;justify-content:center;border-color:#3a3108;background:#111;}
 #ep .ep-qty-control{display:flex;gap:4px;align-items:center;}
+#ep .ep-row--qty.has-totu .ep-col-wide{flex:1.22 1 0;}
+#ep .ep-row--qty.has-totu .ep-col-narrow{flex:.78 1 0;}
+#ep .ep-row--qty.no-totu .ep-col-wide{flex:1.5 1 0;}
+#ep .ep-row--qty.no-totu .ep-col-narrow{flex:.85 1 0;}
+#ep .ep-row--qty .ep-col-totu.is-hidden{display:none;}
+#ep .ep-label-action{cursor:pointer;user-select:none;color:#f5c400;}
+#ep .ep-row--peso-u{margin-top:-2px;}
+#ep .ep-row--peso-u.is-hidden{display:none;}
 #ep .ep-qty-btn{
   width:32px;height:32px;box-sizing:border-box;border:1px solid var(--border);
   border-radius:8px;background:#1e1e1e;color:var(--muted);font-size:18px;line-height:1;

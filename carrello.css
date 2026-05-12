@@ -4175,7 +4175,7 @@ body.light-mode .ct-mq-inp:focus {
     gap:5px !important;
   }
   #ep .ep-row{
-    gap:4px !important;
+    gap:3px !important;
   }
   #ep .ep-label{
     font-size:10px !important;
@@ -4186,7 +4186,7 @@ body.light-mode .ct-mq-inp:focus {
   #ep .ep-select{
     height:30px !important;
     min-height:30px !important;
-    padding:0 7px !important;
+    padding:0 5px !important;
     font-size:11px !important;
   }
   #ep textarea.ep-field{
@@ -4246,19 +4246,42 @@ body.light-mode .ct-mq-inp:focus {
   #ep .ep-row--qty .ep-col{
     min-width:0 !important;
   }
-  #ep .ep-row--qty .ep-col-wide{
+  #ep .ep-row--qty.has-totu .ep-col-wide{
+    flex:1.12 1 0 !important;
+  }
+  #ep .ep-row--qty.has-totu .ep-col-narrow{
+    flex:0.7 1 0 !important;
+  }
+  #ep .ep-row--qty.has-totu .ep-col-totu{
+    flex:0.7 1 0 !important;
+  }
+  #ep .ep-row--qty.no-totu .ep-col-wide{
     flex:1.35 1 0 !important;
   }
-  #ep .ep-row--qty .ep-col-narrow{
+  #ep .ep-row--qty.no-totu .ep-col-narrow{
     flex:0.82 1 0 !important;
   }
+  #ep .ep-row--qty .ep-col-totu.is-hidden{
+    display:none !important;
+  }
   #ep .ep-row--qty .ep-qty-control{
-    gap:3px !important;
+    gap:2px !important;
   }
   #ep .ep-row--qty .ep-qty-btn{
-    width:26px !important;
-    min-width:26px !important;
+    width:24px !important;
+    min-width:24px !important;
     height:30px !important;
+    font-size:16px !important;
+    padding:0 !important;
+  }
+  #ep .ep-row--qty .ep-label{
+    font-size:10px !important;
+  }
+  #ep .ep-row--peso-u{
+    margin-top:1px !important;
+  }
+  #ep .ep-row--peso-u.is-hidden{
+    display:none !important;
   }
 
   #ep .ep-row--info .ep-col-3{

@@ -1291,30 +1291,36 @@ body.light-mode #confirm-overlay > div { background:#fff; }
       </div>
     </div>
 
-    <!-- Quantità + Unità -->
-    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-end;">
-      <div style="flex:1;">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">📦 Quantità</div>
-        <div style="display:flex;align-items:center;gap:5px;">
-          <button onclick="epDeltaQty(-1)" style="background:#333;border:none;color:var(--text);width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:18px;font-weight:bold;flex-shrink:0;">−</button>
-          <input type="number" min="0" id="ep-qty" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#111;color:var(--accent);font-size:16px;font-weight:900;text-align:center;">
-          <button onclick="epDeltaQty(1)" style="background:#333;border:none;color:var(--text);width:32px;height:32px;border-radius:6px;cursor:pointer;font-size:18px;font-weight:bold;flex-shrink:0;">+</button>
+    <!-- Quantità / Unità / Scorta / Tot.U -->
+    <div class="ep-stock-row ep-stock-row--qty no-totu" id="ep-stock-row">
+      <div class="ep-stock-field ep-stock-qty">
+        <div class="ep-stock-label">Quantità</div>
+        <div class="ep-qty-control">
+          <button onclick="epDeltaQty(-1)" class="ep-qty-btn" type="button">−</button>
+          <input type="number" min="0" id="ep-qty" class="ep-stock-input ep-stock-input-qty">
+          <button onclick="epDeltaQty(1)" class="ep-qty-btn" type="button">+</button>
         </div>
       </div>
-      <div style="width:90px;">
-        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Unità</div>
-        <select id="ep-unit" style="width:100%;padding:7px 6px;border:1px solid var(--border);border-radius:6px;background:#111;color:var(--text);font-size:13px;">
+      <div class="ep-stock-field ep-stock-unit">
+        <div class="ep-stock-label">Unità</div>
+        <select id="ep-unit" class="ep-stock-select">
           <option>pz</option><option>mt</option><option>kg</option><option>lt</option><option>conf</option><option>rot</option><option>sc</option>
         </select>
       </div>
+      <div class="ep-stock-field ep-stock-min">
+        <div class="ep-stock-label ep-stock-label-danger">Scorta Min.</div>
+        <input type="number" min="0" id="ep-soglia" class="ep-stock-input ep-stock-input-min" placeholder="0">
+      </div>
+      <div class="ep-stock-field ep-stock-min ep-stock-totu is-hidden" id="ep-tot-u-col">
+        <div class="ep-stock-label ep-stock-label-action" onclick="epTogglePesoU()" onkeydown="if(event.key==='Enter' || event.key===' '){ event.preventDefault(); epTogglePesoU(); }" role="button" tabindex="0">Tot.U</div>
+        <input type="number" min="0" step="any" id="ep-tot-u" class="ep-stock-input ep-stock-input-totu" placeholder="0">
+      </div>
     </div>
-
-    <!-- Scorta minima — riga dedicata -->
-    <div style="margin-bottom:10px;">
-      <div style="font-size:10px;color:#e53e3e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">🔔 Scorta minima — avvisa quando scende sotto questa quantità</div>
-      <input type="number" min="0" id="ep-soglia"
-        style="width:100%;padding:9px 12px;border:2px solid #e53e3e44;border-radius:8px;background:#111;color:#e53e3e;font-size:15px;font-weight:900;text-align:left;"
-        placeholder="1 (default)">
+    <div class="ep-stock-row ep-stock-row--peso is-hidden" id="ep-peso-u-wrap">
+      <div class="ep-stock-field" style="flex:1;">
+        <div class="ep-stock-label">Peso per Unità</div>
+        <input type="number" min="0" step="any" id="ep-peso-u" class="ep-stock-input" placeholder="Es: 1.25 kg per unità">
+      </div>
     </div>
 
     <!-- Nome fornitore -->

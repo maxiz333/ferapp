@@ -55,6 +55,8 @@ function openEditProdotto(i, isNew, cartEditContext){
   sf('ep-pos',    m.posizione || '');
   sf('ep-qty',    m.qty !== undefined ? m.qty : '');
   sf('ep-soglia', (m.soglia !== undefined && m.soglia !== null && m.soglia !== '') ? m.soglia : 0);
+  sf('ep-tot-u',  (m.tot_u !== undefined && m.tot_u !== null) ? m.tot_u : '');
+  sf('ep-peso-u', (m.peso_u !== undefined && m.peso_u !== null) ? m.peso_u : '');
   sf('ep-fornitore', m.nomeFornitore || '');
 
   // Unit-
@@ -62,13 +64,18 @@ function openEditProdotto(i, isNew, cartEditContext){
   if(unitSel){
     if(typeof umOptionsHtml === 'function') unitSel.innerHTML = umOptionsHtml(rowListinoUnit(r));
     unitSel.value = rowListinoUnit(r);
-    unitSel.onchange = function(){ epRefreshPrezzoBaseUi(); };
+    unitSel.onchange = function(){
+      epRefreshPrezzoBaseUi();
+      epSyncTotUVisibility();
+    };
   }
   var prezzoInp = document.getElementById('ep-prezzo');
   if(prezzoInp){
     prezzoInp.oninput = function(){ epRefreshPrezzoBaseUi(); };
   }
   epRefreshPrezzoBaseUi();
+  epSyncTotUVisibility();
+  epTogglePesoU(String(m.peso_u == null ? '' : m.peso_u).trim() !== '');
   _epRefreshPrezzoDot();
 
   // Popola categorie
@@ -119,6 +126,42 @@ function epDeltaQty(delta){
   var inp = document.getElementById('ep-qty');
   var cur = parseFloat(inp.value) || 0;
   inp.value = Math.max(0, cur + delta);
+}
+
+function epUnitShowsTotU(unitRaw){
+  var unit = String(unitRaw == null ? '' : unitRaw).trim();
+  if(typeof normalizeUmValue === 'function'){
+    unit = normalizeUmValue(unit);
+  }
+  unit = String(unit || 'pz').trim().toLowerCase();
+  return unit !== 'pz';
+}
+
+function epTogglePesoU(forceOpen){
+  var pesoWrap = document.getElementById('ep-peso-u-wrap');
+  if(!pesoWrap) return;
+  var nextOpen;
+  if(forceOpen === true || forceOpen === false){
+    nextOpen = forceOpen;
+  }else{
+    nextOpen = pesoWrap.classList.contains('is-hidden');
+  }
+  pesoWrap.classList.toggle('is-hidden', !nextOpen);
+}
+
+function epSyncTotUVisibility(){
+  var unitEl = document.getElementById('ep-unit');
+  var row = document.querySelector('#ep .ep-row--qty');
+  var totUCol = document.getElementById('ep-tot-u-col');
+  var pesoWrap = document.getElementById('ep-peso-u-wrap');
+  if(!unitEl || !row || !totUCol || !pesoWrap) return;
+  var showTotU = epUnitShowsTotU(unitEl.value);
+  row.classList.toggle('has-totu', showTotU);
+  row.classList.toggle('no-totu', !showTotU);
+  totUCol.classList.toggle('is-hidden', !showTotU);
+  if(!showTotU){
+    epTogglePesoU(false);
+  }
 }
 
 function epRefreshPrezzoBaseUi(){
@@ -294,6 +337,15 @@ function saveEditProdotto(){
   magazzino[i].cat   = catEl ? catEl.value : '';
   var subEl = document.getElementById('ep-subcat');
   magazzino[i].subcat        = subEl ? subEl.value : '';
+  var totUVal = gf('ep-tot-u');
+  var pesoUVal = gf('ep-peso-u');
+  if(epUnitShowsTotU(unitNow)){
+    magazzino[i].tot_u = totUVal !== '' ? parseFloat(totUVal) : '';
+    magazzino[i].peso_u = pesoUVal !== '' ? parseFloat(pesoUVal) : '';
+  }else{
+    magazzino[i].tot_u = '';
+    magazzino[i].peso_u = '';
+  }
   magazzino[i].nomeFornitore = gf('ep-fornitore');
   magazzino[i]._updatedAt    = Date.now();
 

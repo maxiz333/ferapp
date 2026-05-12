@@ -1432,6 +1432,16 @@ body.light-mode #confirm-overlay > div { background:#fff; }
           <div class="ep-label" style="color:#e53e3e;">Scorta Min.</div>
           <input type="number" min="0" id="ep-soglia" class="ep-field ep-field-danger" placeholder="0">
         </div>
+        <div class="ep-col ep-col-narrow ep-col-totu" id="ep-tot-u-col">
+          <div class="ep-label ep-label-action" onclick="epTogglePesoU()" onkeydown="if(event.key==='Enter' || event.key===' '){ event.preventDefault(); epTogglePesoU(); }" role="button" tabindex="0">Tot.U</div>
+          <input type="number" min="0" step="any" id="ep-tot-u" class="ep-field ep-field-center" placeholder="0">
+        </div>
+      </div>
+      <div class="ep-row ep-row--peso-u is-hidden" id="ep-peso-u-wrap">
+        <div class="ep-col">
+          <div class="ep-label">Peso per Unità</div>
+          <input type="number" min="0" step="any" id="ep-peso-u" class="ep-field" placeholder="Es: 1.25 kg per unità">
+        </div>
       </div>
       <div class="ep-row ep-row--info">
         <div class="ep-col ep-col-3">
