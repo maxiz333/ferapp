@@ -1323,7 +1323,7 @@ body.light-mode #confirm-overlay > div { background:#fff; }
       </div>
       <div class="ep-stock-field" style="flex:1;">
         <div class="ep-stock-label">Peso per Unità</div>
-        <input type="number" min="0" step="any" id="ep-peso-u" class="ep-stock-input" placeholder="Es: 1.25 kg per unità">
+        <input type="number" min="0" step="any" id="ep-peso-u" class="ep-stock-input" placeholder="Es: 0.289 (Peso al mt/mq)">
       </div>
     </div>
 
@@ -1569,6 +1569,7 @@ body.light-mode #confirm-overlay > div { background:#fff; }
         <b id="pbcalc-weight">0,000</b>
       </div>
     </div>
+    <div id="pbcalc-ref" class="pbcalc-ref" aria-live="polite"></div>
     <div class="pbcalc-actions">
       <button type="button" class="pbcalc-btn pbcalc-btn-muted" onclick="closePrezzoBaseCalc()">Chiudi</button>
       <button type="button" id="pbcalc-apply" class="pbcalc-btn pbcalc-btn-primary" onclick="applyPrezzoBaseCalc()" disabled>Applica</button>

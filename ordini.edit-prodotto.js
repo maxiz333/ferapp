@@ -57,6 +57,7 @@ function openEditProdotto(i, isNew, cartEditContext){
   sf('ep-soglia', (m.soglia !== undefined && m.soglia !== null && m.soglia !== '') ? m.soglia : 0);
   sf('ep-tot-u',  (m.tot_u !== undefined && m.tot_u !== null) ? m.tot_u : '');
   sf('ep-mt-rot', (m.mt_rot !== undefined && m.mt_rot !== null) ? m.mt_rot : '');
+  // peso_u = coefficiente di conversione (kg per mt/mq o unità vendita non-kg); dati tecnici carrello, non prezzi.
   sf('ep-peso-u', (m.peso_u !== undefined && m.peso_u !== null) ? m.peso_u : '');
   sf('ep-fornitore', m.nomeFornitore || '');
 
@@ -342,9 +343,10 @@ function saveEditProdotto(){
   var mtRotVal = gf('ep-mt-rot');
   var pesoUVal = gf('ep-peso-u');
   if(epUnitShowsTotU(unitNow)){
-    magazzino[i].tot_u = totUVal !== '' ? parseFloat(totUVal) : '';
-    magazzino[i].mt_rot = mtRotVal !== '' ? parseFloat(mtRotVal) : '';
-    magazzino[i].peso_u = pesoUVal !== '' ? parseFloat(pesoUVal) : '';
+    magazzino[i].tot_u = totUVal !== '' ? (function(){ var n = parseNumericInputIt(totUVal); return isFinite(n) ? n : ''; })() : '';
+    magazzino[i].mt_rot = mtRotVal !== '' ? (function(){ var n2 = parseNumericInputIt(mtRotVal); return isFinite(n2) ? n2 : ''; })() : '';
+    // peso_u: coefficiente di conversione (kg da taglio mt/mq ecc.) per il carrello; non è un prezzo.
+    magazzino[i].peso_u = pesoUVal !== '' ? (function(){ var n3 = parseNumericInputIt(pesoUVal); return isFinite(n3) ? n3 : ''; })() : '';
   }else{
     magazzino[i].tot_u = '';
     magazzino[i].mt_rot = '';

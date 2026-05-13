@@ -292,7 +292,6 @@ function renderCartTabs(){
       });
       h += '</select>';
       if(itemUsesPrezzoPerBaseUm(it.unit)){
-        var bd = itemBaseUmScontoDisplay(it);
         var suffPB = itemPrezzoBaseUmSuffix(it.unit);
         var qhPB = itemUmQtyHint(it.unit);
         h += '<div class="ct-pb-inline" id="cart-pb-' + idx + '">';
@@ -302,13 +301,16 @@ function renderCartTabs(){
         h += 'title="Prezzo listino ' + esc(suffPB) + ' · qtà ' + esc(qhPB) + '" ';
         h += 'oninput="cartInputPrezzoUnitaBase(\'' + cart.id + '\',' + idx + ',this)" ';
         h += 'onclick="event.stopPropagation();this.select()" />';
-        h += '<span class="ct-pb-disc" id="cart-pb-disc-' + idx + '">';
-        if(bd && bd.hasSc){
-          h += '<span class="ct-pb-struck">€' + formatPrezzoUnitDisplay(bd.b0) + '</span>';
-          h += '<span class="ct-pb-final">€' + formatPrezzoUnitDisplay(bd.b1) + '</span>';
-          h += '<span class="ct-pb-sav">-€' + formatPrezzoUnitDisplay(bd.savPerBase) + '</span>';
+        h += '</div>';
+        var taglioNote = '';
+        var taglioHide = ' style="display:none"';
+        if(it._pbTaglioInput != null && isFinite(it._pbTaglioInput) && it._pbTaglioInput > 0){
+          var umL = it._pbTaglioUm === 'mq' ? 'mq' : 'mt';
+          var xv = String(Number(it._pbTaglioInput)).replace('.', ',');
+          taglioNote = '(Calcolato da ' + xv + ' ' + umL + ')';
+          taglioHide = '';
         }
-        h += '</span></div>';
+        h += '<div class="ct-pb-taglio-note" id="cart-pb-taglio-' + idx + '"' + taglioHide + '>' + esc(taglioNote) + '</div>';
       }
       h += '</div>';
 

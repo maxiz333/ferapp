@@ -416,6 +416,7 @@ body.light-mode #fatture-popup button { color: #444; }
 }
 .pbcalc-result span{font-size:11px;color:#9aa4b2;}
 .pbcalc-result b{font-size:18px;color:#f6e05e;font-variant-numeric:tabular-nums;}
+.pbcalc-ref{font-size:10px;line-height:1.35;color:var(--muted);margin-top:6px;padding:0 2px;min-height:1.2em;}
 .pbcalc-actions{display:flex;gap:8px;margin-top:10px;}
 .pbcalc-btn{
   flex:1;height:42px;border-radius:10px;border:1px solid var(--border);

@@ -2059,6 +2059,20 @@ body.light-mode .ct-fattura-badge {
   font-size: 10px;
   line-height: 1.15;
 }
+.ct-pb-taglio-note{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  margin:2px 0 0;
+  padding:0 1px;
+  font-size:9px;
+  line-height:1.2;
+  color:#8b92a0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 .ct-pb-struck {
   text-decoration: line-through;
   color: #9ca3af;

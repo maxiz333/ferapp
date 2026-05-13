@@ -303,6 +303,14 @@ function ordineAppendStorico(ord, descrizione){
 
 /** Legge e trimma il valore di un input per id */
 function gf(id){ var el=document.getElementById(id); return el?(el.value||'').trim():''; }
+/** Normalizza input numerico (virgole e spazi) prima di parseFloat — scheda #ep, calcolatore, ecc. */
+function parseNumericInputIt(raw){
+  if(raw == null) return NaN;
+  var s = String(raw).trim().replace(/\s/g, '').replace(/,/g, '.');
+  if(s === '') return NaN;
+  var n = parseFloat(s);
+  return isFinite(n) ? n : NaN;
+}
 var rows=[], removed=new Set(lsGet(RK,[])), cestino=lsGet(CK,[]);
 var movimenti=lsGet(MOVK)||[];
 var sortCol=null, sortDir=1, noteIdx=null, pendingImport=[];
