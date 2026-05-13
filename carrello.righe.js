@@ -32,6 +32,13 @@ function cartAddItem(rowIdx){
     posizione:m.posizione||'',prezzoUnit:r.prezzo||'0',qty:1,unit:rowListinoUnit(r),
     scampolo:false,hasScaglioni:hasScag,scaglioni:hasScag?JSON.parse(JSON.stringify(m.scaglioni)):[],
     nota:'',_scaglioniAperti:false,daOrdinare:false};
+  if(typeof itemUsesPrezzoPerBaseUm==='function'&&itemUsesPrezzoPerBaseUm(newItem.unit)){
+    var pList=parsePriceIT(r.prezzo||'0');
+    if(pList>0){
+      newItem._prezzoUnitaBase=itemFormatPrezzoLineStr(pList);
+      if(typeof itemApplyPrezzoUnitaBase==='function') itemApplyPrezzoUnitaBase(newItem);
+    }
+  }
   (cart.items=cart.items||[]).push(newItem);
   // Sync immediata su bozza/ordine collegato per evitare lag o race di salvataggio.
   _cartSyncLinkedOrdine(cart);
@@ -394,8 +401,50 @@ function itemApplyPrezzoUnitaBase(it){
   _cartApplicaScaglione(it);
 }
 
-var _cartBaseUmTimers = {};
-var _cartMqHlTimers = {};
+/** Salvataggio/sync bozza dopo H/L e Prezzo base: debounce (tablet) + evita save a ogni tasto. */
+var _cartMqPbPersistTimers = {};
+var _CART_MQ_PB_SAVE_DEBOUNCE_MS = 900;
+
+function _cartPersistMqPbRowNow(cart){
+  if(!cart) return;
+  saveCarrelli();
+  var o = ordinePerCarrelloStorico(cart);
+  if(o && typeof saveOrdini === 'function') saveOrdini();
+  if(typeof _aggiornaBozzaOrdine === 'function' && cart.bozzaOrdId) _aggiornaBozzaOrdine(cart);
+  if(typeof _aggiornaOrdineDaCarrelloModifica === 'function' && cart.stato === 'modifica' && cart.ordId){
+    _aggiornaOrdineDaCarrelloModifica(cart);
+  }
+}
+
+function _cartSchedulePersistMqPbRow(cartId, idx){
+  var cart = carrelli.find(function(c){ return c.id === cartId; });
+  if(!cart) return;
+  var key = cartId + '_' + idx;
+  clearTimeout(_cartMqPbPersistTimers[key]);
+  _cartMqPbPersistTimers[key] = setTimeout(function(){
+    _cartMqPbPersistTimers[key] = null;
+    _cartPersistMqPbRowNow(cart);
+  }, _CART_MQ_PB_SAVE_DEBOUNCE_MS);
+}
+
+/**
+ * Dopo blur su H/L/Prezzo base: salva subito se il focus non passa a un altro campo mq/pb
+ * (così H→L non forza un save/render mentre si continua a editare la stessa riga).
+ */
+function cartMqPbInputBlur(cartId, idx){
+  setTimeout(function(){
+    var a = document.activeElement;
+    if(a && a.classList && (a.classList.contains('ct-mq-inp') || a.classList.contains('ct-pb-inp'))){
+      return;
+    }
+    var key = cartId + '_' + idx;
+    if(!_cartMqPbPersistTimers[key]) return;
+    clearTimeout(_cartMqPbPersistTimers[key]);
+    _cartMqPbPersistTimers[key] = null;
+    var cart = carrelli.find(function(c){ return c.id === cartId; });
+    if(cart) _cartPersistMqPbRowNow(cart);
+  }, 0);
+}
 
 function cartSetMqSuperficie(cartId, idx, which, rawVal){
   var cart = carrelli.find(function(c){ return c.id === cartId; });
@@ -408,17 +457,7 @@ function cartSetMqSuperficie(cartId, idx, which, rawVal){
   if(typeof itemMqSuperficieSyncQty === 'function') itemMqSuperficieSyncQty(it);
   _cartRicalcolaPrezzoVendita(it);
   cartRefreshLineAndTotals(cartId, idx);
-  var key = cartId + '_' + idx + '_mq';
-  clearTimeout(_cartMqHlTimers[key]);
-  _cartMqHlTimers[key] = setTimeout(function(){
-    saveCarrelli();
-    var o = ordinePerCarrelloStorico(cart);
-    if(o && typeof saveOrdini === 'function') saveOrdini();
-    if(typeof _aggiornaBozzaOrdine === 'function' && cart.bozzaOrdId) _aggiornaBozzaOrdine(cart);
-    if(typeof _aggiornaOrdineDaCarrelloModifica === 'function' && cart.stato === 'modifica' && cart.ordId){
-      _aggiornaOrdineDaCarrelloModifica(cart);
-    }
-  }, 420);
+  _cartSchedulePersistMqPbRow(cartId, idx);
 }
 
 function cartInputPrezzoUnitaBase(cartId, idx, el){
@@ -431,13 +470,7 @@ function cartInputPrezzoUnitaBase(cartId, idx, el){
     itemApplyPrezzoUnitaBase(it);
   }
   cartRefreshLineAndTotals(cartId, idx);
-  var key = cartId + '_' + idx;
-  clearTimeout(_cartBaseUmTimers[key]);
-  _cartBaseUmTimers[key] = setTimeout(function(){
-    saveCarrelli();
-    var o = ordinePerCarrelloStorico(cart);
-    if(o && typeof saveOrdini === 'function') saveOrdini();
-  }, 450);
+  _cartSchedulePersistMqPbRow(cartId, idx);
 }
 
 function cartRefreshPbTaglioNote(idx, it){
@@ -521,16 +554,18 @@ function _cartScheduleDebouncedSave(){
   }, _CART_NOTA_DEBOUNCE_MS);
 }
 
-/** True se il focus è su una textarea/input nota del carrello (non ricostruire il DOM). */
+/** True se il focus è su note carrello o su H/L/Prezzo base (evita renderCartTabs / sync che toglie il focus). */
 function cartNoteFieldHasFocus(){
   var a = document.activeElement;
   if(!a || !a.classList) return false;
   return a.classList.contains('pos-nota-ordine') || a.classList.contains('ct-nota-inp') ||
-    a.classList.contains('ord-bozza-nota') || a.classList.contains('ord-nota-input');
+    a.classList.contains('ord-bozza-nota') || a.classList.contains('ord-nota-input') ||
+    a.classList.contains('ct-mq-inp') || a.classList.contains('ct-pb-inp');
 }
 if(typeof window !== 'undefined'){
   window.cartNoteFieldHasFocus = cartNoteFieldHasFocus;
   window.scheduleDebouncedSaveCarrelli = _cartScheduleDebouncedSave;
+  window.cartMqPbInputBlur = cartMqPbInputBlur;
 }
 
 /** Dopo blur sulle note: salva subito senza attendere il debounce. */

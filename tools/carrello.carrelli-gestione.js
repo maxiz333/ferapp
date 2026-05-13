@@ -17,10 +17,12 @@ function confirmNewCart(){
   if(!sconto&&savedSconto)sconto=savedSconto;
   if(nome&&sconto)setClienteSconto(nome,sconto);
   var id='cart_'+Date.now();
+  var nowIso=new Date().toISOString();
   carrelli.push({id:id,nome:nome||('Cliente '+(carrelli.length+1)),
     createdAt:new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}),
     dataCreazione:Date.now(),
-    creatoAtISO:new Date().toISOString(),
+    creatoAtISO:nowIso,
+    ultimaModificaISO:nowIso,
     items:[],
     scontoGlobale:sconto||null});
   activeCartId=id;

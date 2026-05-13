@@ -32,6 +32,13 @@ function cartAddItem(rowIdx){
     posizione:m.posizione||'',prezzoUnit:r.prezzo||'0',qty:1,unit:rowListinoUnit(r),
     scampolo:false,hasScaglioni:hasScag,scaglioni:hasScag?JSON.parse(JSON.stringify(m.scaglioni)):[],
     nota:'',_scaglioniAperti:false,daOrdinare:false};
+  if(typeof itemUsesPrezzoPerBaseUm==='function'&&itemUsesPrezzoPerBaseUm(newItem.unit)){
+    var pList=parsePriceIT(r.prezzo||'0');
+    if(pList>0){
+      newItem._prezzoUnitaBase=itemFormatPrezzoLineStr(pList);
+      if(typeof itemApplyPrezzoUnitaBase==='function') itemApplyPrezzoUnitaBase(newItem);
+    }
+  }
   (cart.items=cart.items||[]).push(newItem);
   // Sync immediata su bozza/ordine collegato per evitare lag o race di salvataggio.
   _cartSyncLinkedOrdine(cart);

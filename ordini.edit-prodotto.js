@@ -1,5 +1,43 @@
 // ordini.edit-prodotto.js - estratto da ordini.js
 
+/** Data ultimo aggiornamento prezzo (priceUpdatedAt; opz. dataPrezzo / ultimaModificaPrezzo). */
+function _epResolvePrezzoUpdatedDisplay(r){
+  if(!r) return '';
+  var raw = r.dataPrezzo;
+  if(raw == null || raw === '') raw = r.ultimaModificaPrezzo;
+  if(raw != null && raw !== ''){
+    var d = new Date(raw);
+    if(!isNaN(d.getTime())){
+      return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});
+    }
+    var n = Number(raw);
+    if(isFinite(n) && n > 0){
+      var d2 = new Date(n);
+      if(!isNaN(d2.getTime())) return d2.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});
+    }
+  }
+  var t = typeof getRowPriceUpdateAt === 'function' ? getRowPriceUpdateAt(r) : 0;
+  if(t > 0) return new Date(t).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});
+  return '';
+}
+function epRefreshPrezzoUpdatedLabel(r){
+  var el = document.getElementById('ep-prezzo-updated');
+  var wrap = document.querySelector('#ep .ep-prezzo-input-wrap');
+  if(!el) return;
+  var s = _epResolvePrezzoUpdatedDisplay(r);
+  if(!s){
+    el.textContent = '';
+    el.setAttribute('hidden','');
+    el.style.display = 'none';
+    if(wrap) wrap.classList.remove('ep-prezzo-input-wrap--has-date');
+    return;
+  }
+  el.textContent = '\u2014 ' + s;
+  el.removeAttribute('hidden');
+  el.style.display = 'block';
+  if(wrap) wrap.classList.add('ep-prezzo-input-wrap--has-date');
+}
+
 function openEditProdotto(i, isNew, cartEditContext){
   if(!rows[i]) return;
   _epIdx = i;
@@ -19,6 +57,7 @@ function openEditProdotto(i, isNew, cartEditContext){
   sf('ep-codf',   r.codF || '');
   sf('ep-codm',   r.codM || '');
   sf('ep-prezzo', r.prezzo || '');
+  epRefreshPrezzoUpdatedLabel(r);
   sf('ep-prezzoold', r.prezzoOld || '');
   _epPromoG = !!(r.isPromo === true && String(r.promoTipo || '') === 'G');
   epRenderPromoGBtn();
@@ -210,6 +249,7 @@ function epPrezzoVerificato(){
   if(_epSnapshot && _epSnapshot.row) _epSnapshot.row.priceUpdatedAt = rows[_epIdx].priceUpdatedAt;
   if(typeof lsSet === 'function' && typeof SK !== 'undefined') lsSet(SK, rows);
   if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(_epIdx);
+  epRefreshPrezzoUpdatedLabel(rows[_epIdx]);
   _epRefreshPrezzoDot();
   if(typeof renderMagazzino === 'function') renderMagazzino();
   if(typeof showToastGen === 'function') showToastGen('green','\u2705 Prezzo verificato \u2014 timestamp aggiornato');

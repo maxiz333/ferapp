@@ -719,7 +719,8 @@ button[touch-action="manipulation"],
   white-space: nowrap;
 }
 .cart-trash-day { margin-bottom: 12px; }
-.cart-trash-day-title {
+.cart-trash-day-title,
+.cassa-date-header {
   position: sticky;
   top: -10px;
   z-index: 1;
@@ -737,7 +738,10 @@ button[touch-action="manipulation"],
   text-transform: uppercase;
   letter-spacing: .35px;
 }
-.cart-trash-day-title span {
+.cart-trash-day-title span,
+.cart-trash-day-title .badge-count,
+.cassa-date-header span,
+.cassa-date-header .badge-count {
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
@@ -2410,7 +2414,8 @@ body.light-mode .cart-trash-preview span {
   background: #fff8dc;
   color: #333;
 }
-body.light-mode .cart-trash-day-title {
+body.light-mode .cart-trash-day-title,
+body.light-mode .cassa-date-header {
   background: #f7f7f7;
   border-color: #ddd;
 }
@@ -4265,6 +4270,17 @@ body.light-mode .ct-mq-inp:focus {
     width:30px !important;
     min-width:30px !important;
     padding:0 4px !important;
+  }
+  #ep .ep-prezzo-input-wrap.ep-prezzo-input-wrap--has-date .ep-field-accent{
+    padding-right:70px !important;
+  }
+  #ep .ep-prezzo-input-wrap.ep-prezzo-input-wrap--has-date #ep-prezzo{
+    padding-right:68px !important;
+  }
+  #ep .ep-prezzo-updated-at{
+    font-size:9px !important;
+    right:5px !important;
+    bottom:2px !important;
   }
 
   #ep .ep-row--qty .ep-col{

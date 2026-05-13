@@ -1,5 +1,42 @@
 // ordini.edit-prodotto.js - estratto da ordini.js
 
+function _epResolvePrezzoUpdatedDisplay(r){
+  if(!r) return '';
+  var raw = r.dataPrezzo;
+  if(raw == null || raw === '') raw = r.ultimaModificaPrezzo;
+  if(raw != null && raw !== ''){
+    var d = new Date(raw);
+    if(!isNaN(d.getTime())){
+      return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});
+    }
+    var n = Number(raw);
+    if(isFinite(n) && n > 0){
+      var d2 = new Date(n);
+      if(!isNaN(d2.getTime())) return d2.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});
+    }
+  }
+  var t = typeof getRowPriceUpdateAt === 'function' ? getRowPriceUpdateAt(r) : 0;
+  if(t > 0) return new Date(t).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});
+  return '';
+}
+function epRefreshPrezzoUpdatedLabel(r){
+  var el = document.getElementById('ep-prezzo-updated');
+  var wrap = document.querySelector('#ep .ep-prezzo-input-wrap');
+  if(!el) return;
+  var s = _epResolvePrezzoUpdatedDisplay(r);
+  if(!s){
+    el.textContent = '';
+    el.setAttribute('hidden','');
+    el.style.display = 'none';
+    if(wrap) wrap.classList.remove('ep-prezzo-input-wrap--has-date');
+    return;
+  }
+  el.textContent = '\u2014 ' + s;
+  el.removeAttribute('hidden');
+  el.style.display = 'block';
+  if(wrap) wrap.classList.add('ep-prezzo-input-wrap--has-date');
+}
+
 function openEditProdotto(i, isNew){
   if(!rows[i]) return;
   _epIdx = i;
@@ -18,6 +55,7 @@ function openEditProdotto(i, isNew){
   sf('ep-codf',   r.codF || '');
   sf('ep-codm',   r.codM || '');
   sf('ep-prezzo', r.prezzo || '');
+  epRefreshPrezzoUpdatedLabel(r);
   sf('ep-prezzoold', r.prezzoOld || '');
   // Popola tendina storico prezzi
   var ph = r.priceHistory || [];

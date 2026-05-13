@@ -1257,7 +1257,10 @@ body.light-mode #confirm-overlay > div { background:#fff; }
     <div style="display:flex;gap:8px;margin-bottom:10px;">
       <div style="flex:1;">
         <div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">💰 Prezzo vendita</div>
+        <div class="ep-prezzo-input-wrap" style="position:relative;width:100%;box-sizing:border-box;">
         <input type="text" id="ep-prezzo" style="width:100%;padding:7px 10px;border:1px solid var(--accent)44;border-radius:8px;background:#111;color:var(--accent);font-size:15px;font-weight:900;">
+        <span id="ep-prezzo-updated" class="ep-prezzo-updated-at" hidden></span>
+        </div>
       </div>
       <div style="flex:1;">
         <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">↩️ Prezzo vecchio</div>

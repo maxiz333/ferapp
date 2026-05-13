@@ -346,12 +346,16 @@ function renderCartTabs(){
         h += '<input type="text" class="ct-mq-inp" inputmode="decimal" autocomplete="off" ';
         h += 'value="' + esc(hSup) + '" placeholder="—" title="Altezza m" ';
         h += 'oninput="cartSetMqSuperficie(\'' + cart.id + '\',' + idx + ',\'h\',this.value)" ';
+        h += 'onblur="cartMqPbInputBlur(\'' + cart.id + '\',' + idx + ')" ';
+        h += 'onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" ';
         h += 'onclick="event.stopPropagation();this.select()" />';
         h += '<span class="ct-mq-x">×</span>';
         h += '<span class="ct-mq-hl-lbl" title="Larghezza (m)">L</span>';
         h += '<input type="text" class="ct-mq-inp" inputmode="decimal" autocomplete="off" ';
         h += 'value="' + esc(lSup) + '" placeholder="—" title="Larghezza m" ';
         h += 'oninput="cartSetMqSuperficie(\'' + cart.id + '\',' + idx + ',\'l\',this.value)" ';
+        h += 'onblur="cartMqPbInputBlur(\'' + cart.id + '\',' + idx + ')" ';
+        h += 'onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" ';
         h += 'onclick="event.stopPropagation();this.select()" />';
         h += '</div>';
       }
@@ -364,6 +368,8 @@ function renderCartTabs(){
         h += 'value="' + esc(it._prezzoUnitaBase || '') + '" placeholder="—" ';
         h += 'title="Prezzo listino ' + esc(suffPB) + ' · qtà ' + esc(qhPB) + '" ';
         h += 'oninput="cartInputPrezzoUnitaBase(\'' + cart.id + '\',' + idx + ',this)" ';
+        h += 'onblur="cartMqPbInputBlur(\'' + cart.id + '\',' + idx + ')" ';
+        h += 'onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}" ';
         h += 'onclick="event.stopPropagation();this.select()" />';
         h += '</div>';
         var taglioNote = '';

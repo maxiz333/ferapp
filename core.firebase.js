@@ -348,7 +348,7 @@ function _scheduleDbSystemMaintenance(){
         var tc=document.getElementById('tc');
         if(tc&&tc.classList.contains('active')){
           if(typeof cartNoteFieldHasFocus==='function'&&cartNoteFieldHasFocus()){
-            /* evita renderCartTabs mentre si scrive nelle note */
+            /* evita renderCartTabs mentre si scrive in note / H·L / prezzo base */
           }else if(typeof renderCartTabs==='function'){
             renderCartTabs();
           }
@@ -379,7 +379,7 @@ function _scheduleDbSystemMaintenance(){
         var t = document.getElementById('tc');
         if(t && t.classList.contains('active')){
           if(typeof cartNoteFieldHasFocus === 'function' && cartNoteFieldHasFocus()){
-            /* evita renderCartTabs mentre si scrive nelle note: altrimenti si perde il focus */
+            /* evita renderCartTabs mentre si scrive in note / H·L / prezzo base */
           } else if(typeof renderCartTabs === 'function'){
             renderCartTabs();
           }

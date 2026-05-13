@@ -272,6 +272,7 @@ function renderOrdini(){
 
       var indiciDisplay=(function(){
         var all=ordineIndiciOrdineDisplay(ord);
+        // Stesso ordine visivo del carrello: ultimo push in cima (vedi carrello.render-tabs.js loop su length-1..0).
         var attivi=all.filter(function(ii){ return !ordItemCongelato((ord.items||[])[ii]); }).reverse();
         var congelati=all.filter(function(ii){ return ordItemCongelato((ord.items||[])[ii]); });
         return attivi.concat(congelati);
@@ -306,7 +307,7 @@ function renderOrdini(){
 
         // Colonna prodotto: nome + codici sotto (codF editabile con dblclick)
         h+='<div class="ord-gc-desc">';
-        h+='<div class="ord-item-name" onclick="openSchedaFromOrdine('+gi+','+ii+')" style="cursor:pointer;">'+esc(it.desc||'\u2014')+'</div>';
+        h+='<div class="ord-item-name" onclick="openSchedaFromOrdine('+gi+','+ii+')" style="cursor:pointer;"><span class="ct-card-num" aria-hidden="true">'+(ii+1)+'.</span> '+esc(it.desc||'\u2014')+'</div>';
         if(isFz) h+='<div class="ord-congelato-badge">Rimosso dal banco</div>';
         else if(isSr) h+='<div class="ord-reso-badge" style="font-size:9px;font-weight:800;color:#fc8181;margin-top:4px;letter-spacing:.2px;">STORNO RESO</div>';
         var codes='';

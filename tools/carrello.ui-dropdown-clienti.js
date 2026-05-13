@@ -1,5 +1,5 @@
 // =============================================================================
-//  CLIENTI DROPDOWN — Menu raggruppato per giorno
+//  CLIENTI DROPDOWN — Menu raggruppato per giorno (stile Cestino)
 // =============================================================================
 var _gg = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Sabato'];
 
@@ -19,24 +19,56 @@ function ctRenderClientiList(){
   var list = document.getElementById('ct-clienti-list');
   if(!list) return;
 
-  // Filtra solo carrelli di oggi
-  var oggiStr = new Date().toISOString().slice(0,10);
-  var carrelliOggi = [];
-  carrelli.forEach(function(cart, ci){
-    var cData = '';
-    if(cart.creatoAtISO) cData = cart.creatoAtISO.slice(0,10);
-    else if(cart.dataCreazione) cData = new Date(cart.dataCreazione).toISOString().slice(0,10);
-    if(cData === oggiStr || cart.stato === 'inviato' || cart.stato === 'modifica'){
-      carrelliOggi.push({cart:cart, ci:ci});
-    }
+  var entries = [];
+  (carrelli || []).forEach(function(cart, ci){
+    entries.push({ cart: cart, ci: ci });
   });
 
-  if(!carrelliOggi.length){
-    list.innerHTML = '<div style="text-align:center;color:#555;padding:20px;font-size:13px;">Nessun cliente oggi.<br>Premi ＋ NUOVO per iniziare.</div>';
+  if(!entries.length){
+    list.innerHTML = '<div style="text-align:center;color:#555;padding:20px;font-size:13px;">Nessun carrello attivo.<br>Premi ＋ NUOVO per iniziare.</div>';
     return;
   }
 
-  // Helper locali — definiti qui per non sporcare lo scope globale
+  function _ctClientiActivityIso(cart){
+    if(!cart) return '';
+    if(cart.ultimaModificaISO){
+      var d = new Date(cart.ultimaModificaISO);
+      if(!isNaN(d.getTime())) return cart.ultimaModificaISO;
+    }
+    if(cart.creatoAtISO){
+      var d2 = new Date(cart.creatoAtISO);
+      if(!isNaN(d2.getTime())) return cart.creatoAtISO;
+    }
+    if(cart.dataCreazione != null){
+      var d3 = new Date(cart.dataCreazione);
+      if(!isNaN(d3.getTime())) return d3.toISOString();
+    }
+    return '';
+  }
+  function _ctClientiDayKey(cart){
+    var iso = _ctClientiActivityIso(cart);
+    if(iso){
+      var dIso = new Date(iso);
+      if(!isNaN(dIso.getTime())) return dIso.toISOString().slice(0, 10);
+    }
+    return 'senza-data';
+  }
+  function _ctClientiDayLabel(key){
+    if(key === 'senza-data') return 'Senza data';
+    var today = new Date().toISOString().slice(0, 10);
+    var y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    if(key === today) return 'Oggi';
+    if(key === y) return 'Ieri';
+    var p = key.split('-');
+    return p.length === 3 ? (p[2] + '/' + p[1] + '/' + p[0]) : key;
+  }
+  function _ctClientiActivityMs(cart){
+    var iso = _ctClientiActivityIso(cart);
+    if(!iso) return 0;
+    var t = new Date(iso).getTime();
+    return isNaN(t) ? 0 : t;
+  }
+
   function _ctcCalcTot(items){
     var tot = 0;
     try {
@@ -55,8 +87,8 @@ function ctRenderClientiList(){
     catch(e){ return v.toFixed(2); }
   }
   function _ctcOraHHMM(cart){
-    var iso = cart && cart.creatoAtISO
-      ? cart.creatoAtISO
+    var iso = cart && (cart.ultimaModificaISO || cart.creatoAtISO)
+      ? (cart.ultimaModificaISO || cart.creatoAtISO)
       : (cart && cart.dataCreazione ? new Date(cart.dataCreazione).toISOString() : '');
     if(!iso) return '';
     try {
@@ -75,8 +107,7 @@ function ctRenderClientiList(){
     return s;
   }
 
-  var h = '';
-  carrelliOggi.forEach(function(item){
+  function _renderRow(item){
     var cart      = item.cart;
     var ci        = item.ci;
     var items     = cart.items || [];
@@ -89,7 +120,7 @@ function ctRenderClientiList(){
     var ora       = _ctcOraHHMM(cart);
     var ante      = _ctcAnteprima(items);
 
-    h += '<button class="ct-clienti-btn ct-clienti-btn--rich' + (isActive ? ' active' : '') + '" ' +
+    return '<button class="ct-clienti-btn ct-clienti-btn--rich' + (isActive ? ' active' : '') + '" ' +
          'onclick="ctSelezionaCliente(' + ci + ')">' +
          '<div class="ct-cli-row">' +
            '<div class="ct-cli-info">' +
@@ -108,6 +139,34 @@ function ctRenderClientiList(){
            '</div>' +
          '</div>' +
          '</button>';
+  }
+
+  var groups = {};
+  entries.forEach(function(entry){
+    var key = _ctClientiDayKey(entry.cart);
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(entry);
+  });
+  var keys = Object.keys(groups).sort(function(a, b){
+    if(a === 'senza-data') return 1;
+    if(b === 'senza-data') return -1;
+    return a < b ? 1 : (a > b ? -1 : 0);
+  });
+  keys.forEach(function(key){
+    groups[key].sort(function(a, b){
+      return _ctClientiActivityMs(b.cart) - _ctClientiActivityMs(a.cart);
+    });
+  });
+
+  var h = '';
+  keys.forEach(function(key){
+    h += '<div class="cart-trash-day">';
+    h += '<div class="cart-trash-day-title cassa-date-header">' + esc(_ctClientiDayLabel(key)) +
+         ' <span class="badge-count">' + groups[key].length + '</span></div>';
+    groups[key].forEach(function(item){
+      h += _renderRow(item);
+    });
+    h += '</div>';
   });
   list.innerHTML = h;
 }
