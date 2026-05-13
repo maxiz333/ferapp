@@ -127,7 +127,8 @@ function cartStripStaleRotoloInteroNota(it){
   if(!it._tuttoRotolo) it.nota = '';
 }
 
-function cartSetPrezzo(cartId,idx,val){
+function cartSetPrezzo(cartId,idx,val,opts){
+  opts = opts || {};
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!cart.items[idx])return;
   if(cart.items[idx]._stornoReso) return;
@@ -136,8 +137,8 @@ function cartSetPrezzo(cartId,idx,val){
   if(String(val||'')===oldP) return;
   it.prezzoUnit=val;
   cartStripStaleRotoloInteroNota(it);
-  if(itemUsesPrezzoPerBaseUm(it.unit)) itemSyncPrezzoUnitaBaseDaPrezzoRiga(it);
-  if(it.rowIdx != null && it.rowIdx !== '' && typeof rows !== 'undefined' && rows){
+  if(itemUsesPrezzoPerBaseUm(it.unit) && !opts.skipBaseSync) itemSyncPrezzoUnitaBaseDaPrezzoRiga(it);
+  if(!opts.skipCatalogSync && it.rowIdx != null && it.rowIdx !== '' && typeof rows !== 'undefined' && rows){
     var ri = parseInt(it.rowIdx, 10);
     if(!isNaN(ri) && rows[ri]){
       var nowP = Date.now();
@@ -803,6 +804,161 @@ function openQtyNumpad(cartId,idx){
     }
     it.qty=val;_cartRicalcolaPrezzoVendita(it);saveCarrelli();renderCartTabs();
   });
+}
+
+var _pbCalcState = null;
+
+function _pbCalcParseNum(raw){
+  var s = String(raw == null ? '' : raw).replace(',', '.').trim();
+  if(!s) return NaN;
+  var n = parseFloat(s);
+  return isFinite(n) ? n : NaN;
+}
+
+function _pbCalcFmtWeight(v){
+  if(!isFinite(v)) return '0,000';
+  return (Math.round(v * 1000) / 1000).toFixed(3).replace('.', ',');
+}
+
+function _pbCalcSetHint(msg){
+  var hint = document.getElementById('pbcalc-hint');
+  if(hint) hint.textContent = msg || '';
+}
+
+function _pbCalcQtyLabel(unit){
+  var u = String(unit == null ? '' : unit).toLowerCase();
+  if(u === 'mt' || u === 'm') return 'Metri da Tagliare';
+  if(u === 'mq' || u === 'm²') return 'Mq da Tagliare';
+  if(u === 'kg') return 'Kg da Tagliare';
+  if(u === 'lt' || u === 'l') return 'Litri da Tagliare';
+  return 'Quantità da Tagliare';
+}
+
+function _pbCalcCompute(state, qtaTaglio){
+  if(!state || !isFinite(qtaTaglio) || qtaTaglio <= 0) return { ok:false, msg:'Inserisci una quantità valida.' };
+  var pesoTot = 0;
+  var prezzoTot = 0;
+  if(state.unit === 'kg'){
+    pesoTot = qtaTaglio;
+    prezzoTot = qtaTaglio * state.prezzoBase;
+  }else{
+    var pesoPerUnita = 0;
+    if(isFinite(state.pesoU) && state.pesoU > 0){
+      pesoPerUnita = state.pesoU;
+    }else if(isFinite(state.totU) && state.totU > 0 && isFinite(state.mtRot) && state.mtRot > 0){
+      pesoPerUnita = state.totU / state.mtRot;
+    }else{
+      return { ok:false, msg:'Servono Peso/Unità oppure Tot.U e mt.rot nella scheda articolo.' };
+    }
+    pesoTot = qtaTaglio * pesoPerUnita;
+    prezzoTot = pesoTot * state.prezzoBase;
+  }
+  if(!isFinite(prezzoTot) || prezzoTot <= 0) return { ok:false, msg:'Calcolo non valido.' };
+  return { ok:true, pesoTot:pesoTot, prezzoTot:prezzoTot };
+}
+
+function openPrezzoBaseCalc(cartId, idx){
+  var cart = carrelli.find(function(c){ return c.id === cartId; });
+  if(!cart || !cart.items[idx]) return;
+  var it = cart.items[idx];
+  if(it._stornoReso) return;
+  if(!itemUsesPrezzoPerBaseUm(it.unit)){
+    if(typeof showToastGen === 'function') showToastGen('orange', 'Calcolatore disponibile solo per articoli a prezzo base.');
+    return;
+  }
+  var prezzoBase = parsePriceIT(it._prezzoUnitaBase);
+  if(prezzoBase <= 0){
+    var f = (typeof itemUmToBasePriceFactor === 'function') ? itemUmToBasePriceFactor(it.unit) : 1;
+    var pUnit = parsePriceIT(it.prezzoUnit);
+    if(pUnit > 0 && f > 0) prezzoBase = pUnit / f;
+  }
+  if(prezzoBase <= 0){
+    if(typeof showToastGen === 'function') showToastGen('orange', 'Prezzo base non valido.');
+    return;
+  }
+  var rowIdx = parseInt(it.rowIdx, 10);
+  var m = (!isNaN(rowIdx) && typeof magazzino !== 'undefined' && magazzino[rowIdx]) ? magazzino[rowIdx] : {};
+  var unitNorm = (typeof normalizeUmValue === 'function') ? normalizeUmValue(it.unit || 'pz') : String(it.unit || 'pz');
+  unitNorm = String(unitNorm || 'pz').toLowerCase();
+  var qtyRiga = parseFloat(it.qty || 0);
+  _pbCalcState = {
+    cartId: cartId,
+    idx: idx,
+    unit: unitNorm,
+    prezzoBase: prezzoBase,
+    pesoU: parseFloat(m.peso_u),
+    totU: parseFloat(m.tot_u),
+    mtRot: parseFloat(m.mt_rot),
+    qtyRiga: isFinite(qtyRiga) ? qtyRiga : 0
+  };
+
+  var baseEl = document.getElementById('pbcalc-base');
+  var totUEl = document.getElementById('pbcalc-totu');
+  var qtyLbl = document.getElementById('pbcalc-qty-label');
+  var qtyEl = document.getElementById('pbcalc-qty');
+  var ov = document.getElementById('pbcalc-overlay');
+  if(baseEl) baseEl.textContent = '€ ' + itemFormatPrezzoLineStr(prezzoBase);
+  if(totUEl) totUEl.textContent = isFinite(_pbCalcState.totU) ? String(_pbCalcState.totU).replace('.', ',') : '—';
+  if(qtyLbl) qtyLbl.textContent = _pbCalcQtyLabel(_pbCalcState.unit);
+  if(qtyEl) qtyEl.value = '';
+  if(ov) ov.classList.add('open');
+  _pbCalcSetHint('');
+  pbCalcRecompute();
+  setTimeout(function(){ if(qtyEl) qtyEl.focus(); }, 30);
+}
+
+function closePrezzoBaseCalc(){
+  var ov = document.getElementById('pbcalc-overlay');
+  if(ov) ov.classList.remove('open');
+  _pbCalcState = null;
+}
+
+function pbCalcRecompute(){
+  var priceOut = document.getElementById('pbcalc-price');
+  var weightOut = document.getElementById('pbcalc-weight');
+  var applyBtn = document.getElementById('pbcalc-apply');
+  var qtyEl = document.getElementById('pbcalc-qty');
+  if(!priceOut || !weightOut || !applyBtn) return;
+  var qtaTaglio = _pbCalcParseNum(qtyEl ? qtyEl.value : '');
+  var calc = _pbCalcCompute(_pbCalcState, qtaTaglio);
+  if(!calc.ok){
+    priceOut.textContent = '€ 0,00';
+    weightOut.textContent = '0,000';
+    applyBtn.disabled = true;
+    _pbCalcSetHint(_pbCalcState ? calc.msg : '');
+    return;
+  }
+  priceOut.textContent = '€ ' + itemFormatPrezzoLineStr(calc.prezzoTot);
+  weightOut.textContent = _pbCalcFmtWeight(calc.pesoTot);
+  applyBtn.disabled = !(_pbCalcState && _pbCalcState.qtyRiga > 0);
+  _pbCalcSetHint('');
+}
+
+function applyPrezzoBaseCalc(){
+  if(!_pbCalcState) return;
+  var qtyEl = document.getElementById('pbcalc-qty');
+  var qtaTaglio = _pbCalcParseNum(qtyEl ? qtyEl.value : '');
+  var calc = _pbCalcCompute(_pbCalcState, qtaTaglio);
+  if(!calc.ok){
+    _pbCalcSetHint(calc.msg);
+    if(typeof showToastGen === 'function') showToastGen('orange', calc.msg);
+    return;
+  }
+  var qtyRiga = _pbCalcState.qtyRiga;
+  if(!isFinite(qtyRiga) || qtyRiga <= 0){
+    if(typeof showToastGen === 'function') showToastGen('orange', 'Quantità riga non valida.');
+    return;
+  }
+  var prezzoUnitRiga = calc.prezzoTot / qtyRiga;
+  if(!isFinite(prezzoUnitRiga) || prezzoUnitRiga <= 0){
+    if(typeof showToastGen === 'function') showToastGen('orange', 'Prezzo calcolato non valido.');
+    return;
+  }
+  var cartId = _pbCalcState.cartId;
+  var rowIdx = _pbCalcState.idx;
+  closePrezzoBaseCalc();
+  cartSetPrezzo(cartId, rowIdx, itemFormatPrezzoLineStr(prezzoUnitRiga), { skipBaseSync: true, skipCatalogSync: true });
+  if(typeof showToastGen === 'function') showToastGen('green', 'Prezzo vendita applicato alla riga corrente.');
 }
 
 // --- SCAGLIONI CARRELLO ---------------------------------------

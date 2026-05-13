@@ -2013,6 +2013,15 @@ body.light-mode .ct-fattura-badge {
   letter-spacing: 0.25px;
   flex-shrink: 0;
 }
+.ct-pb-tag--clickable {
+  color: var(--ct-yellow, #f5c400);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  touch-action: manipulation;
+}
+.ct-pb-tag--clickable:active { filter: brightness(.88); }
 .ct-pb-inp {
   width: 52px;
   min-width: 38px;
@@ -2488,6 +2497,7 @@ body.light-mode .ct-mq-inp:focus {
     gap: 4px;
     border-top: none;
   }
+  #tc .ct-pb-tag--clickable { font-size: 9px; }
   #tc .ct-pb-disc {
     gap: 3px 6px;
   }
@@ -4371,6 +4381,7 @@ body.light-mode .ct-mq-inp {
   -webkit-text-fill-color: var(--field-text) !important;
   border-color: var(--border) !important;
 }
+body.light-mode .ct-pb-tag--clickable { color: #8b6a00; }
 
 body.light-mode #tc .ct-card .ord-code-mag,
 body.light-mode #tc .ct-card .ord-code-mag.ord-code-mag--toggle {

@@ -360,7 +360,7 @@ function renderCartTabs(){
         var suffPB = itemPrezzoBaseUmSuffix(it.unit);
         var qhPB = itemUmQtyHint(it.unit);
         h += '<div class="ct-pb-inline" id="cart-pb-' + idx + '">';
-        h += '<span class="ct-pb-tag" title="Prezzo per ' + esc(suffPB) + ', quantità in ' + esc(qhPB) + '">Prezzo Base</span>';
+        h += '<span class="ct-pb-tag ct-pb-tag--clickable" role="button" tabindex="0" title="Apri calcolatore taglio/peso" onclick="event.stopPropagation();openPrezzoBaseCalc(\'' + cart.id + '\',' + idx + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();event.stopPropagation();openPrezzoBaseCalc(\'' + cart.id + '\',' + idx + ');}">PREZZO BASE</span>';
         h += '<input type="text" class="ct-pb-inp" inputmode="decimal" ';
         h += 'value="' + esc(it._prezzoUnitaBase || '') + '" placeholder="—" ';
         h += 'title="Prezzo listino ' + esc(suffPB) + ' · qtà ' + esc(qhPB) + '" ';

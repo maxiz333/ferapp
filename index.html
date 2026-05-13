@@ -1438,7 +1438,11 @@ body.light-mode #confirm-overlay > div { background:#fff; }
         </div>
       </div>
       <div class="ep-row ep-row--peso-u is-hidden" id="ep-peso-u-wrap">
-        <div class="ep-col">
+        <div class="ep-col ep-col-2">
+          <div class="ep-label">mt.rot</div>
+          <input type="number" min="0" step="any" id="ep-mt-rot" class="ep-field" placeholder="Metri rotolo">
+        </div>
+        <div class="ep-col ep-col-2">
           <div class="ep-label">Peso per Unità</div>
           <input type="number" min="0" step="any" id="ep-peso-u" class="ep-field" placeholder="Es: 1.25 kg per unità">
         </div>
@@ -1655,6 +1659,37 @@ body.light-mode #confirm-overlay > div { background:#fff; }
       <textarea id="of-note" rows="2" placeholder="Note ordine..." style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:#111;color:var(--text);font-size:12px;box-sizing:border-box;resize:none;font-family:inherit;"></textarea>
     </div>
     <button onclick="salvaOrdFor()" style="width:100%;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#111;font-size:14px;font-weight:900;cursor:pointer;">📦 Invia ordine</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ CALCOLATORE TAGLIO/PESO -->
+<div id="pbcalc-overlay" class="overlay" onclick="if(event.target.id==='pbcalc-overlay') closePrezzoBaseCalc();">
+  <div id="pbcalc-box" class="pbcalc-box">
+    <div class="pbcalc-head">
+      <div class="pbcalc-title">Calcolatore Taglio/Peso</div>
+      <button type="button" class="pbcalc-close" onclick="closePrezzoBaseCalc()" aria-label="Chiudi calcolatore">✕</button>
+    </div>
+    <div class="pbcalc-meta">
+      <div class="pbcalc-chip">Prezzo Base: <b id="pbcalc-base">€ 0,00</b></div>
+      <div class="pbcalc-chip">Tot.U: <b id="pbcalc-totu">—</b></div>
+    </div>
+    <div id="pbcalc-qty-label" class="pbcalc-label">Quantità da Tagliare</div>
+    <input id="pbcalc-qty" class="pbcalc-qty" type="text" inputmode="decimal" autocomplete="off" placeholder="0" oninput="pbCalcRecompute()">
+    <div id="pbcalc-hint" class="pbcalc-hint"></div>
+    <div class="pbcalc-results">
+      <div class="pbcalc-result">
+        <span>Prezzo Totale (€)</span>
+        <b id="pbcalc-price">€ 0,00</b>
+      </div>
+      <div class="pbcalc-result">
+        <span>Peso Totale (kg)</span>
+        <b id="pbcalc-weight">0,000</b>
+      </div>
+    </div>
+    <div class="pbcalc-actions">
+      <button type="button" class="pbcalc-btn pbcalc-btn-muted" onclick="closePrezzoBaseCalc()">Chiudi</button>
+      <button type="button" id="pbcalc-apply" class="pbcalc-btn pbcalc-btn-primary" onclick="applyPrezzoBaseCalc()" disabled>Applica</button>
+    </div>
   </div>
 </div>
 

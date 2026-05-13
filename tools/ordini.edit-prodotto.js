@@ -34,6 +34,7 @@ function openEditProdotto(i, isNew){
   sf('ep-qty',    m.qty !== undefined ? m.qty : '');
   sf('ep-soglia',    m.soglia !== undefined ? m.soglia : '');
   sf('ep-tot-u',  (m.tot_u !== undefined && m.tot_u !== null) ? m.tot_u : '');
+  sf('ep-mt-rot', (m.mt_rot !== undefined && m.mt_rot !== null) ? m.mt_rot : '');
   sf('ep-peso-u', (m.peso_u !== undefined && m.peso_u !== null) ? m.peso_u : '');
   sf('ep-fornitore', m.nomeFornitore || '');
 
@@ -56,7 +57,7 @@ function openEditProdotto(i, isNew){
   });
   epFillSubcat(m.subcat);
   epSyncTotUVisibility();
-  epTogglePesoU(String(m.peso_u == null ? '' : m.peso_u).trim() !== '');
+  epTogglePesoU(String(m.peso_u == null ? '' : m.peso_u).trim() !== '' || String(m.mt_rot == null ? '' : m.mt_rot).trim() !== '');
 
   document.getElementById('ep').classList.add('open');
   setTimeout(function(){ document.getElementById('ep-desc').focus(); renderCorrelati(_epIdx); renderScaglioni(_epIdx); }, 100);
@@ -168,12 +169,15 @@ function saveEditProdotto(){
   var subEl = document.getElementById('ep-subcat');
   magazzino[i].subcat        = subEl ? subEl.value : '';
   var totUVal = gf('ep-tot-u');
+  var mtRotVal = gf('ep-mt-rot');
   var pesoUVal = gf('ep-peso-u');
   if(epUnitShowsTotU(unitNow)){
     magazzino[i].tot_u = totUVal !== '' ? parseFloat(totUVal) : '';
+    magazzino[i].mt_rot = mtRotVal !== '' ? parseFloat(mtRotVal) : '';
     magazzino[i].peso_u = pesoUVal !== '' ? parseFloat(pesoUVal) : '';
   }else{
     magazzino[i].tot_u = '';
+    magazzino[i].mt_rot = '';
     magazzino[i].peso_u = '';
   }
   magazzino[i].nomeFornitore = gf('ep-fornitore');
