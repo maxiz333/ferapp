@@ -16,48 +16,138 @@ function toggleRicercaGlobale() {
   }
 }
 
+/** Match inventario ricerca globale: _invIdx o hay raw (Fase 3 primary/fallback). */
+function _globalSearchInvRow(qNorm, r, i, m, mode){
+  var invIdxReady = typeof _invIdx !== 'undefined' && _invIdx && typeof _invIdxBuilt !== 'undefined' && _invIdxBuilt && _invIdx.length === rows.length;
+  if(typeof matchNormQueryToText === 'function'){
+    if(invIdxReady){
+      return matchNormQueryToText(qNorm, _invIdx[i] || '', mode);
+    }
+    var hay = [r.desc, r.codF, r.codM, m.marca, m.specs, m.posizione, m.nomeFornitore].join(' ');
+    return matchNormQueryToText(qNorm, typeof norm === 'function' ? norm(hay) : hay.toLowerCase(), mode);
+  }
+  if(invIdxReady){
+    return { ok: fuzzyMatchNormalized(qNorm, _invIdx[i]||''), tier: 'exact' };
+  }
+  var hayF = [r.desc, r.codF, r.codM, m.marca, m.specs, m.posizione, m.nomeFornitore].join(' ');
+  var tn = typeof norm === 'function' ? norm(hayF) : String(hayF).toLowerCase();
+  return { ok: fuzzyMatchNormalized(qNorm, tn), tier: 'exact' };
+}
+
+/** Pannello header #rg-panel: inventario paginato come il popup. */
+var _rgInvMoreState = { q: '', items: [], shown: 0 };
+var RG_INV_INITIAL = 15;
+var RG_INV_PAGE = 20;
+
+function gsRgInvRowHtml(h){
+  var row = '';
+  row += '<div onclick="' + h.action + '" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid #222;display:flex;flex-direction:column;gap:1px;" onmouseover="this.style.background=\'#2a2a2a\'" onmouseout="this.style.background=\'\'">';
+  row += '<span style="font-size:12px;color:var(--text);font-weight:600">' + esc(h.label) + '</span>';
+  if (h.sub) row += '<span style="font-size:10px;color:var(--muted)">' + esc(h.sub) + '</span>';
+  row += '</div>';
+  return row;
+}
+
+function gsRgPanelLoadMoreInv(){
+  var inp = document.getElementById('rg-input');
+  var qNow = (inp && inp.value || '').trim();
+  var st = _rgInvMoreState;
+  if(!st.items.length || qNow !== st.q) return;
+  var listEl = document.getElementById('rg-panel-inv-rows');
+  var moreEl = document.getElementById('rg-panel-inv-more');
+  if(!listEl || !moreEl) return;
+  var total = st.items.length;
+  var start = st.shown;
+  if(start >= total) return;
+  var end = Math.min(start + RG_INV_PAGE, total);
+  for(var i = start; i < end; i++){
+    listEl.insertAdjacentHTML('beforeend', gsRgInvRowHtml(st.items[i]));
+  }
+  st.shown = end;
+  var rem = total - end;
+  if(rem <= 0){
+    moreEl.parentNode.removeChild(moreEl);
+  } else {
+    moreEl.textContent = '... e altri ' + rem + ' articoli';
+  }
+}
+
 function eseguiRicercaGlobale() {
   var inp = document.getElementById('rg-input');
   if (!inp) return;
   var el = document.getElementById('rg-results');
   if (!el) return;
   var qRaw = inp.value.trim();
+  _rgInvMoreState = { q: '', items: [], shown: 0 };
   if (qRaw.length < 2) {
     el.innerHTML = '<div style="color:#555;font-size:12px;font-style:italic;padding:12px">Scrivi almeno 2 caratteri-</div>';
     return;
   }
+  var qNorm = typeof norm === 'function' ? norm(qRaw) : qRaw.toLowerCase();
   var hits = [];
-  // - Inventario -
-  rows.forEach(function (r, i) {
-    if (removed.has(String(i))) return;
-    var m = magazzino[i] || {};
-    var hay = [r.desc, r.codF, r.codM, m.marca, m.specs, m.posizione, m.nomeFornitore].join(' ');
-    if (!fuzzyMatch(qRaw, hay)) return;
-    hits.push({ tipo: 'inv', label: r.desc || '-', sub: (r.codF || '') + (m.nomeFornitore ? ' - ' + m.nomeFornitore : ''), action: 'openSchedaProdotto(' + i + ');toggleRicercaGlobale()', _hay: hay });
-  });
-  // - Ordini -
-  ordini.forEach(function (o) {
-    if (!o) return;
-    var hay = [o.id, o.stato, o.nota, o.nomeCliente].join(' ');
-    if (o.note) hay += ' ' + o.note;
-    (o.items || []).forEach(function (it) {
-      hay += ' ' + (it.desc || '') + ' ' + (it.codF || '') + ' ' + (it.nomeFornitore || '') + ' ' + (it.fornitore || '');
+
+  function invCollect(mode){
+    var arr = [];
+    rows.forEach(function (r, i) {
+      if (removed.has(String(i))) return;
+      var m = magazzino[i] || {};
+      var hay = [r.desc, r.codF, r.codM, m.marca, m.specs, m.posizione, m.nomeFornitore].join(' ');
+      var mr = _globalSearchInvRow(qNorm, r, i, m, mode);
+      if (!mr.ok) return;
+      arr.push({ tipo: 'inv', label: r.desc || '-', sub: (r.codF || '') + (m.nomeFornitore ? ' - ' + m.nomeFornitore : ''), action: 'openSchedaProdotto(' + i + ');toggleRicercaGlobale()', _hay: hay, searchTier: mr.tier || 'exact' });
     });
-    if (!fuzzyMatch(qRaw, hay)) return;
-    hits.push({ tipo: 'ord', label: 'Ordine ' + (o.nomeCliente || 'senza nome'), sub: o.data || '', action: 'goTab(\'to\');toggleRicercaGlobale()', _hay: hay });
-  });
-  // - Movimenti -
-  movimenti.forEach(function (mv) {
-    var hay = [mv.desc, mv.codF, mv.note, mv.tipo, mv.data].join(' ');
-    if (!fuzzyMatch(qRaw, hay)) return;
-    hits.push({ tipo: 'mov', label: mv.desc || '-', sub: mv.data + ' - ' + mv.tipo + ' ' + (mv.delta >= 0 ? '+' : '') + mv.delta, action: 'goTab(\'tmov\');toggleRicercaGlobale()', _hay: hay });
-  });
+    return arr;
+  }
+  var invHits = invCollect('primary');
+  if(!invHits.length) invHits = invCollect('fallback');
+  hits = hits.concat(invHits);
+
+  function ordCollect(mode){
+    var arr = [];
+    ordini.forEach(function (o) {
+      if (!o) return;
+      var hay = [o.id, o.stato, o.nota, o.nomeCliente].join(' ');
+      if (o.note) hay += ' ' + o.note;
+      (o.items || []).forEach(function (it) {
+        hay += ' ' + (it.desc || '') + ' ' + (it.codF || '') + ' ' + (it.nomeFornitore || '') + ' ' + (it.fornitore || '');
+      });
+      var mr = (typeof matchNormQueryToText === 'function' && typeof norm === 'function')
+        ? matchNormQueryToText(qNorm, norm(hay), mode)
+        : { ok: fuzzyMatch(qRaw, hay), tier: 'exact' };
+      if (!mr.ok) return;
+      arr.push({ tipo: 'ord', label: 'Ordine ' + (o.nomeCliente || 'senza nome'), sub: o.data || '', action: 'goTab(\'to\');toggleRicercaGlobale()', _hay: hay, searchTier: mr.tier || 'exact' });
+    });
+    return arr;
+  }
+  var ordHits = ordCollect('primary');
+  if(!ordHits.length) ordHits = ordCollect('fallback');
+  hits = hits.concat(ordHits);
+
+  function movCollect(mode){
+    var arr = [];
+    movimenti.forEach(function (mv) {
+      var hay = [mv.desc, mv.codF, mv.note, mv.tipo, mv.data].join(' ');
+      var mr = (typeof matchNormQueryToText === 'function' && typeof norm === 'function')
+        ? matchNormQueryToText(qNorm, norm(hay), mode)
+        : { ok: fuzzyMatch(qRaw, hay), tier: 'exact' };
+      if (!mr.ok) return;
+      arr.push({ tipo: 'mov', label: mv.desc || '-', sub: mv.data + ' - ' + mv.tipo + ' ' + (mv.delta >= 0 ? '+' : '') + mv.delta, action: 'goTab(\'tmov\');toggleRicercaGlobale()', _hay: hay, searchTier: mr.tier || 'exact' });
+    });
+    return arr;
+  }
+  var movHits = movCollect('primary');
+  if(!movHits.length) movHits = movCollect('fallback');
+  hits = hits.concat(movHits);
   if (!hits.length) {
+    _rgInvMoreState = { q: '', items: [], shown: 0 };
     el.innerHTML = '<div style="color:#555;font-size:12px;padding:12px">Nessun risultato per "<b>' + esc(qRaw) + '</b>"</div>';
     return;
   }
   if (typeof fuzzyScore === 'function') {
-    hits.forEach(function (h) { h.rank = fuzzyScore(qRaw, h._hay || ''); });
+    hits.forEach(function (h) {
+      var mult = (typeof searchTierRankMultiplier === 'function') ? searchTierRankMultiplier(h.searchTier||'exact') : 1;
+      h.rank = fuzzyScore(qRaw, h._hay || '') * mult;
+    });
   }
   var groupOrder = { inv: 0, ord: 1, mov: 2 };
   var groupLabel = { inv: '- Inventario', ord: '- Ordini', mov: '- Movimenti' };
@@ -69,12 +159,27 @@ function eseguiRicercaGlobale() {
       sections[tipo].sort(function (a, b) { return (b.rank || 0) - (a.rank || 0); });
     }
     hhtml += '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:6px 10px 3px;border-top:1px solid var(--border);">' + groupLabel[tipo] + ' (' + sections[tipo].length + ')</div>';
-    sections[tipo].slice(0, 20).forEach(function (h) {
-      hhtml += '<div onclick="' + h.action + '" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid #222;display:flex;flex-direction:column;gap:1px;" onmouseover="this.style.background=\'#2a2a2a\'" onmouseout="this.style.background=\'\'">'; 
-      hhtml += '<span style="font-size:12px;color:var(--text);font-weight:600">' + esc(h.label) + '</span>';
-      if (h.sub) hhtml += '<span style="font-size:10px;color:var(--muted)">' + esc(h.sub) + '</span>';
+    if (tipo === 'inv') {
+      var invArr = sections[tipo];
+      var firstRg = Math.min(RG_INV_INITIAL, invArr.length);
+      _rgInvMoreState = { q: qRaw, items: invArr, shown: firstRg };
+      hhtml += '<div id="rg-panel-inv-rows">';
+      for (var rgi = 0; rgi < firstRg; rgi++) {
+        hhtml += gsRgInvRowHtml(invArr[rgi]);
+      }
       hhtml += '</div>';
-    });
+      var remRg = invArr.length - firstRg;
+      if (remRg > 0) {
+        hhtml += '<div id="rg-panel-inv-more" role="button" tabindex="0" onclick="gsRgPanelLoadMoreInv()" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();gsRgPanelLoadMoreInv();}" style="cursor:pointer;font-size:11px;color:var(--accent);text-align:center;padding:8px 10px;border-bottom:1px solid #222;background:#252525;">... e altri ' + remRg + ' articoli</div>';
+      }
+    } else {
+      sections[tipo].slice(0, 20).forEach(function (h) {
+        hhtml += '<div onclick="' + h.action + '" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid #222;display:flex;flex-direction:column;gap:1px;" onmouseover="this.style.background=\'#2a2a2a\'" onmouseout="this.style.background=\'\'">';
+        hhtml += '<span style="font-size:12px;color:var(--text);font-weight:600">' + esc(h.label) + '</span>';
+        if (h.sub) hhtml += '<span style="font-size:10px;color:var(--muted)">' + esc(h.sub) + '</span>';
+        hhtml += '</div>';
+      });
+    }
   });
   el.innerHTML = '<div style="font-size:10px;color:var(--muted);padding:6px 10px;">' + hits.length + ' risultati</div>' + hhtml;
 }
@@ -214,10 +319,58 @@ function onGlobalSearchInput(val){
   _globalSearchTimer = setTimeout(function(){ doGlobalSearch(val); }, 200);
 }
 
+/** Popup ricerca globale: inventario mostrato a blocchi (evita migliaia di nodi DOM). */
+var _gsInvMoreState = { q: '', items: [], shown: 0 };
+var GS_INV_INITIAL = 15;
+var GS_INV_PAGE = 20;
+
+/** Una riga inventario nel popup #global-search-results. */
+function gsGlobalSearchInvRowHtml(item){
+  var qty = item.m.qty !== undefined && item.m.qty !== '' ? Number(item.m.qty) : '-';
+  var soglia = getSoglia(item.i);
+  var isLow = qty !== '-' && qty <= soglia;
+  var h = '';
+  h += '<div data-gi="'+item.i+'" onclick="gsGoArticolo(this)" style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#1e1e1e;border-radius:8px;margin-bottom:4px;cursor:pointer;border-left:3px solid '+(isLow?'#e53e3e':'transparent')+';">';
+  h += '<div>';
+  h += '<div style="font-size:12px;font-weight:600;color:var(--text);">'+ esc(item.r.desc||'-') +'</div>';
+  h += '<div style="font-size:10px;color:var(--muted);">'+esc(item.r.codF||'')+(item.m.marca?' - '+esc(item.m.marca):'')+'</div>';
+  h += '</div>';
+  h += '<div style="text-align:right;">';
+  h += '<div style="font-size:12px;font-weight:700;color:var(--accent);">- '+(item.r.prezzo||'-')+'</div>';
+  h += '<div style="font-size:10px;color:'+(isLow?'#e53e3e':'#555')+';">Qta: '+qty+(isLow?' --':'')+'</div>';
+  h += '</div></div>';
+  return h;
+}
+
+function gsGlobalSearchLoadMoreInv(){
+  var inp = document.getElementById('global-search-input');
+  var qNow = (inp && inp.value || '').trim();
+  var st = _gsInvMoreState;
+  if(!st.items.length || qNow !== st.q) return;
+  var listEl = document.getElementById('gs-inv-rows');
+  var moreEl = document.getElementById('gs-inv-more');
+  if(!listEl || !moreEl) return;
+  var total = st.items.length;
+  var start = st.shown;
+  if(start >= total) return;
+  var end = Math.min(start + GS_INV_PAGE, total);
+  for(var i = start; i < end; i++){
+    listEl.insertAdjacentHTML('beforeend', gsGlobalSearchInvRowHtml(st.items[i]));
+  }
+  st.shown = end;
+  var rem = total - end;
+  if(rem <= 0){
+    moreEl.parentNode.removeChild(moreEl);
+  } else {
+    moreEl.textContent = '... e altri ' + rem + ' articoli';
+  }
+}
+
 function doGlobalSearch(q){
   q = (q||'').trim();
   var el = document.getElementById('global-search-results');
   if(!el) return;
+  _gsInvMoreState = { q: '', items: [], shown: 0 };
   if(q.length < 2){
     el.innerHTML = '<div style="text-align:center;color:#555;padding:20px;font-size:13px;">Digita almeno 2 caratteri...</div>';
     return;
@@ -229,66 +382,72 @@ function doGlobalSearch(q){
   var qNorm;
   if(typeof norm === 'function') qNorm = norm(q);
   else qNorm = q.toLowerCase();
-  var invIdxReady = typeof fuzzyMatchNormalized === 'function' && typeof _invIdx !== 'undefined' && _invIdx && typeof _invIdxBuilt !== 'undefined' && _invIdxBuilt && _invIdx.length === rows.length;
 
-  // -- Inventario -- (_invIdx pre-normalizzato + fuzzyMatchNormalized: no norm() per riga)
-  var invResults = [];
-  rows.forEach(function(r,i){
-    if(removed.has(String(i))) return;
-    var m = magazzino[i] || {};
-    var matchInv = false;
-    if(invIdxReady){
-      matchInv = fuzzyMatchNormalized(qNorm, _invIdx[i] || '');
-    } else {
-      var hay = [r.desc, r.codF, r.codM, m.marca, m.specs, m.posizione, m.nomeFornitore].join(' ');
-      matchInv = fuzzyMatch(q, hay);
-    }
-    if(matchInv) invResults.push({r:r, m:m, i:i});
-  });
+  function gsCollectInv(mode){
+    var arr = [];
+    rows.forEach(function(r,i){
+      if(removed.has(String(i))) return;
+      var m = magazzino[i] || {};
+      var mr = _globalSearchInvRow(qNorm, r, i, m, mode);
+      if(!mr.ok) return;
+      arr.push({r:r, m:m, i:i, searchTier: mr.tier||'exact'});
+    });
+    return arr;
+  }
+  var invResults = gsCollectInv('primary');
+  if(!invResults.length) invResults = gsCollectInv('fallback');
 
   if(typeof fuzzyScore === 'function' && invResults.length){
     invResults.forEach(function(item){
       var hayR = [item.r.desc, item.r.codF, item.r.codM, item.m.marca, item.m.specs, item.m.posizione, item.m.nomeFornitore].join(' ');
-      item._rank = fuzzyScore(q, hayR);
+      var mult = (typeof searchTierRankMultiplier === 'function') ? searchTierRankMultiplier(item.searchTier||'exact') : 1;
+      item._rank = fuzzyScore(q, hayR) * mult;
     });
     invResults.sort(function(a,b){ return (b._rank||0) - (a._rank||0); });
   }
 
-  var INV_CAP = 15;
   if(invResults.length){
+    var firstInv = Math.min(GS_INV_INITIAL, invResults.length);
+    _gsInvMoreState = { q: q, items: invResults, shown: firstInv };
     html += '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">- Inventario ('+invResults.length+')</div>';
-    invResults.slice(0,INV_CAP).forEach(function(item){
-      var qty = item.m.qty !== undefined && item.m.qty !== '' ? Number(item.m.qty) : '-';
-      var soglia = getSoglia(item.i);
-      var isLow = qty !== '-' && qty <= soglia;
-      html += '<div data-gi="'+item.i+'" onclick="gsGoArticolo(this)" style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:#1e1e1e;border-radius:8px;margin-bottom:4px;cursor:pointer;border-left:3px solid '+(isLow?'#e53e3e':'transparent')+';">';
-      html += '<div>';
-      html += '<div style="font-size:12px;font-weight:600;color:var(--text);">'+ esc(item.r.desc||'-') +'</div>';
-      html += '<div style="font-size:10px;color:var(--muted);">'+esc(item.r.codF||'')+(item.m.marca?' - '+esc(item.m.marca):'')+'</div>';
-      html += '</div>';
-      html += '<div style="text-align:right;">';
-      html += '<div style="font-size:12px;font-weight:700;color:var(--accent);">- '+(item.r.prezzo||'-')+'</div>';
-      html += '<div style="font-size:10px;color:'+(isLow?'#e53e3e':'#555')+';">Qta: '+qty+(isLow?' --':'')+'</div>';
-      html += '</div></div>';
-    });
-    if(invResults.length > INV_CAP) html += '<div style="font-size:10px;color:#555;text-align:center;padding:4px;">...e altri '+(invResults.length-INV_CAP)+' articoli</div>';
+    html += '<div id="gs-inv-rows">';
+    for(var gii = 0; gii < firstInv; gii++){
+      html += gsGlobalSearchInvRowHtml(invResults[gii]);
+    }
+    html += '</div>';
+    var invRem = invResults.length - firstInv;
+    if(invRem > 0){
+      html += '<div id="gs-inv-more" role="button" tabindex="0" onclick="gsGlobalSearchLoadMoreInv()" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();gsGlobalSearchLoadMoreInv();}" style="cursor:pointer;font-size:11px;color:var(--accent);text-align:center;padding:10px 8px;margin-bottom:4px;border-radius:8px;background:#252525;border:1px solid var(--border);">... e altri '+invRem+' articoli</div>';
+    }
     totale += invResults.length;
   }
 
   // -- Ordini --
-  var ordResults = [];
-  ordini.forEach(function(o){
-    if(!o) return;
-    var hay = [o.id, o.stato, o.nota, o.nomeCliente].join(' ');
-    if(o.note) hay += ' ' + o.note;
-    (o.items || []).forEach(function(item){
-      hay += ' ' + (item.desc||'') + ' ' + (item.codF||'') + ' ' + (item.nomeFornitore||'') + ' ' + (item.fornitore||'');
+  function gsCollectOrd(mode){
+    var arr = [];
+    ordini.forEach(function(o){
+      if(!o) return;
+      var hay = [o.id, o.stato, o.nota, o.nomeCliente].join(' ');
+      if(o.note) hay += ' ' + o.note;
+      (o.items || []).forEach(function(item){
+        hay += ' ' + (item.desc||'') + ' ' + (item.codF||'') + ' ' + (item.nomeFornitore||'') + ' ' + (item.fornitore||'');
+      });
+      var mr = (typeof matchNormQueryToText === 'function' && typeof norm === 'function')
+        ? matchNormQueryToText(qNorm, norm(hay), mode)
+        : { ok: fuzzyMatch(q, hay), tier: 'exact' };
+      if(!mr.ok) return;
+      arr.push({ o: o, _hay: hay, searchTier: mr.tier||'exact' });
     });
-    if(fuzzyMatch(q, hay)) ordResults.push({ o: o, _hay: hay });
-  });
+    return arr;
+  }
+  var ordResults = gsCollectOrd('primary');
+  if(!ordResults.length) ordResults = gsCollectOrd('fallback');
 
   if(typeof fuzzyScore === 'function' && ordResults.length){
-    ordResults.forEach(function(row){ row._rank = fuzzyScore(q, row._hay || ''); });
+    ordResults.forEach(function(row){
+      var mult = (typeof searchTierRankMultiplier === 'function') ? searchTierRankMultiplier(row.searchTier||'exact') : 1;
+      row._rank = fuzzyScore(q, row._hay || '') * mult;
+    });
     ordResults.sort(function(a,b){ return (b._rank||0) - (a._rank||0); });
   }
 
@@ -309,14 +468,26 @@ function doGlobalSearch(q){
   }
 
   // -- Movimenti --
-  var movResults = [];
-  movimenti.forEach(function(mv){
-    var hay = [mv.desc, mv.codF, mv.tipo, mv.note, mv.data].join(' ');
-    if(fuzzyMatch(q, hay)) movResults.push({ mv: mv, _hay: hay });
-  });
+  function gsCollectMov(mode){
+    var arr = [];
+    movimenti.forEach(function(mv){
+      var hay = [mv.desc, mv.codF, mv.tipo, mv.note, mv.data].join(' ');
+      var mr = (typeof matchNormQueryToText === 'function' && typeof norm === 'function')
+        ? matchNormQueryToText(qNorm, norm(hay), mode)
+        : { ok: fuzzyMatch(q, hay), tier: 'exact' };
+      if(!mr.ok) return;
+      arr.push({ mv: mv, _hay: hay, searchTier: mr.tier||'exact' });
+    });
+    return arr;
+  }
+  var movResults = gsCollectMov('primary');
+  if(!movResults.length) movResults = gsCollectMov('fallback');
 
   if(typeof fuzzyScore === 'function' && movResults.length){
-    movResults.forEach(function(row){ row._rank = fuzzyScore(q, row._hay || ''); });
+    movResults.forEach(function(row){
+      var mult = (typeof searchTierRankMultiplier === 'function') ? searchTierRankMultiplier(row.searchTier||'exact') : 1;
+      row._rank = fuzzyScore(q, row._hay || '') * mult;
+    });
     movResults.sort(function(a,b){ return (b._rank||0) - (a._rank||0); });
   }
 

@@ -218,8 +218,11 @@ function setMagMode(mode){
   renderMagazzino();
 }
 
-// Match su stringhe già normalizzate (es. indice _invIdx + query norm()).
+// Match su stringhe normalizzate (Fase 3: stemming per parola, letterali esatti).
 function fuzzyMatchNormalized(qNorm, tNorm){
+  if(typeof matchNormQueryToText === 'function'){
+    return matchNormQueryToText(qNorm || '', tNorm || '', 'primary').ok;
+  }
   var q = qNorm || '';
   var t = tNorm || '';
   if(!q) return true;
@@ -228,9 +231,12 @@ function fuzzyMatchNormalized(qNorm, tNorm){
   return words.every(function(w){ return t.indexOf(w) >= 0; });
 }
 
-// Ricerca fuzzy intelligente: matcha anche parole parziali e ordine diverso; accenti unificati via norm().
+// Ricerca fuzzy: accenti via norm + match per-token (Fase 3).
 function fuzzyMatch(query, target){
   if(!query) return true;
+  if(typeof norm === 'function' && typeof matchNormQueryToText === 'function'){
+    return matchNormQueryToText(norm(query), norm(target || ''), 'primary').ok;
+  }
   var q, t;
   if(typeof norm === 'function'){
     q = norm(query);
@@ -260,8 +266,6 @@ function renderMagazzino(){
   }
 
   // Raggruppa per categoria
-  var grouped={};
-  var totalProd=0, totalCat=new Set();
 
   // Database non ancora caricato
   if(!rows||!rows.length){
@@ -269,34 +273,73 @@ function renderMagazzino(){
     return;
   }
 
-  rows.forEach(function(r,i){
-    if(!r)return;
-    if(removed.has(String(i))) return;
-    var m=magazzino[i]||{};
-    var catId=m.cat||'__nessuna__';
-    // Filtro intelligente per modalit-
-    if(search){
-      if(magMode==='prod'){
-        // Cerca in descrizione + codici — protezione null
-        var haystack=[r.desc||'',String(r.codF||''),String(r.codM||''),m.marca||'',m.specs||'',m.posizione||'',m.nomeFornitore||''].join(' ');
-        if(!fuzzyMatch(search, haystack)) return;
-      } else {
-        // Cerca solo nelle specifiche tecniche
-        var haystack=m.specs||'';
-        if(!fuzzyMatch(search, haystack)) return;
+  function magBuildGrouped(matchMode){
+    var g = {};
+    var tot = 0;
+    var cats = new Set();
+    rows.forEach(function(r,i){
+      if(!r)return;
+      if(removed.has(String(i))) return;
+      var m=magazzino[i]||{};
+      var catId=m.cat||'__nessuna__';
+      var tier = 'exact';
+      if(search){
+        var haystack;
+        if(magMode==='prod'){
+          haystack=[r.desc||'',String(r.codF||''),String(r.codM||''),m.marca||'',m.specs||'',m.posizione||'',m.nomeFornitore||''].join(' ');
+        } else {
+          haystack=m.specs||'';
+        }
+        var mr = (typeof matchNormQueryToText === 'function')
+          ? matchNormQueryToText(norm(search), norm(haystack), matchMode)
+          : { ok: fuzzyMatchNormalized(norm(search), norm(haystack)), tier: 'exact' };
+        if(!mr.ok) return;
+        tier = mr.tier || 'exact';
       }
-    }
-    if(catFilter && catId!==catFilter) return;
-    if(!grouped[catId]) grouped[catId]=[];
-    var soglia=getSoglia(i);
-    var qty=m.qty!==undefined&&m.qty!==''?Number(m.qty):null;
-    var isLow=qty!==null&&qty<=soglia;
-    grouped[catId].push({r:r,i:i,m:m,isLow:isLow});
-    totalProd++;
-    if(catId!=='__nessuna__') totalCat.add(catId);
-  });
+      if(catFilter && catId!==catFilter) return;
+      if(!g[catId]) g[catId]=[];
+      var soglia=getSoglia(i);
+      var qty=m.qty!==undefined&&m.qty!==''?Number(m.qty):null;
+      var isLow=qty!==null&&qty<=soglia;
+      g[catId].push({r:r,i:i,m:m,isLow:isLow,searchTier:tier});
+      tot++;
+      if(catId!=='__nessuna__') cats.add(catId);
+    });
+    return { grouped: g, totalProd: tot, totalCat: cats };
+  }
 
-  // Ordina per rilevanza (solo con ricerca attiva): fuzzyScore solo sui match già filtrati
+  var grouped={};
+  var totalProd=0, totalCat=new Set();
+
+  if(search){
+    var built = magBuildGrouped('primary');
+    grouped = built.grouped;
+    totalProd = built.totalProd;
+    totalCat = built.totalCat;
+    if(totalProd===0 && (search||'').trim()){
+      built = magBuildGrouped('fallback');
+      grouped = built.grouped;
+      totalProd = built.totalProd;
+      totalCat = built.totalCat;
+    }
+  } else {
+    rows.forEach(function(r,i){
+      if(!r)return;
+      if(removed.has(String(i))) return;
+      var m=magazzino[i]||{};
+      var catId=m.cat||'__nessuna__';
+      if(catFilter && catId!==catFilter) return;
+      if(!grouped[catId]) grouped[catId]=[];
+      var soglia=getSoglia(i);
+      var qty=m.qty!==undefined&&m.qty!==''?Number(m.qty):null;
+      var isLow=qty!==null&&qty<=soglia;
+      grouped[catId].push({r:r,i:i,m:m,isLow:isLow,searchTier:'exact'});
+      totalProd++;
+      if(catId!=='__nessuna__') totalCat.add(catId);
+    });
+  }
+
+  // Ordina per rilevanza (solo con ricerca attiva): fuzzyScore + penalità tier Fase 3
   if(search && typeof fuzzyScore === 'function'){
     Object.keys(grouped).forEach(function(catId){
       var items = grouped[catId];
@@ -304,13 +347,13 @@ function renderMagazzino(){
         var hay = magMode === 'prod'
           ? [o.r.desc||'',String(o.r.codF||''),String(o.r.codM||''),o.m.marca||'',o.m.specs||'',o.m.posizione||'',o.m.nomeFornitore||''].join(' ')
           : (o.m.specs||'');
-        o._rank = fuzzyScore(search, hay);
+        var mult = (typeof searchTierRankMultiplier === 'function') ? searchTierRankMultiplier(o.searchTier||'exact') : 1;
+        o._rank = fuzzyScore(search, hay) * mult;
       });
       items.sort(function(a,b){ return (b._rank||0) - (a._rank||0); });
     });
   }
 
-  // Stats
   statsEl.innerHTML=
     '<div class="sc"><span class="n">'+totalProd+'</span>Prodotti</div>'+
     '<div class="sc g"><span class="n" style="color:#68d391">'+totalCat.size+'</span>Categorie</div>'+

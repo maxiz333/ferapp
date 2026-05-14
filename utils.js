@@ -26,7 +26,8 @@
   }
 
   function stem(w){
-    if(w.length < 5) return w;
+    if(w.length < 3) return w;
+    if(w.length < 5) return w.replace(/[aeiou]$/, '');
     var rules = [/zioni$/, /zione$/, /tori$/, /tore$/, /elli$/, /ella$/, /ello$/, /etti$/, /etta$/, /etto$/, /ali$/, /ale$/, /ori$/, /ore$/, /ari$/, /are$/, /ici$/, /ico$/, /ica$/, /osi$/, /oso$/, /nti$/, /nte$/, /oli$/, /ola$/, /olo$/];
     var stems = ['zion', 'zion', 'tor', 'tor', 'ell', 'ell', 'ell', 'ett', 'ett', 'ett', 'al', 'al', 'or', 'or', 'ar', 'ar', 'ic', 'ic', 'ic', 'os', 'os', 'nt', 'nt', 'ol', 'ol', 'ol'];
     for(var j = 0; j < rules.length; j++){
@@ -87,6 +88,76 @@
     return tot / qw.length;
   }
 
+  /** Token con cifre o profilo codice/misura: niente stem né fuzzy sul token. */
+  function isLiteralSearchToken(w){
+    if(!w) return false;
+    if(/\d/.test(w)) return true;
+    return false;
+  }
+
+  function linguisticWordMatch(qw, padded, hayTokens, isPrimary){
+    if(qw.length <= 2){
+      if(hayTokens.indexOf(qw) >= 0) return { ok: true, exact: true };
+      if(padded.indexOf(' ' + qw + ' ') >= 0) return { ok: true, exact: true };
+      return { ok: false, exact: false };
+    }
+    if(padded.indexOf(' ' + qw + ' ') >= 0) return { ok: true, exact: true };
+    var best = 0;
+    var ti;
+    for(ti = 0; ti < hayTokens.length; ti++){
+      best = Math.max(best, wordScore(qw, hayTokens[ti]));
+      if(best >= 100) break;
+    }
+    if(isPrimary){
+      if(best >= 62) return { ok: true, exact: best >= 100 };
+      return { ok: false, exact: false };
+    }
+    if(best >= 45) return { ok: true, exact: false };
+    if(qw.length >= 4){
+      for(ti = 0; ti < hayTokens.length; ti++){
+        var tw = hayTokens[ti];
+        if(isLiteralSearchToken(tw)) continue;
+        if(tw.length >= 3 && lev(qw, tw) <= 2) return { ok: true, exact: false };
+      }
+    }
+    return { ok: false, exact: false };
+  }
+
+  /**
+   * @param {string} qNorm query già normalizzata (norm / _invNorm)
+   * @param {string} tNorm testo già normalizzato
+   * @param {'primary'|'fallback'} mode
+   * @returns {{ ok: boolean, tier: 'exact'|'flex'|'fallback' }}
+   */
+  function matchNormQueryToText(qNorm, tNorm, mode){
+    if(!qNorm) return { ok: true, tier: 'exact' };
+    var words = qNorm.split(/\s+/).filter(Boolean);
+    if(!words.length) return { ok: true, tier: 'exact' };
+    var hayTokens = tNorm.split(/\s+/).filter(Boolean);
+    var padded = ' ' + tNorm + ' ';
+    var isPrimary = mode !== 'fallback';
+    var anyFlex = false;
+    for(var wi = 0; wi < words.length; wi++){
+      var qw = words[wi];
+      if(isLiteralSearchToken(qw)){
+        if(tNorm.indexOf(qw) < 0) return { ok: false, tier: 'exact' };
+        continue;
+      }
+      var lm = linguisticWordMatch(qw, padded, hayTokens, isPrimary);
+      if(!lm.ok) return { ok: false, tier: 'exact' };
+      if(!lm.exact) anyFlex = true;
+    }
+    if(!isPrimary) return { ok: true, tier: 'fallback' };
+    return { ok: true, tier: anyFlex ? 'flex' : 'exact' };
+  }
+
+  /** Moltiplicatore ranking: exact > flex > fallback (Fase 3). */
+  function searchTierRankMultiplier(tier){
+    if(tier === 'fallback') return 0.75;
+    if(tier === 'flex') return 0.88;
+    return 1;
+  }
+
   window.AppUtils = {
     parsePriceIT: parsePriceIT,
     autoSize: autoSize,
@@ -95,6 +166,9 @@
     stem: stem,
     lev: lev,
     wordScore: wordScore,
-    fuzzyScore: fuzzyScore
+    fuzzyScore: fuzzyScore,
+    isLiteralSearchToken: isLiteralSearchToken,
+    matchNormQueryToText: matchNormQueryToText,
+    searchTierRankMultiplier: searchTierRankMultiplier
   };
 })();

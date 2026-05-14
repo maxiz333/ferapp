@@ -90,81 +90,91 @@ function _doMagSearch(){
     return;
   }
 
-  // Query words
-  var qWords = hasSearch
-    ? _invNorm(rawSearch).split(' ').filter(function(w){ return w.length >= 2; })
-    : [];
+  // Query normalizzata (token ≥2), match per parola via matchNormQueryToText (Fase 3)
+  var qNorm = hasSearch
+    ? _invNorm(rawSearch).split(' ').filter(function(w){ return w.length >= 2; }).join(' ')
+    : '';
 
   var MAX = 50;
   var results = [], tot = 0, sottoScorta = 0;
   var revPrzCount = { giallo:0, arancio:0, rosso:0, neutro:0 };
   if(typeof rebuildMagDuplicateCodes === 'function') rebuildMagDuplicateCodes();
 
-  for(var i = 0; i < rows.length; i++){
-    var r = rows[i];
-    if(!r) continue;
-    if(removed.has(String(i))) continue;
-    var m = magazzino[i] || {};
+  var textMode = hasSearch ? 'primary' : null;
+  for(var attempt = 0; attempt < (hasSearch ? 2 : 1); attempt++){
+    if(hasSearch && attempt === 1) textMode = 'fallback';
+    results = [];
+    tot = 0;
+    sottoScorta = 0;
+    revPrzCount = { giallo:0, arancio:0, rosso:0, neutro:0 };
 
-    // Filtro categoria
-    if(hasFilter && (m.cat || '__nessuna__') !== catFilter) continue;
+    for(var i = 0; i < rows.length; i++){
+      var r = rows[i];
+      if(!r) continue;
+      if(removed.has(String(i))) continue;
+      var m = magazzino[i] || {};
 
-    // Filtro testo — indexOf sull'indice piatto
-    if(hasSearch){
-      var hay = '';
-      if(mode === 'spec'){
-        // Modalità specifiche: cerca solo in specs
-        hay = _invNorm(m.specs || '');
-      } else {
-        hay = _invIdx[i] || '';
+      if(hasFilter && (m.cat || '__nessuna__') !== catFilter) continue;
+
+      var searchTier = 'exact';
+      if(hasSearch){
+        var hay = (mode === 'spec')
+          ? _invNorm(m.specs || '')
+          : (_invIdx[i] || '');
+        var mr = (typeof matchNormQueryToText === 'function')
+          ? matchNormQueryToText(qNorm, hay, textMode)
+          : (function(){
+            var qw = qNorm.split(/\s+/).filter(Boolean);
+            for(var wi = 0; wi < qw.length; wi++){
+              if(hay.indexOf(qw[wi]) < 0) return { ok: false, tier: 'exact' };
+            }
+            return { ok: true, tier: 'exact' };
+          })();
+        if(!mr.ok) continue;
+        searchTier = mr.tier || 'exact';
       }
-      var ok = true;
-      for(var w = 0; w < qWords.length; w++){
-        if(hay.indexOf(qWords[w]) < 0){ ok = false; break; }
+
+      var soglia = getSoglia(i);
+      var qty    = (m.qty !== undefined && m.qty !== '') ? Number(m.qty) : null;
+      var isLow  = qty !== null && qty <= soglia;
+      if(hasSottoSc && !isLow) continue;
+
+      var freshness = (typeof getPriceFreshnessInfo === 'function') ? getPriceFreshnessInfo(r) : null;
+      if(hasRevPrz){
+        if(!freshness || freshness.bucket === 'verde') continue;
       }
-      if(!ok) continue;
-    }
+      if(hasChrono){
+        var cAt = (typeof getRowCreatedAt === 'function') ? getRowCreatedAt(r) : 0;
+        if(chronoMode === 'added'){
+          if(cAt < recentiLimitMs || cAt > recentiMaxMs) continue;
+        } else if(chronoMode === 'modified'){
+          var modAt = (typeof getRowModifiedChronoAt === 'function') ? getRowModifiedChronoAt(r, i) : 0;
+          if(modAt < recentiLimitMs || modAt > recentiMaxMs) continue;
+          if(typeof _magModifiedChronoHidden !== 'undefined' && _magModifiedChronoHidden[String(i)]) continue;
+        }
+      }
 
-    // Filtro sotto-scorta
-    var soglia = getSoglia(i);
-    var qty    = (m.qty !== undefined && m.qty !== '') ? Number(m.qty) : null;
-    var isLow  = qty !== null && qty <= soglia;
-    if(hasSottoSc && !isLow) continue;
-
-    // Semaforo Prezzi: calcola freshness (riusato sia dal filtro che dal render)
-    var freshness = (typeof getPriceFreshnessInfo === 'function') ? getPriceFreshnessInfo(r) : null;
-    if(hasRevPrz){
-      if(!freshness || freshness.bucket === 'verde') continue;
-    }
-    if(hasChrono){
-      var cAt = (typeof getRowCreatedAt === 'function') ? getRowCreatedAt(r) : 0;
-      if(chronoMode === 'added'){
-        if(cAt < recentiLimitMs || cAt > recentiMaxMs) continue;
-      } else if(chronoMode === 'modified'){
-        var modAt = (typeof getRowModifiedChronoAt === 'function') ? getRowModifiedChronoAt(r, i) : 0;
-        if(modAt < recentiLimitMs || modAt > recentiMaxMs) continue;
-        if(typeof _magModifiedChronoHidden !== 'undefined' && _magModifiedChronoHidden[String(i)]) continue;
+      tot++;
+      if(isLow) sottoScorta++;
+      if(freshness && freshness.bucket !== 'verde' && revPrzCount.hasOwnProperty(freshness.bucket)){
+        revPrzCount[freshness.bucket]++;
+      }
+      if(hasChrono){
+        results.push({r:r, i:i, m:m, isLow:isLow, soglia:soglia, qty:qty, freshness:freshness, searchTier: searchTier});
+      } else if(hasSearch){
+        results.push({r:r, i:i, m:m, isLow:isLow, soglia:soglia, qty:qty, freshness:freshness, searchTier: searchTier});
+      } else if(results.length < MAX){
+        results.push({r:r, i:i, m:m, isLow:isLow, soglia:soglia, qty:qty, freshness:freshness, searchTier: 'exact'});
       }
     }
-
-    tot++;
-    if(isLow) sottoScorta++;
-    if(freshness && freshness.bucket !== 'verde' && revPrzCount.hasOwnProperty(freshness.bucket)){
-      revPrzCount[freshness.bucket]++;
-    }
-    if(hasChrono){
-      results.push({r:r, i:i, m:m, isLow:isLow, soglia:soglia, qty:qty, freshness:freshness});
-    } else if(hasSearch){
-      results.push({r:r, i:i, m:m, isLow:isLow, soglia:soglia, qty:qty, freshness:freshness});
-    } else if(results.length < MAX){
-      results.push({r:r, i:i, m:m, isLow:isLow, soglia:soglia, qty:qty, freshness:freshness});
-    }
+    if(!hasSearch || tot > 0) break;
   }
 
   if(hasSearch && !hasChrono && results.length && typeof fuzzyScore === 'function'){
     results.forEach(function(o){
       var hayRank = mode === 'spec' ? (o.m.specs||'') : [o.r.desc, o.r.codF, o.r.codM, o.m.marca, o.m.specs, o.m.posizione, o.m.nomeFornitore].join(' ');
-      o._rank = fuzzyScore(rawSearch, hayRank);
+      var mult = (typeof searchTierRankMultiplier === 'function') ? searchTierRankMultiplier(o.searchTier||'exact') : 1;
+      o._rank = fuzzyScore(rawSearch, hayRank) * mult;
     });
     results.sort(function(a,b){ return (b._rank||0) - (a._rank||0); });
     if(results.length > MAX) results = results.slice(0, MAX);

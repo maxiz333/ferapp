@@ -289,6 +289,12 @@ function wordScore(qw,tw){
 function fuzzyScore(query,text){
   return window.AppUtils.fuzzyScore(query,text);
 }
+function matchNormQueryToText(qNorm,tNorm,mode){
+  return window.AppUtils.matchNormQueryToText(qNorm,tNorm,mode);
+}
+function searchTierRankMultiplier(tier){
+  return window.AppUtils.searchTierRankMultiplier(tier);
+}
 function doFilter(){
   var q=(document.getElementById('si')||{value:''}).value.trim();
   var hint=document.getElementById('sh');

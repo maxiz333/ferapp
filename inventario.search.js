@@ -101,55 +101,78 @@ function _doInvSearch(){
     return;
   }
 
-  // ── Costruisce le query-words per ricerca multi-termine ───────────────────
-  // Es. "vite inox m6" → cerca articoli che contengano TUTTE e tre le parole
-  var qWords = hasSearch
-    ? _invNorm(rawSearch).split(' ').filter(function(w){ return w.length >= 2; })
-    : [];
+  // Query normalizzata (token ≥2 caratteri), stessa base dell'indice _invIdx
+  var qNorm = hasSearch
+    ? _invNorm(rawSearch).split(' ').filter(function(w){ return w.length >= 2; }).join(' ')
+    : '';
 
   var MAX = 50;
   var results = [];
   var tot = 0, sottoScorta = 0, totVal = 0;
 
-  for(var i = 0; i < rows.length; i++){
-    var r = rows[i];
-    if(!r) continue;
-    if(removed.has(String(i))) continue;
+  var textMode = hasSearch ? 'primary' : null;
+  for(var attempt = 0; attempt < (hasSearch ? 2 : 1); attempt++){
+    if(hasSearch && attempt === 1) textMode = 'fallback';
+    results = [];
+    tot = 0;
+    sottoScorta = 0;
+    totVal = 0;
 
-    var m = magazzino[i] || {};
+    for(var i = 0; i < rows.length; i++){
+      var r = rows[i];
+      if(!r) continue;
+      if(removed.has(String(i))) continue;
 
-    // Filtro categoria
-    if(hasFilter && (m.cat || '') !== catFilter) continue;
+      var m = magazzino[i] || {};
 
-    // Filtro testo — indexOf sull'indice piatto, nessun fuzzy
-    if(hasSearch){
-      var hay = _invIdx[i] || '';
-      var ok = true;
-      for(var w = 0; w < qWords.length; w++){
-        if(hay.indexOf(qWords[w]) < 0){ ok = false; break; }
+      if(hasFilter && (m.cat || '') !== catFilter) continue;
+
+      var searchTier = 'exact';
+      if(hasSearch){
+        var hay = _invIdx[i] || '';
+        var mr = (typeof matchNormQueryToText === 'function')
+          ? matchNormQueryToText(qNorm, hay, textMode)
+          : (function(){
+            var qw = qNorm.split(/\s+/).filter(Boolean);
+            for(var wi = 0; wi < qw.length; wi++){
+              if(hay.indexOf(qw[wi]) < 0) return { ok: false, tier: 'exact' };
+            }
+            return { ok: true, tier: 'exact' };
+          })();
+        if(!mr.ok) continue;
+        searchTier = mr.tier || 'exact';
       }
-      if(!ok) continue;
+
+      var soglia = getSoglia(i);
+      var qty = (m.qty !== undefined && m.qty !== '') ? Number(m.qty) : null;
+      var isLow = qty !== null && qty <= soglia;
+      if(hasSottoScorta && !isLow) continue;
+
+      if(hasGiornalino && !(r.giornalino)) continue;
+
+      tot++;
+      if(qty !== null) totVal += (parseFloat(r.prezzo) || 0) * qty;
+      if(isLow) sottoScorta++;
+
+      results.push({ r:r, i:i, m:m, isLow:isLow, soglia:soglia, qty:qty, _updatedAt:getRowUpdatedAt(r,i), searchTier: searchTier });
     }
-
-    // Filtro sotto-scorta
-    var soglia = getSoglia(i);
-    var qty = (m.qty !== undefined && m.qty !== '') ? Number(m.qty) : null;
-    var isLow = qty !== null && qty <= soglia;
-    if(hasSottoScorta && !isLow) continue;
-
-    // Filtro giornalino
-    if(hasGiornalino && !(r.giornalino)) continue;
-
-    // Statistiche su tutti i match (non solo i primi 50)
-    tot++;
-    if(qty !== null) totVal += (parseFloat(r.prezzo) || 0) * qty;
-    if(isLow) sottoScorta++;
-
-    results.push({ r:r, i:i, m:m, isLow:isLow, soglia:soglia, qty:qty, _updatedAt:getRowUpdatedAt(r,i) });
+    if(!hasSearch || tot > 0) break;
   }
 
-  // Ultimi aggiunti/modificati in alto.
-  results.sort(function(a,b){ return (b._updatedAt||0) - (a._updatedAt||0); });
+  if(hasSearch && typeof fuzzyScore === 'function'){
+    results.forEach(function(x){
+      var hayRank = [x.r.desc, x.r.codF, x.r.codM, x.m.marca, x.m.specs, x.m.posizione, x.m.nomeFornitore].join(' ');
+      var mult = (typeof searchTierRankMultiplier === 'function') ? searchTierRankMultiplier(x.searchTier || 'exact') : 1;
+      x._rank = fuzzyScore(rawSearch, hayRank) * mult;
+    });
+    results.sort(function(a,b){
+      var rd = (b._rank || 0) - (a._rank || 0);
+      if(rd !== 0) return rd;
+      return (b._updatedAt || 0) - (a._updatedAt || 0);
+    });
+  } else {
+    results.sort(function(a,b){ return (b._updatedAt||0) - (a._updatedAt||0); });
+  }
   if(results.length > MAX) results.length = MAX;
 
   // ── Render HTML dei primi MAX risultati ───────────────────────────────────
