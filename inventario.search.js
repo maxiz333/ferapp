@@ -12,6 +12,7 @@
 //     (una per articolo). Viene chiamato appena Firebase finisce di caricare.
 //  2. renderInventario() — debounce 350ms, poi cerca con semplice indexOf()
 //     sull'indice: niente fuzzy, niente Levenshtein, ~2ms per 19.000 voci.
+//     L'indice usa la stessa normalizzazione globale norm() (utils / database.cartellini).
 //  3. Max 50 righe renderizzate. Lista vuota finché < 3 caratteri.
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -20,8 +21,9 @@ var _invIdx = null;
 var _invIdxBuilt = false;
 var _invSearchTimer = null;
 
-// Normalizza per ricerca: minuscolo, senza accenti, senza punteggiatura
+// Normalizza per ricerca: delega a norm() globale (accenti/simboli come utils.js).
 function _invNorm(s){
+  if(typeof norm === 'function') return norm(s);
   return (s || '').toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9\s]/g, ' ')
@@ -41,7 +43,8 @@ function _invBuildIndex(){
       r.codM  || '',
       m.marca || '',
       m.specs || '',
-      m.posizione || ''
+      m.posizione || '',
+      m.nomeFornitore || ''
     ].join(' '));
   }
   _invIdxBuilt = true;

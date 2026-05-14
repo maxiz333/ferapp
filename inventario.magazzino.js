@@ -8,7 +8,7 @@
 //
 //  Soluzione:
 //  • Lista vuota finché non si digitano ≥ 3 caratteri (o filtro/sottoScorta)
-//  • Ricerca con indexOf sull'indice _invIdx già costruito (zero fuzzyMatch)
+//  • Ricerca con indexOf sull'indice _invIdx (stringhe pre-normalizzate con norm(); nessun fuzzyMatch a runtime).
 //  • Max 50 card renderizzate
 //  • Debounce 350ms sulla digitazione
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -154,9 +154,20 @@ function _doMagSearch(){
     }
     if(hasChrono){
       results.push({r:r, i:i, m:m, isLow:isLow, soglia:soglia, qty:qty, freshness:freshness});
+    } else if(hasSearch){
+      results.push({r:r, i:i, m:m, isLow:isLow, soglia:soglia, qty:qty, freshness:freshness});
     } else if(results.length < MAX){
       results.push({r:r, i:i, m:m, isLow:isLow, soglia:soglia, qty:qty, freshness:freshness});
     }
+  }
+
+  if(hasSearch && !hasChrono && results.length && typeof fuzzyScore === 'function'){
+    results.forEach(function(o){
+      var hayRank = mode === 'spec' ? (o.m.specs||'') : [o.r.desc, o.r.codF, o.r.codM, o.m.marca, o.m.specs, o.m.posizione, o.m.nomeFornitore].join(' ');
+      o._rank = fuzzyScore(rawSearch, hayRank);
+    });
+    results.sort(function(a,b){ return (b._rank||0) - (a._rank||0); });
+    if(results.length > MAX) results = results.slice(0, MAX);
   }
 
   if(hasChrono && results.length){

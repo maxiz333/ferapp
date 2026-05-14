@@ -604,16 +604,28 @@ function setMagMode(mode){
   renderMagazzino();
 }
 
-// Ricerca fuzzy intelligente: matcha anche parole parziali e ordine diverso
+// Match su stringhe già normalizzate (es. indice _invIdx + query norm()).
+function fuzzyMatchNormalized(qNorm, tNorm){
+  var q = qNorm || '';
+  var t = tNorm || '';
+  if(!q) return true;
+  if(t.indexOf(q) >= 0) return true;
+  var words = q.split(/\s+/).filter(Boolean);
+  return words.every(function(w){ return t.indexOf(w) >= 0; });
+}
+
+// Ricerca fuzzy intelligente: matcha anche parole parziali e ordine diverso; accenti unificati via norm().
 function fuzzyMatch(query, target){
   if(!query) return true;
-  var q=query.toLowerCase().trim();
-  var t=(target||'').toLowerCase();
-  // Match esatto sottostringa
-  if(t.indexOf(q)>=0) return true;
-  // Match per parole singole: ogni parola della query deve apparire nel testo
-  var words=q.split(/\s+/).filter(Boolean);
-  return words.every(function(w){ return t.indexOf(w)>=0; });
+  var q, t;
+  if(typeof norm === 'function'){
+    q = norm(query);
+    t = norm(target || '');
+  } else {
+    q = String(query).toLowerCase().trim();
+    t = String(target || '').toLowerCase();
+  }
+  return fuzzyMatchNormalized(q, t);
 }
 
 function renderMagazzino(){
@@ -652,7 +664,7 @@ function renderMagazzino(){
     if(search){
       if(magMode==='prod'){
         // Cerca in descrizione + codici — protezione null
-        var haystack=[r.desc||'',String(r.codF||''),String(r.codM||''),m.marca||''].join(' ');
+        var haystack=[r.desc||'',String(r.codF||''),String(r.codM||''),m.marca||'',m.specs||'',m.posizione||'',m.nomeFornitore||''].join(' ');
         if(!fuzzyMatch(search, haystack)) return;
       } else {
         // Cerca solo nelle specifiche tecniche
@@ -669,6 +681,20 @@ function renderMagazzino(){
     totalProd++;
     if(catId!=='__nessuna__') totalCat.add(catId);
   });
+
+  // Ordina per rilevanza (solo con ricerca attiva): fuzzyScore solo sui match già filtrati
+  if(search && typeof fuzzyScore === 'function'){
+    Object.keys(grouped).forEach(function(catId){
+      var items = grouped[catId];
+      items.forEach(function(o){
+        var hay = magMode === 'prod'
+          ? [o.r.desc||'',String(o.r.codF||''),String(o.r.codM||''),o.m.marca||'',o.m.specs||'',o.m.posizione||'',o.m.nomeFornitore||''].join(' ')
+          : (o.m.specs||'');
+        o._rank = fuzzyScore(search, hay);
+      });
+      items.sort(function(a,b){ return (b._rank||0) - (a._rank||0); });
+    });
+  }
 
   // Stats
   statsEl.innerHTML=
