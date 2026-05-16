@@ -92,6 +92,10 @@ var renderTable = (function(_origRenderTable){
 var _fbSyncingCt = false; // flag per evitare loop sync Firebase cartellini
 var _ctTab = 'dafare'; // tab attiva: 'dafare' | 'fatti'
 
+function ctCodiceArticolo(r){
+  return String(r && r.codM || '').trim().toUpperCase();
+}
+
 function ct_setTab(tab){
   _ctTab = tab;
   var btnDf = document.getElementById('ct-tab-dafare');
@@ -156,6 +160,15 @@ var CT = {
     var realIndices = [];
     ctRows.forEach(function(r, i){ if(isFatti ? !!r.fatto : !r.fatto) realIndices.push(i); });
 
+    var fattiCodes = {};
+    if(!isFatti){
+      ctRows.forEach(function(r){
+        if(!r || !r.fatto) return;
+        var fc = ctCodiceArticolo(r);
+        if(fc) fattiCodes[fc] = true;
+      });
+    }
+
     if(!realIndices.length){
       if(empty){
         empty.style.display = 'block';
@@ -188,8 +201,13 @@ var CT = {
       var r = ctRows[realIdx];
       var c = CT.color(r.giornalino||'');
       var promoOn = (r.barrato==='si' || r.promo==='si');
+      var rowStyle = 'border-bottom:1px solid #222;border-left:3px solid '+c.dot+';';
+      if(!isFatti){
+        var codDf = ctCodiceArticolo(r);
+        if(codDf && fattiCodes[codDf]) rowStyle += 'background:rgba(255,165,0,0.2);';
+      }
 
-      h += '<tr style="border-bottom:1px solid #222;border-left:3px solid '+c.dot+';">';
+      h += '<tr style="'+rowStyle+'">';
 
       // Prodotto
       h += '<td style="padding:6px 4px;">';

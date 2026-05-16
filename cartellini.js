@@ -289,6 +289,14 @@ var CT = {
         dupFattiByCode[code] = (dupFattiByCode[code] || 0) + 1;
       });
     }
+    var fattiCodes = {};
+    if(!isFatti){
+      ctRows.forEach(function(r){
+        if(!r || !r.fatto) return;
+        var fc = ctCodiceArticolo(r);
+        if(fc) fattiCodes[fc] = true;
+      });
+    }
 
     if(!realIndices.length){
       if(empty){
@@ -329,6 +337,10 @@ var CT = {
       var isDupFatto = !!(dupCode && dupFattiByCode[dupCode] > 1);
       var rowStyle = 'border-bottom:1px solid #222;border-left:3px solid '+(isDupFatto ? '#f6ad55' : c.dot)+';';
       if(isDupFatto) rowStyle += 'background:rgba(246,173,85,.14);box-shadow:inset 0 0 0 1px rgba(246,173,85,.38);';
+      if(!isFatti){
+        var codDf = ctCodiceArticolo(r);
+        if(codDf && fattiCodes[codDf]) rowStyle += 'background:rgba(255,165,0,0.2);';
+      }
 
       h += '<tr style="'+rowStyle+'">';
 
