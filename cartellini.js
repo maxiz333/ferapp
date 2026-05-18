@@ -947,6 +947,8 @@ function ct_syncDB(){
   var oggi = new Date().toLocaleDateString('it-IT');
   var stats = { prezzi:0, codF:0, nuovi:0, promo:0, qty:0 };
   var daFareRows = (ctRows || []).filter(function(ct){ return ct && !ct.fatto; });
+  var promoRowsAll = (ctRows || []).filter(function(ct){ return ct && !!ct.giornalino; });
+  var promoAlignedByIdx = {};
 
   daFareRows.forEach(function(ct){
     if(!ct.codM && !ct.codF) return;
@@ -968,6 +970,7 @@ function ct_syncDB(){
         changed = true;
         productTouched = true;
         stats.promo++;
+        promoAlignedByIdx[String(dbIdx)] = true;
       }
 
       // Codice fornitore
@@ -1048,6 +1051,23 @@ function ct_syncDB(){
       stats.nuovi++;
       if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(newIdx);
     }
+  });
+
+  // Riallinea i flag promo [G] anche per cartellini colorati già "fatti":
+  // non tocca prezzi/quantità e non crea/rimuove articoli.
+  promoRowsAll.forEach(function(ct){
+    if(!ct.codM && !ct.codF) return;
+    var dbIdx = ct_findDbIdxByCartellino(ct);
+    if(dbIdx < 0 || !rows[dbIdx]) return;
+    if(promoAlignedByIdx[String(dbIdx)]) return;
+    var r = rows[dbIdx];
+    if(r.isPromo === true && String(r.promoTipo || '') === 'G') return;
+    r.isPromo = true;
+    r.promoTipo = 'G';
+    r._updatedAt = Date.now();
+    if(typeof touchRowProductChangeAt === 'function') touchRowProductChangeAt(r);
+    stats.promo++;
+    if(typeof _fbSaveArticolo === 'function') _fbSaveArticolo(dbIdx);
   });
 
   if(stats.prezzi || stats.codF || stats.promo || stats.nuovi || stats.qty){

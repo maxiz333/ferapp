@@ -20,6 +20,10 @@
 var _invIdx = null;
 var _invIdxBuilt = false;
 var _invSearchTimer = null;
+var INV_RENDER_INITIAL = 50;
+var INV_RENDER_PAGE = 20;
+var _invListMoreState = { sig: '', matches: [], shown: 0 };
+var _invGMoreState = { matches: [], shown: 0 };
 
 // Normalizza per ricerca: delega a norm() globale (accenti/simboli come utils.js).
 function _invNorm(s){
@@ -66,6 +70,110 @@ function renderInventario(){
   _invSearchTimer = setTimeout(_doInvSearch, 350);
 }
 
+function _invListSearchSignature(rawSearch, catFilter, hasSottoScorta, hasGiornalino){
+  return [
+    (rawSearch || '').trim().toLowerCase(),
+    catFilter || '',
+    hasSottoScorta ? '1' : '0',
+    hasGiornalino ? '1' : '0'
+  ].join('|');
+}
+
+function _invListRowHtml(x){
+  var r  = x.r, idx = x.i, m = x.m;
+  var isLow   = x.isLow;
+  var rowBg   = isLow ? 'rgba(229,62,62,0.08)' : '';
+  var borderL = isLow ? 'border-left:3px solid #e53e3e;' : 'border-left:3px solid transparent;';
+  var unit    = rowListinoUnit(r);
+  var specs   = m.specs || '';
+  var pos     = m.posizione || '';
+  var marca   = m.marca || '';
+  var prezzoAcq = m.prezzoAcquisto || '';
+  var catId   = m.cat || '';
+  var catLabel = '';
+  if(catId && typeof categorie !== 'undefined'){
+    var cf = categorie.find(function(c){ return c.id === catId; });
+    catLabel = cf ? cf.nome : '';
+  }
+  var sub = m.subcat || '';
+  var codM7 = r.codM
+    ? (String(r.codM).match(/^\d+$/) ? String(r.codM).padStart(7,'0') : String(r.codM))
+    : '-';
+  var html = '';
+  html += '<tr style="border-bottom:1px solid var(--border);' + borderL + 'background:' + rowBg + ';cursor:pointer;" onclick="openSchedaProdotto(' + idx + ')" title="Modifica">';
+  html += '<td style="padding:8px 6px;">';
+  html += '<div style="font-size:12px;font-weight:600;color:var(--text);">' + esc(r.desc || '—') + '</div>';
+  if(marca) html += '<div style="font-size:10px;color:var(--muted);">• ' + esc(marca) + '</div>';
+  html += '</td>';
+  html += '<td style="padding:8px 6px;font-size:11px;color:#2dd4bf;font-style:italic;">' + esc(specs) + '</td>';
+  html += '<td style="padding:8px 6px;font-size:11px;color:#fc8181;font-weight:600;">' + esc(String(r.codF || '—')) + '</td>';
+  html += '<td style="padding:8px 6px;font-size:11px;color:var(--accent);font-weight:600;">' + esc(codM7) + '</td>';
+  html += '<td style="padding:8px 6px;text-align:center;white-space:nowrap;">';
+  html += '<button onclick="event.stopPropagation();deltaQta(' + idx + ',-1)" style="background:#333;border:none;color:var(--text);width:30px;height:30px;border-radius:5px;cursor:pointer;font-size:18px;font-weight:bold;touch-action:manipulation;">−</button> ';
+  html += '<input type="number" min="0" value="' + (x.qty !== null ? x.qty : '') + '" placeholder="—" onclick="event.stopPropagation()" ' +
+          'style="width:44px;padding:3px 2px;border:1px solid ' + (isLow ? '#e53e3e' : 'var(--border)') + ';border-radius:5px;background:#111;color:' + (isLow ? '#e53e3e' : 'var(--accent)') + ';font-size:13px;font-weight:900;text-align:center;" ' +
+          'onchange="event.stopPropagation();saveQta(' + idx + ',this.value)" id="inv-qty-' + idx + '"> ';
+  html += '<button onclick="event.stopPropagation();deltaQta(' + idx + ',1)" style="background:#333;border:none;color:var(--text);width:30px;height:30px;border-radius:5px;cursor:pointer;font-size:18px;font-weight:bold;touch-action:manipulation;">+</button>';
+  html += '<div style="font-size:10px;color:var(--muted);margin-top:2px;">' +
+          '<button onclick="event.stopPropagation();openMovProdotto(' + idx + ')" style="background:none;border:none;color:#3182ce;font-size:10px;cursor:pointer;padding:0;">📊</button> ' +
+          esc(unit) + (isLow ? ' <span style="color:#e53e3e;font-weight:700;">⚠ min:' + x.soglia + '</span>' : '') +
+          '</div>';
+  html += '</td>';
+  html += '<td style="padding:8px 6px;text-align:right;font-size:13px;font-weight:900;color:var(--accent);">€ ' + esc(r.prezzo || '0') + '</td>';
+  html += '<td style="padding:8px 6px;text-align:right;" onclick="event.stopPropagation();">' +
+          '<input type="text" value="' + esc(prezzoAcq) + '" placeholder="—" onclick="event.stopPropagation()" ' +
+          'style="width:52px;padding:3px 5px;border:1px solid #333;border-radius:5px;background:#0d0d0d;color:#555;font-size:11px;text-align:right;font-style:italic;" ' +
+          'title="Prezzo acquisto" ' +
+          'onchange="event.stopPropagation();saveMagRow(' + idx + ',\'prezzoAcquisto\',this.value)">' +
+          '</td>';
+  html += '<td style="padding:8px 6px;font-size:11px;color:#888;font-style:italic;">' + esc(pos) + '</td>';
+  html += '<td style="padding:8px 6px;">';
+  if(catLabel) html += '<div style="font-size:10px;color:var(--accent);">' + esc(catLabel) + '</div>';
+  if(sub)      html += '<div style="font-size:10px;color:#555;">' + esc(sub) + '</div>';
+  html += '</td>';
+  var giorn = r.giornalino || '';
+  html += '<td style="padding:8px 6px;text-align:center;">';
+  if(giorn){
+    var gCol = {rosso:'#e53e3e',verde:'#38a169',blu:'#3182ce',giallo:'#d69e2e',viola:'#805ad5',arancio:'#dd6b20',grigio:'#718096'};
+    var dotColor = gCol[giorn] || '#888';
+    html += '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + dotColor + ';" title="' + esc(giorn) + '"></span>';
+  }
+  html += '</td></tr>';
+  return html;
+}
+
+function _invListMoreRowHtml(shown, total){
+  var rem = total - shown;
+  return '<tr id="inv-more-row"><td colspan="10" style="text-align:center;padding:12px;font-size:12px;color:var(--muted);background:rgba(245,196,0,.04);border-top:1px solid var(--border);cursor:pointer;" onclick="invListLoadMore()">' +
+    '📌 Mostrati <b style="color:var(--accent)">' + shown + '</b> su <b>' + total + '</b> articoli — <span style="color:var(--accent);font-weight:700;">... e altri ' + rem + ' articoli</span>' +
+    '</td></tr>';
+}
+
+function invListLoadMore(){
+  var st = _invListMoreState;
+  if(!st.matches.length) return;
+  var q = (document.getElementById('inv-search') || {}).value || '';
+  var cat = (document.getElementById('inv-cat-filter') || {}).value || '';
+  var hasSottoScorta = (typeof invSottoScorta !== 'undefined') && invSottoScorta;
+  var hasGiornalino = (typeof invGiornalino !== 'undefined') && invGiornalino;
+  if(st.sig !== _invListSearchSignature(q, cat, hasSottoScorta, hasGiornalino)) return;
+  var body = document.getElementById('inv-body');
+  if(!body) return;
+  var moreRow = document.getElementById('inv-more-row');
+  if(moreRow && moreRow.parentNode) moreRow.parentNode.removeChild(moreRow);
+  var total = st.matches.length;
+  var start = st.shown;
+  if(start >= total) return;
+  var end = Math.min(start + INV_RENDER_PAGE, total);
+  for(var i = start; i < end; i++){
+    body.insertAdjacentHTML('beforeend', _invListRowHtml(st.matches[i]));
+  }
+  st.shown = end;
+  if(end < total){
+    body.insertAdjacentHTML('beforeend', _invListMoreRowHtml(end, total));
+  }
+}
+
 // ── Ricerca vera — eseguita dopo il debounce ──────────────────────────────────
 function _doInvSearch(){
   var body    = document.getElementById('inv-body');
@@ -106,7 +214,6 @@ function _doInvSearch(){
     ? _invNorm(rawSearch).split(' ').filter(function(w){ return w.length >= 2; }).join(' ')
     : '';
 
-  var MAX = 50;
   var results = [];
   var tot = 0, sottoScorta = 0, totVal = 0;
 
@@ -173,101 +280,33 @@ function _doInvSearch(){
   } else {
     results.sort(function(a,b){ return (b._updatedAt||0) - (a._updatedAt||0); });
   }
-  if(results.length > MAX) results.length = MAX;
+  _invListMoreState = {
+    sig: _invListSearchSignature(rawSearch, catFilter, hasSottoScorta, hasGiornalino),
+    matches: results.slice(),
+    shown: Math.min(INV_RENDER_INITIAL, results.length)
+  };
 
-  // ── Render HTML dei primi MAX risultati ───────────────────────────────────
+  // ── Render HTML del primo blocco risultati ────────────────────────────────
   var html = '';
+  var shown = _invListMoreState.shown;
 
   if(!results.length){
     html = '<tr><td colspan="10" style="padding:40px;text-align:center;color:var(--muted);">' +
       'Nessun risultato per <b style="color:var(--accent)">"' + esc(rawSearch) + '"</b>' +
       '</td></tr>';
   } else {
-    for(var ri = 0; ri < results.length; ri++){
-      var x  = results[ri];
-      var r  = x.r, idx = x.i, m = x.m;
-      var isLow   = x.isLow;
-      var rowBg   = isLow ? 'rgba(229,62,62,0.08)' : '';
-      var borderL = isLow ? 'border-left:3px solid #e53e3e;' : 'border-left:3px solid transparent;';
-      var unit    = rowListinoUnit(r);
-      var specs   = m.specs || '';
-      var pos     = m.posizione || '';
-      var marca   = m.marca || '';
-      var prezzoAcq = m.prezzoAcquisto || '';
-      var catId   = m.cat || '';
-      var catLabel = '';
-      if(catId && typeof categorie !== 'undefined'){
-        var cf = categorie.find(function(c){ return c.id === catId; });
-        catLabel = cf ? cf.nome : '';
-      }
-      var sub = m.subcat || '';
-      var codM7 = r.codM
-        ? (String(r.codM).match(/^\d+$/) ? String(r.codM).padStart(7,'0') : String(r.codM))
-        : '-';
-
-      html += '<tr style="border-bottom:1px solid var(--border);' + borderL + 'background:' + rowBg + ';cursor:pointer;" onclick="openSchedaProdotto(' + idx + ')" title="Modifica">';
-      // 1. Descrizione + marca
-      html += '<td style="padding:8px 6px;">';
-      html += '<div style="font-size:12px;font-weight:600;color:var(--text);">' + esc(r.desc || '—') + '</div>';
-      if(marca) html += '<div style="font-size:10px;color:var(--muted);">• ' + esc(marca) + '</div>';
-      html += '</td>';
-      // 2. Specifiche
-      html += '<td style="padding:8px 6px;font-size:11px;color:#2dd4bf;font-style:italic;">' + esc(specs) + '</td>';
-      // 3. Cod. Fornitore
-      html += '<td style="padding:8px 6px;font-size:11px;color:#fc8181;font-weight:600;">' + esc(String(r.codF || '—')) + '</td>';
-      // 4. Mio Codice
-      html += '<td style="padding:8px 6px;font-size:11px;color:var(--accent);font-weight:600;">' + esc(codM7) + '</td>';
-      // 5. Quantità
-      html += '<td style="padding:8px 6px;text-align:center;white-space:nowrap;">';
-      html += '<button onclick="event.stopPropagation();deltaQta(' + idx + ',-1)" style="background:#333;border:none;color:var(--text);width:30px;height:30px;border-radius:5px;cursor:pointer;font-size:18px;font-weight:bold;touch-action:manipulation;">−</button> ';
-      html += '<input type="number" min="0" value="' + (x.qty !== null ? x.qty : '') + '" placeholder="—" onclick="event.stopPropagation()" ' +
-              'style="width:44px;padding:3px 2px;border:1px solid ' + (isLow ? '#e53e3e' : 'var(--border)') + ';border-radius:5px;background:#111;color:' + (isLow ? '#e53e3e' : 'var(--accent)') + ';font-size:13px;font-weight:900;text-align:center;" ' +
-              'onchange="event.stopPropagation();saveQta(' + idx + ',this.value)" id="inv-qty-' + idx + '"> ';
-      html += '<button onclick="event.stopPropagation();deltaQta(' + idx + ',1)" style="background:#333;border:none;color:var(--text);width:30px;height:30px;border-radius:5px;cursor:pointer;font-size:18px;font-weight:bold;touch-action:manipulation;">+</button>';
-      html += '<div style="font-size:10px;color:var(--muted);margin-top:2px;">' +
-              '<button onclick="event.stopPropagation();openMovProdotto(' + idx + ')" style="background:none;border:none;color:#3182ce;font-size:10px;cursor:pointer;padding:0;">📊</button> ' +
-              esc(unit) + (isLow ? ' <span style="color:#e53e3e;font-weight:700;">⚠ min:' + x.soglia + '</span>' : '') +
-              '</div>';
-      html += '</td>';
-      // 6. Prezzo vendita
-      html += '<td style="padding:8px 6px;text-align:right;font-size:13px;font-weight:900;color:var(--accent);">€ ' + esc(r.prezzo || '0') + '</td>';
-      // 7. Prezzo acquisto (riservato)
-      html += '<td style="padding:8px 6px;text-align:right;" onclick="event.stopPropagation();">' +
-              '<input type="text" value="' + esc(prezzoAcq) + '" placeholder="—" onclick="event.stopPropagation()" ' +
-              'style="width:52px;padding:3px 5px;border:1px solid #333;border-radius:5px;background:#0d0d0d;color:#555;font-size:11px;text-align:right;font-style:italic;" ' +
-              'title="Prezzo acquisto" ' +
-              'onchange="event.stopPropagation();saveMagRow(' + idx + ',\'prezzoAcquisto\',this.value)">' +
-              '</td>';
-      // 8. Posizione
-      html += '<td style="padding:8px 6px;font-size:11px;color:#888;font-style:italic;">' + esc(pos) + '</td>';
-      // 9. Categoria
-      html += '<td style="padding:8px 6px;">';
-      if(catLabel) html += '<div style="font-size:10px;color:var(--accent);">' + esc(catLabel) + '</div>';
-      if(sub)      html += '<div style="font-size:10px;color:#555;">' + esc(sub) + '</div>';
-      html += '</td>';
-      // 10. Giornalino
-      var giorn = r.giornalino || '';
-      html += '<td style="padding:8px 6px;text-align:center;">';
-      if(giorn){
-        var gCol = {rosso:'#e53e3e',verde:'#38a169',blu:'#3182ce',giallo:'#d69e2e',viola:'#805ad5',arancio:'#dd6b20',grigio:'#718096'};
-        var dotColor = gCol[giorn] || '#888';
-        html += '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + dotColor + ';" title="' + esc(giorn) + '"></span>';
-      }
-      html += '</td></tr>';
+    for(var ri = 0; ri < shown; ri++){
+      html += _invListRowHtml(results[ri]);
     }
-
-    // Banner se ci sono più di MAX risultati
-    if(tot > MAX){
-      html += '<tr><td colspan="10" style="text-align:center;padding:12px;font-size:12px;color:var(--muted);background:rgba(245,196,0,.04);border-top:1px solid var(--border);">' +
-              '📌 Mostrati <b style="color:var(--accent)">' + MAX + '</b> su <b>' + tot + '</b> risultati — aggiungi parole per restringere la ricerca.' +
-              '</td></tr>';
+    if(shown < results.length){
+      html += _invListMoreRowHtml(shown, results.length);
     }
   }
 
   body.innerHTML = html;
 
   if(statsEl) statsEl.innerHTML =
-    '<div class="sc"><span class="n">' + (tot > MAX ? MAX + '+' : tot) + '</span>Risultati</div>' +
+    '<div class="sc"><span class="n">' + (tot > shown ? shown + '+' : tot) + '</span>Risultati</div>' +
     (totVal > 0 ? '<div class="sc g"><span class="n" style="color:#68d391">€ ' + totVal.toFixed(0) + '</span>Valore</div>' : '') +
     (sottoScorta ? '<div class="sc r"><span class="n" style="color:#e53e3e">' + sottoScorta + '</span>Sotto scorta</div>' : '');
 }
@@ -322,6 +361,88 @@ function _invIsPromoG(r){
   return r && r.isPromo === true && String(r.promoTipo || '') === 'G';
 }
 
+function _invPromoGRowHtml(x){
+  var r = x.r;
+  var idx = x.i;
+  var m = x.m;
+  var isLow = x.isLow;
+  var rowBg = isLow ? 'rgba(229,62,62,0.08)' : '';
+  var borderL = isLow ? 'border-left:3px solid #e53e3e;' : 'border-left:3px solid transparent;';
+  var unit = rowListinoUnit(r);
+  var specs = m.specs || '';
+  var pos = m.posizione || '';
+  var marca = m.marca || '';
+  var prezzoAcq = m.prezzoAcquisto || '';
+  var catId = m.cat || '';
+  var catLabel = '';
+  if(catId && typeof categorie !== 'undefined'){
+    var cf = categorie.find(function(c){ return c.id === catId; });
+    catLabel = cf ? cf.nome : '';
+  }
+  var sub = m.subcat || '';
+  var codM7 = r.codM
+    ? (String(r.codM).match(/^\d+$/) ? String(r.codM).padStart(7, '0') : String(r.codM))
+    : '-';
+  var html = '';
+  html += '<tr style="border-bottom:1px solid var(--border);' + borderL + 'background:' + rowBg + ';cursor:pointer;" onclick="openSchedaProdotto(' + idx + ')" title="Modifica">';
+  html += '<td style="padding:8px 6px;"><div style="font-size:12px;font-weight:600;color:var(--text);">' + esc(r.desc || '—') + '</div>';
+  if(marca) html += '<div style="font-size:10px;color:var(--muted);">• ' + esc(marca) + '</div>';
+  html += '</td>';
+  html += '<td style="padding:8px 6px;font-size:11px;color:#2dd4bf;font-style:italic;">' + esc(specs) + '</td>';
+  html += '<td style="padding:8px 6px;font-size:11px;color:#fc8181;font-weight:600;">' + esc(String(r.codF || '—')) + '</td>';
+  html += '<td style="padding:8px 6px;font-size:11px;color:var(--accent);font-weight:600;">' + esc(codM7) + '</td>';
+  html += '<td style="padding:8px 6px;text-align:center;white-space:nowrap;">';
+  html += '<button onclick="event.stopPropagation();deltaQta(' + idx + ',-1)" style="background:#333;border:none;color:var(--text);width:30px;height:30px;border-radius:5px;cursor:pointer;font-size:18px;font-weight:bold;touch-action:manipulation;">−</button> ';
+  html += '<input type="number" min="0" value="' + (x.qty !== null ? x.qty : '') + '" placeholder="—" onclick="event.stopPropagation()" ' +
+          'style="width:44px;padding:3px 2px;border:1px solid ' + (isLow ? '#e53e3e' : 'var(--border)') + ';border-radius:5px;background:#111;color:' + (isLow ? '#e53e3e' : 'var(--accent)') + ';font-size:13px;font-weight:900;text-align:center;" ' +
+          'onchange="event.stopPropagation();saveQta(' + idx + ',this.value)" id="inv-g-qty-' + idx + '"> ';
+  html += '<button onclick="event.stopPropagation();deltaQta(' + idx + ',1)" style="background:#333;border:none;color:var(--text);width:30px;height:30px;border-radius:5px;cursor:pointer;font-size:18px;font-weight:bold;touch-action:manipulation;">+</button>';
+  html += '<div style="font-size:10px;color:var(--muted);margin-top:2px;">' +
+          '<button onclick="event.stopPropagation();openMovProdotto(' + idx + ')" style="background:none;border:none;color:#3182ce;font-size:10px;cursor:pointer;padding:0;">📊</button> ' +
+          esc(unit) + (isLow ? ' <span style="color:#e53e3e;font-weight:700;">⚠ min:' + x.soglia + '</span>' : '') +
+          '</div></td>';
+  html += '<td style="padding:8px 6px;text-align:right;font-size:13px;font-weight:900;color:var(--accent);"><span style="display:inline-flex;align-items:center;gap:6px;justify-content:flex-end;">€ ' + esc(r.prezzo || '0') +
+          (typeof htmlPromoGBadge === 'function' ? htmlPromoGBadge() : '') + '</span></td>';
+  html += '<td style="padding:8px 6px;text-align:right;" onclick="event.stopPropagation();">' +
+          '<input type="text" value="' + esc(prezzoAcq) + '" placeholder="—" onclick="event.stopPropagation()" ' +
+          'style="width:52px;padding:3px 5px;border:1px solid #333;border-radius:5px;background:#0d0d0d;color:#555;font-size:11px;text-align:right;font-style:italic;" ' +
+          'onchange="event.stopPropagation();saveMagRow(' + idx + ',\'prezzoAcquisto\',this.value)"></td>';
+  html += '<td style="padding:8px 6px;font-size:11px;color:#888;font-style:italic;">' + esc(pos) + '</td>';
+  html += '<td style="padding:8px 6px;">';
+  if(catLabel) html += '<div style="font-size:10px;color:var(--accent);">' + esc(catLabel) + '</div>';
+  if(sub) html += '<div style="font-size:10px;color:#555;">' + esc(sub) + '</div>';
+  html += '</td>';
+  html += '<td style="padding:8px 6px;text-align:center;"><span style="color:#805ad5;font-weight:800;">[G]</span></td></tr>';
+  return html;
+}
+
+function _invPromoGMoreRowHtml(shown, total){
+  var rem = total - shown;
+  return '<tr id="inv-g-more-row"><td colspan="10" style="text-align:center;padding:12px;font-size:12px;color:var(--muted);cursor:pointer;" onclick="invPromoGLoadMore()">' +
+    '📌 Mostrati <b>' + shown + '</b> su <b>' + total + '</b> articoli [G] — <span style="color:#805ad5;font-weight:700;">... e altri ' + rem + ' articoli</span>' +
+    '</td></tr>';
+}
+
+function invPromoGLoadMore(){
+  var st = _invGMoreState;
+  if(!st.matches.length) return;
+  var body = document.getElementById('inv-body-g');
+  if(!body) return;
+  var moreRow = document.getElementById('inv-g-more-row');
+  if(moreRow && moreRow.parentNode) moreRow.parentNode.removeChild(moreRow);
+  var total = st.matches.length;
+  var start = st.shown;
+  if(start >= total) return;
+  var end = Math.min(start + INV_RENDER_PAGE, total);
+  for(var i = start; i < end; i++){
+    body.insertAdjacentHTML('beforeend', _invPromoGRowHtml(st.matches[i]));
+  }
+  st.shown = end;
+  if(end < total){
+    body.insertAdjacentHTML('beforeend', _invPromoGMoreRowHtml(end, total));
+  }
+}
+
 function renderInventarioPromoG(){
   var body = document.getElementById('inv-body-g');
   var statsEl = document.getElementById('inv-stats-g');
@@ -329,10 +450,10 @@ function renderInventarioPromoG(){
   if(!rows || !rows.length){
     body.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted);">⏳ Database in caricamento...</td></tr>';
     if(statsEl) statsEl.innerHTML = '';
+    _invGMoreState = { matches: [], shown: 0 };
     return;
   }
   if(!_invIdxBuilt) _invBuildIndex();
-  var MAX = 50;
   var results = [];
   var tot = 0, sottoScorta = 0, totVal = 0;
   var i, r, m, soglia, qty, isLow;
@@ -357,74 +478,27 @@ function renderInventarioPromoG(){
     if(!isFinite(ma)) ma = 0;
     return mb - ma;
   });
-  if(results.length > MAX) results.length = MAX;
+  var shown = Math.min(INV_RENDER_INITIAL, results.length);
+  _invGMoreState = {
+    matches: results.slice(),
+    shown: shown
+  };
 
   var html = '';
   if(!results.length){
     html = '<tr><td colspan="10" style="padding:40px;text-align:center;color:var(--muted);">Nessun articolo con promo <b style="color:#805ad5">[G]</b> attiva.</td></tr>';
   } else {
-    for(var ri = 0; ri < results.length; ri++){
-      var x = results[ri];
-      r = x.r;
-      var idx = x.i;
-      m = x.m;
-      isLow = x.isLow;
-      var rowBg = isLow ? 'rgba(229,62,62,0.08)' : '';
-      var borderL = isLow ? 'border-left:3px solid #e53e3e;' : 'border-left:3px solid transparent;';
-      var unit = rowListinoUnit(r);
-      var specs = m.specs || '';
-      var pos = m.posizione || '';
-      var marca = m.marca || '';
-      var prezzoAcq = m.prezzoAcquisto || '';
-      var catId = m.cat || '';
-      var catLabel = '';
-      if(catId && typeof categorie !== 'undefined'){
-        var cf = categorie.find(function(c){ return c.id === catId; });
-        catLabel = cf ? cf.nome : '';
-      }
-      var sub = m.subcat || '';
-      var codM7 = r.codM
-        ? (String(r.codM).match(/^\d+$/) ? String(r.codM).padStart(7, '0') : String(r.codM))
-        : '-';
-
-      html += '<tr style="border-bottom:1px solid var(--border);' + borderL + 'background:' + rowBg + ';cursor:pointer;" onclick="openSchedaProdotto(' + idx + ')" title="Modifica">';
-      html += '<td style="padding:8px 6px;"><div style="font-size:12px;font-weight:600;color:var(--text);">' + esc(r.desc || '—') + '</div>';
-      if(marca) html += '<div style="font-size:10px;color:var(--muted);">• ' + esc(marca) + '</div>';
-      html += '</td>';
-      html += '<td style="padding:8px 6px;font-size:11px;color:#2dd4bf;font-style:italic;">' + esc(specs) + '</td>';
-      html += '<td style="padding:8px 6px;font-size:11px;color:#fc8181;font-weight:600;">' + esc(String(r.codF || '—')) + '</td>';
-      html += '<td style="padding:8px 6px;font-size:11px;color:var(--accent);font-weight:600;">' + esc(codM7) + '</td>';
-      html += '<td style="padding:8px 6px;text-align:center;white-space:nowrap;">';
-      html += '<button onclick="event.stopPropagation();deltaQta(' + idx + ',-1)" style="background:#333;border:none;color:var(--text);width:30px;height:30px;border-radius:5px;cursor:pointer;font-size:18px;font-weight:bold;touch-action:manipulation;">−</button> ';
-      html += '<input type="number" min="0" value="' + (x.qty !== null ? x.qty : '') + '" placeholder="—" onclick="event.stopPropagation()" ' +
-              'style="width:44px;padding:3px 2px;border:1px solid ' + (isLow ? '#e53e3e' : 'var(--border)') + ';border-radius:5px;background:#111;color:' + (isLow ? '#e53e3e' : 'var(--accent)') + ';font-size:13px;font-weight:900;text-align:center;" ' +
-              'onchange="event.stopPropagation();saveQta(' + idx + ',this.value)" id="inv-g-qty-' + idx + '"> ';
-      html += '<button onclick="event.stopPropagation();deltaQta(' + idx + ',1)" style="background:#333;border:none;color:var(--text);width:30px;height:30px;border-radius:5px;cursor:pointer;font-size:18px;font-weight:bold;touch-action:manipulation;">+</button>';
-      html += '<div style="font-size:10px;color:var(--muted);margin-top:2px;">' +
-              '<button onclick="event.stopPropagation();openMovProdotto(' + idx + ')" style="background:none;border:none;color:#3182ce;font-size:10px;cursor:pointer;padding:0;">📊</button> ' +
-              esc(unit) + (isLow ? ' <span style="color:#e53e3e;font-weight:700;">⚠ min:' + x.soglia + '</span>' : '') +
-              '</div></td>';
-      html += '<td style="padding:8px 6px;text-align:right;font-size:13px;font-weight:900;color:var(--accent);"><span style="display:inline-flex;align-items:center;gap:6px;justify-content:flex-end;">€ ' + esc(r.prezzo || '0') +
-              (typeof htmlPromoGBadge === 'function' ? htmlPromoGBadge() : '') + '</span></td>';
-      html += '<td style="padding:8px 6px;text-align:right;" onclick="event.stopPropagation();">' +
-              '<input type="text" value="' + esc(prezzoAcq) + '" placeholder="—" onclick="event.stopPropagation()" ' +
-              'style="width:52px;padding:3px 5px;border:1px solid #333;border-radius:5px;background:#0d0d0d;color:#555;font-size:11px;text-align:right;font-style:italic;" ' +
-              'onchange="event.stopPropagation();saveMagRow(' + idx + ',\'prezzoAcquisto\',this.value)"></td>';
-      html += '<td style="padding:8px 6px;font-size:11px;color:#888;font-style:italic;">' + esc(pos) + '</td>';
-      html += '<td style="padding:8px 6px;">';
-      if(catLabel) html += '<div style="font-size:10px;color:var(--accent);">' + esc(catLabel) + '</div>';
-      if(sub) html += '<div style="font-size:10px;color:#555;">' + esc(sub) + '</div>';
-      html += '</td>';
-      html += '<td style="padding:8px 6px;text-align:center;"><span style="color:#805ad5;font-weight:800;">[G]</span></td></tr>';
+    for(var ri = 0; ri < shown; ri++){
+      html += _invPromoGRowHtml(results[ri]);
     }
-    if(tot > MAX){
-      html += '<tr><td colspan="10" style="text-align:center;padding:12px;font-size:12px;color:var(--muted);">📌 Mostrati <b>' + MAX + '</b> su <b>' + tot + '</b> articoli [G].</td></tr>';
+    if(shown < results.length){
+      html += _invPromoGMoreRowHtml(shown, results.length);
     }
   }
   body.innerHTML = html;
   if(statsEl){
     statsEl.innerHTML =
-      '<div class="sc"><span class="n">' + (tot > MAX ? MAX + '+' : tot) + '</span>Promo [G]</div>' +
+      '<div class="sc"><span class="n">' + (tot > shown ? shown + '+' : tot) + '</span>Promo [G]</div>' +
       (totVal > 0 ? '<div class="sc g"><span class="n" style="color:#68d391">€ ' + totVal.toFixed(0) + '</span>Valore</div>' : '') +
       (sottoScorta ? '<div class="sc r"><span class="n" style="color:#e53e3e">' + sottoScorta + '</span>Sotto scorta</div>' : '');
   }
