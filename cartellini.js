@@ -196,6 +196,98 @@ function ctUpdateSearchPlaceholder(){
   }
 }
 
+// ── Riordino mobile (SortableJS, long-press) ─────────────────────────────────
+var _ctSortableInstance = null;
+
+function _ctIsMobile(){
+  return window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+}
+
+/** Indici reali in ctRows[] per la tab/filtro corrente (stessa logica di CT.render). */
+function ct_buildRealIndices(){
+  var isFatti = (_ctTab === 'fatti');
+  var realIndices = [];
+  ctRows.forEach(function(r, i){ if(isFatti ? !!r.fatto : !r.fatto) realIndices.push(i); });
+  if(isFatti && _ctFattiSearch){
+    var qFatti = _ctFattiSearch.toLowerCase();
+    realIndices = realIndices.filter(function(i){
+      var r = ctRows[i] || {};
+      return [
+        r.desc || '',
+        r.codM || '',
+        r.codF || '',
+        r.prezzo || '',
+        r.prezzoOld || '',
+        r.fattoData || '',
+        r.data || ''
+      ].join(' ').toLowerCase().indexOf(qFatti) >= 0;
+    });
+  }
+  return realIndices;
+}
+
+/** Riordina il sottoinsieme visibile senza spostare righe dell'altra tab. */
+function ct_reorderInTab(fromDisplayIdx, toDisplayIdx){
+  if(fromDisplayIdx === toDisplayIdx) return false;
+  if(_ctTab === 'fatti' && _ctFattiSearch) return false;
+  var realIndices = ct_buildRealIndices();
+  if(fromDisplayIdx < 0 || toDisplayIdx < 0 ||
+     fromDisplayIdx >= realIndices.length || toDisplayIdx >= realIndices.length) return false;
+  var subset = realIndices.map(function(i){ return ctRows[i]; });
+  var moved = subset.splice(fromDisplayIdx, 1)[0];
+  subset.splice(toDisplayIdx, 0, moved);
+  var newRows = ctRows.slice();
+  realIndices.forEach(function(realIdx, displayIdx){
+    newRows[realIdx] = subset[displayIdx];
+  });
+  ctRows = newRows;
+  CT.save();
+  ct_refreshPrintPreviewIfOpen();
+  return true;
+}
+
+function ct_refreshPrintPreviewIfOpen(){
+  var pov = document.getElementById('pov');
+  if(!pov || !pov.classList.contains('open') || typeof buildTagsHTML !== 'function') return;
+  var printable = ctRows.filter(function(rr){ return rr && !rr.fatto; });
+  var html = buildTagsHTML(printable, false);
+  var pc = document.getElementById('pc');
+  if(pc) pc.innerHTML = html;
+  var pa = document.getElementById('print-area');
+  if(pa) pa.innerHTML = html;
+  var pat1 = document.getElementById('print-area-t1');
+  if(pat1) pat1.innerHTML = html;
+}
+
+function ct_initMobileReorder(){
+  if(_ctSortableInstance){
+    try{ _ctSortableInstance.destroy(); }catch(e){}
+    _ctSortableInstance = null;
+  }
+  if(!_ctIsMobile() || typeof Sortable === 'undefined') return;
+  var tbody = document.getElementById('ct-sortable-tbody');
+  if(!tbody) return;
+  _ctSortableInstance = Sortable.create(tbody, {
+    animation: 150,
+    delay: 450,
+    delayOnTouchOnly: true,
+    touchStartThreshold: 5,
+    filter: 'input, select, button',
+    preventOnFilter: false,
+    ghostClass: 'ct-row-ghost',
+    chosenClass: 'ct-row-chosen',
+    dragClass: 'ct-row-drag',
+    disabled: (_ctTab === 'fatti' && !!_ctFattiSearch),
+    onStart: function(){ tbody.classList.add('ct-drag-active'); },
+    onEnd: function(evt){
+      tbody.classList.remove('ct-drag-active');
+      if(evt.oldIndex === evt.newIndex || evt.oldIndex == null || evt.newIndex == null) return;
+      ct_reorderInTab(evt.oldIndex, evt.newIndex);
+      CT.render();
+    }
+  });
+}
+
 function ct_setTab(tab){
   _ctTab = tab;
   var btnDf = document.getElementById('ct-tab-dafare');
@@ -262,24 +354,7 @@ var CT = {
     if(cDf) cDf.textContent = nDf ? '('+nDf+')' : '';
     if(cFt) cFt.textContent = nFt ? '('+nFt+')' : '';
 
-    // Indici reali nel ctRows per la tab corrente
-    var realIndices = [];
-    ctRows.forEach(function(r, i){ if(isFatti ? !!r.fatto : !r.fatto) realIndices.push(i); });
-    if(isFatti && _ctFattiSearch){
-      var qFatti = _ctFattiSearch.toLowerCase();
-      realIndices = realIndices.filter(function(i){
-        var r = ctRows[i] || {};
-        return [
-          r.desc || '',
-          r.codM || '',
-          r.codF || '',
-          r.prezzo || '',
-          r.prezzoOld || '',
-          r.fattoData || '',
-          r.data || ''
-        ].join(' ').toLowerCase().indexOf(qFatti) >= 0;
-      });
-    }
+    var realIndices = ct_buildRealIndices();
     var dupFattiByCode = {};
     if(isFatti){
       ctRows.forEach(function(r){
@@ -327,7 +402,7 @@ var CT = {
     h += '<th style="padding:6px 2px;text-align:center;color:#888;font-size:10px;width:40px;">Col</th>';
     h += '<th style="padding:6px 2px;text-align:center;color:#888;font-size:10px;width:36px;" title="Mostra nome articolo sul cartellino">Nome</th>';
     h += '<th style="padding:6px 0;width:48px;"></th>';
-    h += '</tr></thead><tbody>';
+    h += '</tr></thead><tbody id="ct-sortable-tbody">';
 
     realIndices.forEach(function(realIdx){
       var r = ctRows[realIdx];
@@ -342,7 +417,7 @@ var CT = {
         if(codDf && fattiCodes[codDf]) rowStyle += 'background:rgba(255,165,0,0.2);';
       }
 
-      h += '<tr style="'+rowStyle+'">';
+      h += '<tr data-real-idx="'+realIdx+'" style="'+rowStyle+'">';
 
       // Prodotto
       h += '<td style="padding:6px 4px;">';
@@ -442,6 +517,7 @@ var CT = {
     h += '</tbody></table>';
     list.innerHTML = h;
     CT.updateDashboard();
+    ct_initMobileReorder();
   },
 
   // ── Dashboard ───────────────────────────────────────────────────
