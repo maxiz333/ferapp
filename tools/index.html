@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Rattazzi – Cartellini Prezzi</title>
-<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="base.css?v=20260526">
 <link rel="stylesheet" href="carrello.css">
 <link rel="stylesheet" href="ordini.css">
 </head>
@@ -379,15 +379,19 @@ body.light-mode #confirm-overlay > div { background:#fff; }
       <!-- popolato da ct_updateDashboard() -->
     </div>
 
-    <!-- Riga 3: Tab Da fare / Fatti -->
-    <div id="ct-tabs" style="display:flex;gap:6px;margin-top:8px;">
-      <button id="ct-tab-dafare" onclick="ct_setTab('dafare')"
-        style="flex:1;min-height:36px;border-radius:10px;border:none;background:var(--accent);color:#111;font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation;">
-        📋 Da fare <span id="ct-count-dafare" style="font-size:11px;opacity:.7;"></span>
+    <!-- Riga 3: Tab Da fare / Temp / Fatti -->
+    <div id="ct-tabs" style="display:flex;gap:4px;margin-top:8px;width:100%;">
+      <button type="button" class="ct-tab-btn" id="ct-tab-dafare" onclick="ct_setTab('dafare')" title="Da fare"
+        style="flex:1;min-width:0;min-height:36px;border-radius:10px;border:none;background:var(--accent);color:#111;font-size:12px;font-weight:800;cursor:pointer;touch-action:manipulation;">
+        <span class="ct-tab-ico" aria-hidden="true">📋</span><span class="ct-tab-lbl"> Da fare</span><span id="ct-count-dafare" class="ct-tab-count"></span>
       </button>
-      <button id="ct-tab-fatti" onclick="ct_setTab('fatti')"
-        style="flex:1;min-height:36px;border-radius:10px;border:1px solid #2a2a2a;background:transparent;color:#555;font-size:13px;font-weight:800;cursor:pointer;touch-action:manipulation;">
-        ✅ Fatti <span id="ct-count-fatti" style="font-size:11px;opacity:.7;"></span>
+      <button type="button" class="ct-tab-btn" id="ct-tab-temp" onclick="ct_setTab('temp')" title="Temporanei"
+        style="flex:1;min-width:0;min-height:36px;border-radius:10px;border:1px solid #2a2a2a;background:transparent;color:#555;font-size:12px;font-weight:800;cursor:pointer;touch-action:manipulation;">
+        <span class="ct-tab-ico" aria-hidden="true">📦</span><span class="ct-tab-lbl"> Temp</span><span id="ct-count-temp" class="ct-tab-count"></span>
+      </button>
+      <button type="button" class="ct-tab-btn" id="ct-tab-fatti" onclick="ct_setTab('fatti')" title="Fatti"
+        style="flex:1;min-width:0;min-height:36px;border-radius:10px;border:1px solid #2a2a2a;background:transparent;color:#555;font-size:12px;font-weight:800;cursor:pointer;touch-action:manipulation;">
+        <span class="ct-tab-ico" aria-hidden="true">✅</span><span class="ct-tab-lbl"> Fatti</span><span id="ct-count-fatti" class="ct-tab-count"></span>
       </button>
     </div>
 
@@ -442,9 +446,13 @@ body.light-mode #confirm-overlay > div { background:#fff; }
 
   <!-- ══ FOOTER AZIONI ════════════════════════════════════════════════ -->
   <div id="ct-footer" style="display:none;position:fixed;bottom:56px;left:0;right:0;z-index:90;background:#111;border-top:1px solid #1e1e1e;padding:8px 12px;display:none;">
-    <div style="display:flex;gap:8px;">
+    <div id="ct-footer-dafare-actions" style="display:flex;gap:8px;width:100%;">
       <button onclick="ct_syncDB()" style="flex:1;min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--accent)44;background:transparent;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;white-space:nowrap;">🔄 Sincronizza Database</button>
+      <button id="ct-btn-park-all" onclick="ct_parkAll()" style="min-height:44px;padding:0 12px;border-radius:10px;border:1px solid #805ad544;background:transparent;color:#b794f4;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;white-space:nowrap;">📦 Parcheggia tutti</button>
       <button onclick="ct_svuota()" style="min-height:44px;padding:0 16px;border-radius:10px;border:1px solid #e53e3e44;background:transparent;color:#e53e3e;font-size:13px;font-weight:700;cursor:pointer;touch-action:manipulation;white-space:nowrap;">🗑️ Svuota</button>
+    </div>
+    <div id="ct-footer-temp-actions" style="display:none;width:100%;">
+      <button id="ct-btn-restore-all" onclick="ct_restoreAll()" style="width:100%;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid #805ad544;background:transparent;color:#b794f4;font-size:13px;font-weight:700;cursor:pointer;touch-action:manipulation;white-space:nowrap;">↩ Ripristina tutti in Da fare</button>
     </div>
   </div>
 
@@ -1651,7 +1659,7 @@ body.light-mode #confirm-overlay > div { background:#fff; }
 <script src="inventario.search.js"></script>
 <script src="inventario.magazzino.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-<script src="cartellini.js"></script>
+<script src="cartellini.js?v=20260526"></script>
 
 </body>
 </html>

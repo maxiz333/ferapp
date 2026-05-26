@@ -683,3 +683,29 @@ body.light-mode .cassa-mode-footer { background: #fff; }
 body.light-mode .cassa-mode-card { background: #fff; border-color: #e0e0e0; }
 body.light-mode .cassa-mode-card:active { background: #f0f0f0; }
 body.light-mode .cassa-mode-item { border-color: #eee; }
+
+/* Cartellini — tab mobile (icone) */
+@media (max-width:768px){
+  #t1-topbar{ overflow:visible !important; }
+  #ct-tabs{ width:100% !important; overflow:visible !important; }
+  #ct-tabs .ct-tab-btn{
+    flex:1 1 0 !important;
+    min-width:0 !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:6px 2px !important;
+    line-height:1.1;
+  }
+  #ct-tabs .ct-tab-lbl{ display:none !important; }
+  #ct-tabs .ct-tab-ico{ font-size:22px !important; line-height:1 !important; }
+  #ct-tabs .ct-tab-count{
+    display:block !important;
+    font-size:9px !important;
+    opacity:.85 !important;
+    margin-top:2px;
+    min-height:10px;
+  }
+  #ct-tab-temp{ border:1px solid #805ad566 !important; }
+}

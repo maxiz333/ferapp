@@ -90,10 +90,33 @@ var renderTable = (function(_origRenderTable){
 // ═══════════════════════════════════════════════════════════════════════════════
 
 var _fbSyncingCt = false; // flag per evitare loop sync Firebase cartellini
-var _ctTab = 'dafare'; // tab attiva: 'dafare' | 'fatti'
+var _ctTab = 'dafare'; // tab attiva: 'dafare' | 'temp' | 'fatti'
 
 function ctCodiceArticolo(r){
   return String(r && r.codM || '').trim().toUpperCase();
+}
+
+function ct_isDafare(r){ return r && !r.fatto && !r.temp; }
+function ct_isTemp(r){ return r && !r.fatto && !!r.temp; }
+function ct_isFatto(r){ return r && !!r.fatto; }
+function ct_filterPrintable(rows){
+  return (rows || []).filter(function(r){ return ct_isDafare(r); });
+}
+
+/** Sposta la riga all'indice i in cima al sottoinsieme indicato (dafare/temp/fatti). */
+function ct_bringToFront(i, isMember){
+  if(isNaN(i) || i < 0 || i >= ctRows.length || !isMember(ctRows[i])) return;
+  var row = ctRows.splice(i, 1)[0];
+  var insertAt = ctRows.findIndex(isMember);
+  if(insertAt < 0){
+    if(isMember === ct_isFatto){
+      insertAt = ctRows.length;
+    } else {
+      insertAt = ctRows.findIndex(function(r){ return !ct_isFatto(r); });
+      if(insertAt < 0) insertAt = ctRows.length;
+    }
+  }
+  ctRows.splice(insertAt, 0, row);
 }
 
 // ── Riordino righe (SortableJS) ───────────────────────────────────────────────
@@ -101,10 +124,13 @@ var _ctSortableInstance = null;
 
 /** Indici reali in ctRows[] per la tab/filtro corrente (stessa logica di CT.render). */
 function ct_buildRealIndices(){
-  var isFatti = (_ctTab === 'fatti');
   var realIndices = [];
-  ctRows.forEach(function(r, i){ if(isFatti ? !!r.fatto : !r.fatto) realIndices.push(i); });
-  if(isFatti && typeof _ctFattiSearch !== 'undefined' && _ctFattiSearch){
+  ctRows.forEach(function(r, i){
+    if(_ctTab === 'fatti' && ct_isFatto(r)) realIndices.push(i);
+    else if(_ctTab === 'temp' && ct_isTemp(r)) realIndices.push(i);
+    else if(_ctTab === 'dafare' && ct_isDafare(r)) realIndices.push(i);
+  });
+  if(_ctTab === 'fatti' && typeof _ctFattiSearch !== 'undefined' && _ctFattiSearch){
     var qFatti = _ctFattiSearch.toLowerCase();
     realIndices = realIndices.filter(function(i){
       var r = ctRows[i] || {};
@@ -145,7 +171,7 @@ function ct_reorderInTab(fromDisplayIdx, toDisplayIdx){
 function ct_refreshPrintPreviewIfOpen(){
   var pov = document.getElementById('pov');
   if(!pov || !pov.classList.contains('open') || typeof buildTagsHTML !== 'function') return;
-  var printable = ctRows.filter(function(rr){ return rr && !rr.fatto; });
+  var printable = ct_filterPrintable(ctRows);
   var html = buildTagsHTML(printable, false);
   var pc = document.getElementById('pc');
   if(pc) pc.innerHTML = html;
@@ -184,19 +210,41 @@ function ct_initMobileReorder(){
   });
 }
 
+function ct_updateFooter(){
+  var footer = document.getElementById('ct-footer');
+  var dfActs = document.getElementById('ct-footer-dafare-actions');
+  var tmpActs = document.getElementById('ct-footer-temp-actions');
+  if(!footer) return;
+  if(_ctTab === 'fatti'){
+    footer.style.display = 'none';
+    return;
+  }
+  footer.style.display = 'flex';
+  if(dfActs) dfActs.style.display = (_ctTab === 'dafare') ? 'flex' : 'none';
+  if(tmpActs) tmpActs.style.display = (_ctTab === 'temp') ? 'flex' : 'none';
+}
+
 function ct_setTab(tab){
   _ctTab = tab;
   var btnDf = document.getElementById('ct-tab-dafare');
+  var btnTp = document.getElementById('ct-tab-temp');
   var btnFt = document.getElementById('ct-tab-fatti');
-  if(btnDf && btnFt){
-    if(tab === 'dafare'){
-      btnDf.style.background = 'var(--accent)'; btnDf.style.color = '#111'; btnDf.style.border = 'none';
-      btnFt.style.background = 'transparent'; btnFt.style.color = '#555'; btnFt.style.border = '1px solid #2a2a2a';
+  var inactive = { background:'transparent', color:'#555', border:'1px solid #2a2a2a' };
+  function styleBtn(btn, active, bg, color){
+    if(!btn) return;
+    if(active){
+      btn.style.background = bg;
+      btn.style.color = color;
+      btn.style.border = 'none';
     } else {
-      btnFt.style.background = '#38a169'; btnFt.style.color = '#fff'; btnFt.style.border = 'none';
-      btnDf.style.background = 'transparent'; btnDf.style.color = '#555'; btnDf.style.border = '1px solid #2a2a2a';
+      btn.style.background = inactive.background;
+      btn.style.color = inactive.color;
+      btn.style.border = inactive.border;
     }
   }
+  styleBtn(btnDf, tab === 'dafare', 'var(--accent)', '#111');
+  styleBtn(btnTp, tab === 'temp', '#805ad5', '#fff');
+  styleBtn(btnFt, tab === 'fatti', '#38a169', '#fff');
   CT.render();
 }
 
@@ -235,13 +283,17 @@ var CT = {
 
     // Filtra per tab attiva
     var isFatti = (_ctTab === 'fatti');
+    var isTemp = (_ctTab === 'temp');
+    var isDafare = (_ctTab === 'dafare');
 
-    // Aggiorna contatori nei tab
-    var nDf = ctRows.filter(function(r){ return !r.fatto; }).length;
-    var nFt = ctRows.filter(function(r){ return !!r.fatto; }).length;
+    var nDf = ctRows.filter(ct_isDafare).length;
+    var nTemp = ctRows.filter(ct_isTemp).length;
+    var nFt = ctRows.filter(ct_isFatto).length;
     var cDf = document.getElementById('ct-count-dafare');
+    var cTp = document.getElementById('ct-count-temp');
     var cFt = document.getElementById('ct-count-fatti');
     if(cDf) cDf.textContent = nDf ? '('+nDf+')' : '';
+    if(cTp) cTp.textContent = nTemp ? '('+nTemp+')' : '';
     if(cFt) cFt.textContent = nFt ? '('+nFt+')' : '';
 
     var realIndices = ct_buildRealIndices();
@@ -249,25 +301,34 @@ var CT = {
     var dupFattiByCode = {};
     if(isFatti){
       ctRows.forEach(function(r){
-        if(!r || !r.fatto) return;
+        if(!ct_isFatto(r)) return;
         var code = ctCodiceArticolo(r);
         if(!code) return;
         dupFattiByCode[code] = (dupFattiByCode[code] || 0) + 1;
       });
     }
     var dupDafareByCode = {};
-    if(!isFatti){
+    if(isDafare){
       ctRows.forEach(function(r){
-        if(!r || r.fatto) return;
+        if(!ct_isDafare(r)) return;
         var code = ctCodiceArticolo(r);
         if(!code) return;
         dupDafareByCode[code] = (dupDafareByCode[code] || 0) + 1;
       });
     }
-    var fattiCodes = {};
-    if(!isFatti){
+    var dupTempByCode = {};
+    if(isTemp){
       ctRows.forEach(function(r){
-        if(!r || !r.fatto) return;
+        if(!ct_isTemp(r)) return;
+        var code = ctCodiceArticolo(r);
+        if(!code) return;
+        dupTempByCode[code] = (dupTempByCode[code] || 0) + 1;
+      });
+    }
+    var fattiCodes = {};
+    if(isDafare){
+      ctRows.forEach(function(r){
+        if(!ct_isFatto(r)) return;
         var fc = ctCodiceArticolo(r);
         if(fc) fattiCodes[fc] = true;
       });
@@ -276,19 +337,23 @@ var CT = {
     if(!realIndices.length){
       if(empty){
         empty.style.display = 'block';
-        empty.innerHTML = isFatti
-          ? '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">✅</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino fatto</div><div style="font-size:13px;color:#333;">Spunta un articolo per spostarlo qui.</div>'
-          : '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">🏷️</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino</div><div style="font-size:13px;color:#333;line-height:1.5;">Cerca un articolo in alto<br>oppure importa un file CSV.</div>';
+        if(isFatti){
+          empty.innerHTML = '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">✅</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino fatto</div><div style="font-size:13px;color:#333;">Spunta un articolo per spostarlo qui.</div>';
+        } else if(isTemp){
+          empty.innerHTML = '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">📦</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino parcheggiato</div><div style="font-size:13px;color:#333;line-height:1.5;">Usa Parcheggia dalla tab Da fare<br>per liberare la lista di stampa.</div>';
+        } else {
+          empty.innerHTML = '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">🏷️</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino</div><div style="font-size:13px;color:#333;line-height:1.5;">Cerca un articolo in alto<br>oppure importa un file CSV.</div>';
+        }
       }
       list.style.display  = 'none';
-      if(footer) footer.style.display = 'none';
+      ct_updateFooter();
       CT.updateDashboard();
       return;
     }
 
     if(empty)  empty.style.display  = 'none';
     list.style.display  = 'block';
-    if(footer) footer.style.display = isFatti ? 'none' : 'flex';
+    ct_updateFooter();
 
     var h = '<table style="width:100%;border-collapse:collapse;font-size:11px;">';
     h += '<thead><tr style="background:#1a1a1a;position:sticky;top:110px;z-index:10;">';
@@ -308,11 +373,11 @@ var CT = {
       var dupCode = ctCodiceArticolo(r);
       var dupCount = isFatti
         ? (dupFattiByCode[dupCode] || 0)
-        : (dupDafareByCode[dupCode] || 0);
+        : (isTemp ? (dupTempByCode[dupCode] || 0) : (dupDafareByCode[dupCode] || 0));
       var isDup = !!(dupCode && dupCount > 1);
       var rowStyle = 'border-bottom:1px solid #222;border-left:3px solid '+(isDup ? '#f6ad55' : c.dot)+';';
       if(isDup) rowStyle += 'background:rgba(246,173,85,.14);box-shadow:inset 0 0 0 1px rgba(246,173,85,.38);';
-      if(!isFatti && !isDup){
+      if(isDafare && !isDup){
         var codDf = ctCodiceArticolo(r);
         if(codDf && fattiCodes[codDf]) rowStyle += 'background:rgba(255,165,0,0.2);';
       }
@@ -389,10 +454,13 @@ var CT = {
       }
       h += '</td>';
 
-      // Azioni: ✓ / ↩ + ✕
+      // Azioni: parcheggio / ripristino / fatto + elimina
       h += '<td style="padding:2px;text-align:center;white-space:nowrap;">';
-      if(!isFatti){
+      if(isDafare){
+        h += '<button onclick="ct_parkOne('+realIdx+')" title="Parcheggia in Temp" style="border:none;background:transparent;color:#805ad588;font-size:14px;cursor:pointer;padding:0 2px;touch-action:manipulation;">📦</button>';
         h += '<button onclick="ct_toggleFatto('+realIdx+')" title="Segna come fatto" style="border:none;background:transparent;color:#38a16966;font-size:16px;cursor:pointer;padding:0 3px;touch-action:manipulation;">✓</button>';
+      } else if(isTemp){
+        h += '<button onclick="ct_restoreOne('+realIdx+')" title="Ripristina in Da fare" style="border:none;background:transparent;color:#805ad588;font-size:14px;cursor:pointer;padding:0 3px;touch-action:manipulation;">↩</button>';
       } else {
         h += '<button onclick="ct_toggleFatto('+realIdx+')" title="Rimetti in Da fare" style="border:none;background:transparent;color:#d69e2e88;font-size:13px;cursor:pointer;padding:0 3px;touch-action:manipulation;">↩</button>';
       }
@@ -417,6 +485,14 @@ var CT = {
           + '<div style="font-size:18px;font-weight:900;color:var(--accent);line-height:1;">'+ctRows.length+'</div>'
           + '<div style="font-size:9px;color:#555;text-transform:uppercase;letter-spacing:.5px;margin-top:1px;">Totale</div>'
           + '</div>';
+
+    var nTempDash = ctRows.filter(ct_isTemp).length;
+    if(nTempDash){
+      h += '<div style="flex-shrink:0;background:#14082a;border-radius:10px;padding:6px 12px;border:1px solid #805ad544;text-align:center;min-width:56px;">'
+         + '<div style="font-size:18px;font-weight:900;color:#b794f4;line-height:1;">'+nTempDash+'</div>'
+         + '<div style="font-size:9px;color:#b794f4;text-transform:uppercase;letter-spacing:.5px;margin-top:1px;">Temp</div>'
+         + '</div>';
+    }
 
     CT.COLORS.slice(1).forEach(function(col){
       var count = ctRows.filter(function(r){ return (r.giornalino||'')===col.val; }).length;
@@ -555,8 +631,48 @@ function ct_toggleFatto(i){
   var era = !!ctRows[i].fatto;
   ctRows[i].fatto = !era;
   ctRows[i].fattoData = !era ? new Date().toLocaleDateString('it-IT') : '';
+  if(!era) ctRows[i].temp = false;
+  else ctRows[i].temp = false;
   CT.save(); CT.render();
   showToastGen(!era ? 'green' : 'yellow', !era ? '✅ Cartellino fatto!' : '↩ Rimesso in Da fare');
+}
+
+function ct_parkOne(i){
+  i = parseInt(i, 10);
+  if(isNaN(i) || i < 0 || !ctRows[i] || !ct_isDafare(ctRows[i])) return;
+  ctRows[i].temp = true;
+  ct_bringToFront(i, ct_isTemp);
+  CT.save(); CT.render();
+  showToastGen('yellow', '📦 Spostato in Temp');
+}
+
+function ct_restoreOne(i){
+  i = parseInt(i, 10);
+  if(isNaN(i) || i < 0 || !ctRows[i] || !ct_isTemp(ctRows[i])) return;
+  ctRows[i].temp = false;
+  ct_bringToFront(i, ct_isDafare);
+  CT.save(); CT.render();
+  showToastGen('green', '↩ Ripristinato in Da fare');
+}
+
+function ct_parkAll(){
+  var n = ctRows.filter(ct_isDafare).length;
+  if(!n){ showToastGen('yellow', 'Nessun cartellino da parcheggiare'); return; }
+  showConfirm('Parcheggiare tutti i '+n+' cartellini in Temp?', function(){
+    ctRows.forEach(function(r){ if(ct_isDafare(r)) r.temp = true; });
+    CT.save(); CT.render();
+    showToastGen('yellow', '📦 '+n+' cartellini parcheggiati in Temp');
+  });
+}
+
+function ct_restoreAll(){
+  var n = ctRows.filter(ct_isTemp).length;
+  if(!n){ showToastGen('yellow', 'Nessun cartellino in Temp'); return; }
+  showConfirm('Ripristinare tutti i '+n+' cartellini in Da fare?', function(){
+    ctRows.forEach(function(r){ if(ct_isTemp(r)) r.temp = false; });
+    CT.save(); CT.render();
+    showToastGen('green', '↩ '+n+' cartellini ripristinati in Da fare');
+  });
 }
 
 function ct_svuota(){
@@ -577,10 +693,14 @@ function ct_svuota(){
 
 function ct_genAnteprima(){
   if(!ctRows.length){ showToastGen('red','⚠️ Nessun cartellino'); return; }
-  // In anteprima/stampa vanno solo i cartellini ancora "da fare"
-  var printableRows = ctRows.filter(function(r){ return !r.fatto; });
+  var printableRows = ct_filterPrintable(ctRows);
   if(!printableRows.length){
-    showToastGen('yellow','ℹ️ Tutti i cartellini sono segnati come fatti');
+    var nTemp = ctRows.filter(ct_isTemp).length;
+    if(nTemp){
+      showToastGen('yellow','ℹ️ Tutti i cartellini attivi sono parcheggiati in Temp');
+    } else {
+      showToastGen('yellow','ℹ️ Tutti i cartellini sono segnati come fatti');
+    }
     return;
   }
   // Carica e applica le impostazioni editor

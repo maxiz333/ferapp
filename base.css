@@ -886,6 +886,44 @@ body.light-mode .cassa-mode-item { border-color: #eee; }
    ════════════════════════════════════════════════════════════════════ */
 @media (max-width:768px){
 
+  /* ── Topbar: non tagliare le 3 tab ── */
+  #t1-topbar{
+    overflow:visible !important;
+  }
+
+  /* ── Tab Da fare / Temp / Fatti: solo icone su mobile ── */
+  #ct-tabs{
+    width:100% !important;
+    overflow:visible !important;
+  }
+  #ct-tabs .ct-tab-btn{
+    flex:1 1 0 !important;
+    min-width:0 !important;
+    display:flex !important;
+    flex-direction:column !important;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:6px 2px !important;
+    line-height:1.1;
+  }
+  #ct-tabs .ct-tab-lbl{
+    display:none !important;
+  }
+  #ct-tabs .ct-tab-ico{
+    font-size:22px !important;
+    line-height:1 !important;
+  }
+  #ct-tabs .ct-tab-count{
+    display:block !important;
+    font-size:9px !important;
+    opacity:.85 !important;
+    margin-top:2px;
+    min-height:10px;
+  }
+  #ct-tab-temp{
+    border:1px solid #805ad566 !important;
+  }
+
   /* ── Wrapper: il riquadro nero che contiene anteprima + tabella ── */
   #t1-panel{
     width:98vw;
@@ -1158,6 +1196,7 @@ body.light-mode #mag-recenti-btn,
 body.light-mode #inv-scorta-btn,
 body.light-mode #inv-giorn-btn,
 body.light-mode #ct-tab-dafare,
+body.light-mode #ct-tab-temp,
 body.light-mode #ct-tab-fatti,
 body.light-mode #ct-csv-btn,
 body.light-mode #tmov button,
@@ -1179,6 +1218,12 @@ body.light-mode #ct-tab-fatti[style*="var(--accent)"] {
   background: var(--accent) !important;
   color: #111 !important;
   border-color: var(--accent) !important;
+}
+
+body.light-mode #ct-tab-temp[style*="805ad5"] {
+  background: #805ad5 !important;
+  color: #fff !important;
+  border-color: #805ad5 !important;
 }
 
 body.light-mode #inv-body,
