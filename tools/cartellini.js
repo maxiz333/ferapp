@@ -96,12 +96,8 @@ function ctCodiceArticolo(r){
   return String(r && r.codM || '').trim().toUpperCase();
 }
 
-// ── Riordino mobile (SortableJS, long-press) ─────────────────────────────────
+// ── Riordino righe (SortableJS) ───────────────────────────────────────────────
 var _ctSortableInstance = null;
-
-function _ctIsMobile(){
-  return window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-}
 
 /** Indici reali in ctRows[] per la tab/filtro corrente (stessa logica di CT.render). */
 function ct_buildRealIndices(){
@@ -164,7 +160,7 @@ function ct_initMobileReorder(){
     try{ _ctSortableInstance.destroy(); }catch(e){}
     _ctSortableInstance = null;
   }
-  if(!_ctIsMobile() || typeof Sortable === 'undefined') return;
+  if(typeof Sortable === 'undefined') return;
   var tbody = document.getElementById('ct-sortable-tbody');
   if(!tbody) return;
   _ctSortableInstance = Sortable.create(tbody, {
@@ -250,6 +246,24 @@ var CT = {
 
     var realIndices = ct_buildRealIndices();
 
+    var dupFattiByCode = {};
+    if(isFatti){
+      ctRows.forEach(function(r){
+        if(!r || !r.fatto) return;
+        var code = ctCodiceArticolo(r);
+        if(!code) return;
+        dupFattiByCode[code] = (dupFattiByCode[code] || 0) + 1;
+      });
+    }
+    var dupDafareByCode = {};
+    if(!isFatti){
+      ctRows.forEach(function(r){
+        if(!r || r.fatto) return;
+        var code = ctCodiceArticolo(r);
+        if(!code) return;
+        dupDafareByCode[code] = (dupDafareByCode[code] || 0) + 1;
+      });
+    }
     var fattiCodes = {};
     if(!isFatti){
       ctRows.forEach(function(r){
@@ -291,8 +305,14 @@ var CT = {
       var r = ctRows[realIdx];
       var c = CT.color(r.giornalino||'');
       var promoOn = (r.barrato==='si' || r.promo==='si');
-      var rowStyle = 'border-bottom:1px solid #222;border-left:3px solid '+c.dot+';';
-      if(!isFatti){
+      var dupCode = ctCodiceArticolo(r);
+      var dupCount = isFatti
+        ? (dupFattiByCode[dupCode] || 0)
+        : (dupDafareByCode[dupCode] || 0);
+      var isDup = !!(dupCode && dupCount > 1);
+      var rowStyle = 'border-bottom:1px solid #222;border-left:3px solid '+(isDup ? '#f6ad55' : c.dot)+';';
+      if(isDup) rowStyle += 'background:rgba(246,173,85,.14);box-shadow:inset 0 0 0 1px rgba(246,173,85,.38);';
+      if(!isFatti && !isDup){
         var codDf = ctCodiceArticolo(r);
         if(codDf && fattiCodes[codDf]) rowStyle += 'background:rgba(255,165,0,0.2);';
       }
@@ -303,6 +323,7 @@ var CT = {
       h += '<td style="padding:6px 4px;">';
       h += '<div style="font-size:12px;font-weight:700;color:#e8e8e8;line-height:1.2;">'+esc(r.desc||'—')+'</div>';
       if(r.codM) h += '<div style="font-size:9px;color:var(--accent);margin-top:1px;">'+esc(r.codM)+'</div>';
+      if(isDup) h += '<div style="display:inline-block;margin-top:3px;padding:2px 6px;border-radius:999px;background:#f6ad55;color:#111;font-size:9px;font-weight:900;letter-spacing:.3px;">DUPLICATO x'+dupCount+'</div>';
       if(r.fatto) h += '<div style="font-size:9px;color:#38a169;margin-top:1px;">✅ '+esc(r.fattoData||'')+'</div>';
       h += '</td>';
 
