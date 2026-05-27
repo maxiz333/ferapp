@@ -214,8 +214,8 @@ function ctUpdateSearchPlaceholder(){
     _ctFattiSearch = String(inp.value || '').trim();
     if(res){ res.style.display = 'none'; res.innerHTML = ''; }
   } else if(_ctTab === 'temp'){
-    inp.placeholder = '🔍 Parcheggio temporaneo — usa Ripristina per tornare in Da fare';
-    _ctFattiSearch = '';
+    inp.placeholder = '🔍 Cerca nei cartellini parcheggiati...';
+    _ctFattiSearch = String(inp.value || '').trim();
     if(res){ res.style.display = 'none'; res.innerHTML = ''; }
   } else {
     inp.placeholder = '🔍 Cerca articolo dal database e aggiungi...';
@@ -234,8 +234,8 @@ function ct_buildRealIndices(){
     else if(_ctTab === 'temp' && ct_isTemp(r)) realIndices.push(i);
     else if(_ctTab === 'dafare' && ct_isDafare(r)) realIndices.push(i);
   });
-  if(_ctTab === 'fatti' && _ctFattiSearch){
-    var qFatti = _ctFattiSearch.toLowerCase();
+  if((_ctTab === 'fatti' || _ctTab === 'temp') && _ctFattiSearch){
+    var qLocal = _ctFattiSearch.toLowerCase();
     realIndices = realIndices.filter(function(i){
       var r = ctRows[i] || {};
       return [
@@ -246,7 +246,7 @@ function ct_buildRealIndices(){
         r.prezzoOld || '',
         r.fattoData || '',
         r.data || ''
-      ].join(' ').toLowerCase().indexOf(qFatti) >= 0;
+      ].join(' ').toLowerCase().indexOf(qLocal) >= 0;
     });
   }
   return realIndices;
@@ -255,7 +255,7 @@ function ct_buildRealIndices(){
 /** Riordina il sottoinsieme visibile senza spostare righe dell'altra tab. */
 function ct_reorderInTab(fromDisplayIdx, toDisplayIdx){
   if(fromDisplayIdx === toDisplayIdx) return false;
-  if(_ctTab === 'fatti' && _ctFattiSearch) return false;
+  if((_ctTab === 'fatti' || _ctTab === 'temp') && _ctFattiSearch) return false;
   var realIndices = ct_buildRealIndices();
   if(fromDisplayIdx < 0 || toDisplayIdx < 0 ||
      fromDisplayIdx >= realIndices.length || toDisplayIdx >= realIndices.length) return false;
@@ -303,7 +303,7 @@ function ct_initMobileReorder(){
     ghostClass: 'ct-row-ghost',
     chosenClass: 'ct-row-chosen',
     dragClass: 'ct-row-drag',
-    disabled: (_ctTab === 'fatti' && !!_ctFattiSearch),
+    disabled: ((_ctTab === 'fatti' || _ctTab === 'temp') && !!_ctFattiSearch),
     onStart: function(){ tbody.classList.add('ct-drag-active'); },
     onEnd: function(evt){
       tbody.classList.remove('ct-drag-active');
@@ -436,13 +436,13 @@ var CT = {
       });
     }
     var fattiCodes = {};
-    if(isDafare){
-      ctRows.forEach(function(r){
-        if(!ct_isFatto(r)) return;
-        var fc = ctCodiceArticolo(r);
-        if(fc) fattiCodes[fc] = true;
-      });
-    }
+    var tempCodes = {};
+    ctRows.forEach(function(r){
+      var code = ctCodiceArticolo(r);
+      if(!code) return;
+      if(ct_isFatto(r)) fattiCodes[code] = true;
+      if(ct_isTemp(r)) tempCodes[code] = true;
+    });
 
     if(!realIndices.length){
       if(empty){
@@ -452,7 +452,9 @@ var CT = {
             ? '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">🔍</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino fatto trovato</div><div style="font-size:13px;color:#333;">Prova con codice articolo, descrizione o data.</div>'
             : '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">✅</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino fatto</div><div style="font-size:13px;color:#333;">Spunta un articolo per spostarlo qui.</div>';
         } else if(isTemp){
-          empty.innerHTML = '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">📦</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino parcheggiato</div><div style="font-size:13px;color:#333;line-height:1.5;">Usa Parcheggia dalla tab Da fare<br>per liberare la lista di stampa.</div>';
+          empty.innerHTML = _ctFattiSearch
+            ? '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">🔍</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino parcheggiato trovato</div><div style="font-size:13px;color:#333;">Prova con codice articolo, descrizione o data.</div>'
+            : '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">📦</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino parcheggiato</div><div style="font-size:13px;color:#333;line-height:1.5;">Usa Parcheggia dalla tab Da fare<br>per liberare la lista di stampa.</div>';
         } else {
           empty.innerHTML = '<div style="font-size:52px;margin-bottom:14px;opacity:.4;">🏷️</div><div style="font-size:16px;font-weight:700;color:#444;margin-bottom:6px;">Nessun cartellino</div><div style="font-size:13px;color:#333;line-height:1.5;">Cerca un articolo in alto<br>oppure importa un file CSV.</div>';
         }
@@ -492,7 +494,19 @@ var CT = {
       if(isDup) rowStyle += 'background:rgba(246,173,85,.14);box-shadow:inset 0 0 0 1px rgba(246,173,85,.38);';
       if(isDafare && !isDup){
         var codDf = ctCodiceArticolo(r);
-        if(codDf && fattiCodes[codDf]) rowStyle += 'background:rgba(255,165,0,0.2);';
+        var inTemp = !!(codDf && tempCodes[codDf]);
+        var inFatti = !!(codDf && fattiCodes[codDf]);
+        if(inTemp && inFatti){
+          rowStyle = rowStyle.replace(/border-left:3px solid [^;]+;/, '');
+          rowStyle += 'box-shadow:inset 3px 0 0 #e53e3e,inset 6px 0 0 #38a169;';
+          rowStyle += 'background:linear-gradient(90deg,rgba(229,62,62,.14),rgba(56,161,105,.14));';
+        } else if(inTemp){
+          rowStyle = rowStyle.replace(/border-left:3px solid [^;]+;/, 'border-left:3px solid #e53e3e;');
+          rowStyle += 'background:linear-gradient(90deg,rgba(229,62,62,.18),rgba(229,62,62,.06));';
+        } else if(inFatti){
+          rowStyle = rowStyle.replace(/border-left:3px solid [^;]+;/, 'border-left:3px solid #38a169;');
+          rowStyle += 'background:linear-gradient(90deg,rgba(56,161,105,.18),rgba(56,161,105,.06));';
+        }
       }
 
       h += '<tr data-real-idx="'+realIdx+'" style="'+rowStyle+'">';
@@ -924,11 +938,7 @@ function ct_searchInput(val){
   var res = document.getElementById('ct-search-results');
   if(!res) return;
   val = (val||'').trim();
-  if(_ctTab === 'temp'){
-    if(res){ res.style.display = 'none'; res.innerHTML = ''; }
-    return;
-  }
-  if(_ctTab === 'fatti'){
+  if(_ctTab === 'fatti' || _ctTab === 'temp'){
     _ctFattiSearch = val;
     res.style.display = 'none';
     res.innerHTML = '';
