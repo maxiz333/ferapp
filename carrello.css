@@ -253,10 +253,15 @@
   margin-top: 3px;
 }
 
-/* Destra: qty (giallo) + importo (verde) */
+/* Destra: qty (giallo) + formula prezzo (verde) */
 .riepilogo-item-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 44%;
   text-align: right;
-  flex-shrink: 0;
   padding-left: 4px;
 }
 .riepilogo-item-qty {
@@ -267,11 +272,14 @@
   line-height: 1.2;
 }
 .riepilogo-item-sub {
-  font-size: 15px;
-  color: #9ae6b4;
-  font-weight: 800;
+  font-size: 11px;
+  color: #7ecba0;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+  white-space: nowrap;
   margin-top: 2px;
+  line-height: 1.25;
 }
 
 /* Footer fisso */
@@ -333,7 +341,12 @@
 }
 .riepilogo-modal--dense .riepilogo-item-name { font-size: 14px; }
 .riepilogo-modal--dense .riepilogo-item-qty { font-size: 15px; }
-.riepilogo-modal--dense .riepilogo-item-sub { font-size: 14px; }
+.riepilogo-modal--dense .riepilogo-item-sub { font-size: 9px; }
+
+@media (max-width: 360px) {
+  .riepilogo-item-sub { font-size: 9px; }
+  .riepilogo-modal--dense .riepilogo-item-sub { font-size: 8px; }
+}
 
 /* Overlay riepilogo: sheet a tutta larghezza dal basso */
 #riepilogo-overlay.open {

@@ -43,7 +43,10 @@ function openRiepilogoOrdine(cartId){
   (cart.items||[]).forEach(function(it, idx){
     var isChecked = !!checks[idx];
     var codM7 = it.codM ? (String(it.codM).match(/^\d+$/) ? String(it.codM).padStart(7,'0') : it.codM) : '';
-    var sub = (_prezzoEffettivo(it) * (parseFloat(it.qty)||0)).toFixed(2);
+    var qRiep = parseFloat(it.qty) || 0;
+    var uRiep = it.unit || 'pz';
+    var puRiep = _prezzoEffettivo(it);
+    var sub = (puRiep * qRiep).toFixed(2);
     h += '<label class="riepilogo-row' + (isChecked ? ' riepilogo-row-done' : '') + '" data-riepilogo-idx="' + idx + '" onclick="toggleRiepilogoCheck(\'' + cartId + '\',' + idx + ');return false;">';
     h += '<div class="riepilogo-check' + (isChecked ? ' riepilogo-check-on' : '') + '" role="presentation">';
     h += isChecked ? '✓' : '';
@@ -60,8 +63,8 @@ function openRiepilogoOrdine(cartId){
     if(pbRp) h += '<div class="riepilogo-item-nota" style="color:#a0a0a8;">' + esc(pbRp) + '</div>';
     h += '</div>';
     h += '<div class="riepilogo-item-right">';
-    h += '<div class="riepilogo-item-qty">' + (parseFloat(it.qty)||0) + ' ' + (it.unit||'pz') + '</div>';
-    h += '<div class="riepilogo-item-sub">€' + sub + '</div>';
+    h += '<div class="riepilogo-item-qty">' + qRiep + ' ' + uRiep + '</div>';
+    h += '<div class="riepilogo-item-sub">€' + puRiep.toFixed(2) + ' × ' + qRiep + ' ' + uRiep + ' = €' + sub + '</div>';
     h += '</div>';
     h += '</label>';
   });
