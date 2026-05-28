@@ -25,6 +25,12 @@ function _cassaModeOpen(){
   }
   // Avvia auto-refresh ordini in cassa
   _cassaModeRender();
+  if(typeof fetchOrdiniFromFirebase === 'function'){
+    fetchOrdiniFromFirebase({ renderOrdini: false, toast: false }, function(){
+      _cassaLastJson = JSON.stringify(ordini);
+      _cassaModeRender();
+    });
+  }
   _cassaModeStartRefresh();
 }
 
@@ -40,13 +46,47 @@ function _cassaModeClose(){
   _authShowLogin();
 }
 
-// Auto-refresh cassa (polling localStorage ogni 3s)
+// Auto-refresh cassa: localStorage ogni 3s + Firebase ogni 12s + fetch al focus
 var _cassaRefreshInt = null;
 var _cassaLastJson = '';
+var _cassaFbTick = 0;
+var _cassaFocusRefreshAt = 0;
+
+function _cassaModePullFromFirebase(){
+  if(typeof fetchOrdiniFromFirebase !== 'function') return;
+  fetchOrdiniFromFirebase({ renderOrdini: false, toast: false }, function(){
+    _cassaLastJson = JSON.stringify(ordini);
+    if(_cassaModeActive) _cassaModeRender();
+  });
+}
+
+var _cassaRefreshBusy = false;
+
+/** Aggiornamento manuale ordini dal server (pulsante 🔄 in header cassa). */
+function _cassaModeRefreshManual(){
+  if(_cassaRefreshBusy) return;
+  if(typeof fetchOrdiniFromFirebase !== 'function'){
+    if(typeof showToastGen === 'function') showToastGen('orange', 'Sync non disponibile — riprova tra poco');
+    return;
+  }
+  _cassaRefreshBusy = true;
+  fetchOrdiniFromFirebase({ renderOrdini: true, toast: true }, function(){
+    _cassaRefreshBusy = false;
+    _cassaLastJson = JSON.stringify(ordini);
+    if(_cassaModeActive) _cassaModeRender();
+  });
+}
 
 function _cassaModeStartRefresh(){
   _cassaLastJson = JSON.stringify(ordini);
+  _cassaFbTick = 0;
+  _cassaModePullFromFirebase();
   _cassaRefreshInt = setInterval(function(){
+    _cassaFbTick++;
+    if(_cassaFbTick % 4 === 0){
+      _cassaModePullFromFirebase();
+      return;
+    }
     var fresh = lsGet(ORDK, []);
     var freshJson = JSON.stringify(fresh);
     if(freshJson !== _cassaLastJson){
@@ -59,6 +99,24 @@ function _cassaModeStartRefresh(){
 
 function _cassaModeStopRefresh(){
   if(_cassaRefreshInt){ clearInterval(_cassaRefreshInt); _cassaRefreshInt = null; }
+}
+
+function _cassaOnVisible(){
+  if(typeof document !== 'undefined' && document.visibilityState &&
+     document.visibilityState !== 'visible') return;
+  if(!_cassaModeActive) return;
+  var now = Date.now();
+  if(now - _cassaFocusRefreshAt < 2500) return;
+  _cassaFocusRefreshAt = now;
+  _cassaModePullFromFirebase();
+}
+
+if(typeof document !== 'undefined'){
+  document.addEventListener('visibilitychange', _cassaOnVisible);
+}
+if(typeof window !== 'undefined'){
+  window.addEventListener('pageshow', _cassaOnVisible);
+  window.addEventListener('focus', _cassaOnVisible);
 }
 
 // Render lista ordini per la cassa
@@ -79,7 +137,10 @@ function _cassaModeRender(){
   h += '<div><div style="font-size:20px;font-weight:900;color:#68d391;">CASSA</div>';
   h += '<div style="font-size:11px;color:#555;">' + lista.length + ' ordin' + (lista.length===1?'e':'i') + '</div></div>';
   h += '</div>';
-  h += '<button onclick="_cassaModeClose()" style="padding:10px 16px;border-radius:10px;border:1px solid #333;background:#1a1a1a;color:#888;font-size:13px;font-weight:700;cursor:pointer;">🔓 Esci</button>';
+  h += '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">';
+  h += '<button type="button" onclick="_cassaModeRefreshManual()" title="Aggiorna ordini dal server" aria-label="Aggiorna ordini" style="padding:10px 12px;border-radius:10px;border:1px solid #333;background:#1a1a1a;color:var(--accent);font-size:20px;line-height:1;font-weight:700;cursor:pointer;touch-action:manipulation;">🔄</button>';
+  h += '<button type="button" onclick="_cassaModeClose()" style="padding:10px 16px;border-radius:10px;border:1px solid #333;background:#1a1a1a;color:#888;font-size:13px;font-weight:700;cursor:pointer;touch-action:manipulation;">🔓 Esci</button>';
+  h += '</div>';
   h += '</div>';
 
   // Lista ordini
@@ -147,7 +208,10 @@ function _cassaModeApri(gi){
   if(ord.numero) h += 'Ordine #'+ord.numero+' · ';
   h += esc(ord.data||'')+' '+esc(ord.ora||'')+' · '+nArt+' articol'+(nArt===1?'o':'i');
   h += '</div></div></div>';
-  h += '<button onclick="_cassaModeClose()" style="padding:8px 12px;border-radius:10px;border:1px solid #333;background:#1a1a1a;color:#888;font-size:12px;cursor:pointer;">🔓 Esci</button>';
+  h += '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">';
+  h += '<button type="button" onclick="_cassaModeRefreshManual()" title="Aggiorna ordini dal server" aria-label="Aggiorna ordini" style="padding:8px 10px;border-radius:10px;border:1px solid #333;background:#1a1a1a;color:var(--accent);font-size:18px;line-height:1;font-weight:700;cursor:pointer;touch-action:manipulation;">🔄</button>';
+  h += '<button type="button" onclick="_cassaModeClose()" style="padding:8px 12px;border-radius:10px;border:1px solid #333;background:#1a1a1a;color:#888;font-size:12px;cursor:pointer;touch-action:manipulation;">🔓 Esci</button>';
+  h += '</div>';
   h += '</div>';
 
   // Lista articoli
@@ -222,7 +286,12 @@ function _cassaModeFatto(btn, gi){
     ord.completatoAtISO = new Date().toISOString();
     // Sync prezzi al database
     if(typeof _syncPrezziOrdineAlDB === 'function') _syncPrezziOrdineAlDB(ord);
-    saveOrdini();
+    saveOrdini({
+      onBlocked: function(){
+        _cassaLastJson = JSON.stringify(ordini);
+        _cassaModeRender();
+      }
+    });
   }
   _cassaLastJson = JSON.stringify(ordini);
   _cassaModeRender();

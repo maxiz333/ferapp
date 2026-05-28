@@ -7,6 +7,7 @@ var _cestinoOrdOpen = false;
 function deleteOrdine(gi){
   showConfirm('Eliminare questo ordine?',function(){
     var ord = ordini.splice(gi,1)[0];
+    var deletedId = ord && ord.id;
     if(ord){
       ord.eliminatoAt = new Date().toLocaleString('it-IT');
       ordiniCestino.unshift(ord);
@@ -15,7 +16,12 @@ function deleteOrdine(gi){
       if(ord.id) _rimuoviCarrelloDaOrdine(ord.id);
       saveCarrelli();
     }
-    saveOrdini();renderOrdini();showToastGen('red','Ordine spostato nel cestino');
+    var saveOpts = (typeof _ordSaveOptsForDelete === 'function')
+      ? _ordSaveOptsForDelete(deletedId)
+      : null;
+    saveOrdini(saveOpts || undefined);
+    renderOrdini();
+    showToastGen('red','Ordine spostato nel cestino');
   });
 }
 

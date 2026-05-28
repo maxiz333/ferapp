@@ -295,6 +295,11 @@ function _scheduleDbSystemMaintenance(){
       _bozzaKnown[bozza.id] = true;
       try{ _bozzaSnap[bozza.id] = JSON.stringify(bozza); }catch(e){}
     };
+    _fbDb.ref('ordini_meta').on('value', function(snap){
+      var m = snap.val();
+      if(typeof _ordRemoteMeta !== 'undefined') _ordRemoteMeta = m;
+      window._ordRemoteMeta = m;
+    });
     _fbDb.ref('ordini').on('value',function(snap){
       var d=snap.val();
       var fresh=d ? _fbFix(d) : [];
@@ -312,9 +317,16 @@ function _scheduleDbSystemMaintenance(){
       if(JSON.stringify(fresh)===JSON.stringify(ordini)) return;
       _fbSyncing=true;
       try{
-        ordini=fresh;lsSet(ORDK,ordini);updateOrdBadge();updateOrdCounter();
-        var t=document.getElementById('to');
-        if(t&&t.classList.contains('active')) renderOrdini();
+        if(typeof _ordApplyRemoteSnapshot === 'function'){
+          _ordApplyRemoteSnapshot(fresh, _ordRemoteMeta, {
+            renderOrdini: true,
+            onlyIfTabActive: true
+          });
+        } else {
+          ordini=fresh;lsSet(ORDK,ordini);updateOrdBadge();updateOrdCounter();
+          var t=document.getElementById('to');
+          if(t&&t.classList.contains('active')) renderOrdini();
+        }
         // Solo ordini con stato 'nuovo' che NON erano già noti
         var nuovi=fresh.filter(function(o){return o.stato==='nuovo'&&!_idKnown[o.id];});
         if(nuovi.length){
@@ -344,15 +356,6 @@ function _scheduleDbSystemMaintenance(){
             _bozzaSnap[o.id]=newSnap;
           }
         });
-        // Tab Carrello: ridisegna badge "visto" quando ordini/bozze arrivano da Firebase (come listener carrelli)
-        var tc=document.getElementById('tc');
-        if(tc&&tc.classList.contains('active')){
-          if(typeof cartNoteFieldHasFocus==='function'&&cartNoteFieldHasFocus()){
-            /* evita renderCartTabs mentre si scrive in note / H·L / prezzo base */
-          }else if(typeof renderCartTabs==='function'){
-            renderCartTabs();
-          }
-        }
       }catch(e){console.error('FB ordini:',e);}
       _fbSyncing=false;
     });

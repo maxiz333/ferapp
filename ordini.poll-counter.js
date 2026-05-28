@@ -1,8 +1,9 @@
 // ordini.poll-counter.js - estratto da ordini.js
 
-// --- AUTO-REFRESH ORDINI (polling localStorage ogni 5s) -------
+// --- AUTO-REFRESH ORDINI (localStorage ogni 5s + Firebase ogni 30s) -------
 var _autoRefreshInterval=null;
 var _lastOrdiniJson='';
+var _autoRefreshFbTick=0;
 
 function _bozzaItemNotifySig(it){
   return {
@@ -69,8 +70,16 @@ function _updateBozzaBadge(){
 
 function startAutoRefresh(){
   _lastOrdiniJson=JSON.stringify(ordini);
+  _autoRefreshFbTick=0;
   _updateBozzaBadge(); // controlla subito all'avvio
   _autoRefreshInterval=setInterval(function(){
+    _autoRefreshFbTick++;
+    if(_autoRefreshFbTick % 6 === 0 && typeof fetchOrdiniFromFirebase === 'function'){
+      fetchOrdiniFromFirebase({ renderOrdini: true, toast: false }, function(){
+        _lastOrdiniJson=JSON.stringify(ordini);
+      });
+      return;
+    }
     var fresh=lsGet(ORDK,[]);
     var freshJson=JSON.stringify(fresh);
     if(freshJson!==_lastOrdiniJson){
@@ -120,6 +129,15 @@ function startAutoRefresh(){
       }
     }
   },5000);
+}
+
+if(typeof document !== 'undefined'){
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState !== 'visible') return;
+    if(typeof fetchOrdiniFromFirebase === 'function'){
+      fetchOrdiniFromFirebase({ renderOrdini: true, toast: false });
+    }
+  });
 }
 
 // --- CONTATORE ORDINI IN ATTESA -------------------------------

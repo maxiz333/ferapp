@@ -204,6 +204,40 @@ function avvisaUfficio(cartId){
   showToastGen('blue','📢 Bozza inviata! — '+_nomeBozza+' — €'+_totBozza.toFixed(2));
 }
 
+function _ordItemMatchKey(it){
+  var codM = String(it && it.codM || '').trim();
+  if(codM) return 'M:' + codM;
+  return 'D:' + String(it && it.desc || '').trim().toLowerCase();
+}
+
+function _ordHasPricedLine(it){
+  if(!it) return false;
+  if(typeof ordItemCongelato === 'function' && ordItemCongelato(it)) return false;
+  var p = (typeof parsePriceIT === 'function') ? parsePriceIT(it.prezzoUnit) : parseFloat(it.prezzoUnit || 0);
+  return isFinite(p) && p > 0;
+}
+
+/** Non far regredire prezzi già messi in ufficio sull'ordine quando il carrello è stale */
+function _ordMergeCartItemsPreserveOfficePrices(cartItems, ordActiveItems){
+  var byKey = {};
+  (ordActiveItems || []).forEach(function(it){
+    byKey[_ordItemMatchKey(it)] = it;
+  });
+  return (cartItems || []).map(function(cit){
+    var out = JSON.parse(JSON.stringify(cit));
+    var ordIt = byKey[_ordItemMatchKey(out)];
+    if(!ordIt) return out;
+    var ordPrice = (typeof parsePriceIT === 'function') ? parsePriceIT(ordIt.prezzoUnit) : parseFloat(ordIt.prezzoUnit || 0);
+    var cartPrice = (typeof parsePriceIT === 'function') ? parsePriceIT(out.prezzoUnit) : parseFloat(out.prezzoUnit || 0);
+    if(ordPrice > 0 && !(cartPrice > 0)){
+      out.prezzoUnit = ordIt.prezzoUnit;
+      if(ordIt.scaglioni) out.scaglioni = JSON.parse(JSON.stringify(ordIt.scaglioni));
+      if(ordIt._prezzoUnitaBase) out._prezzoUnitaBase = ordIt._prezzoUnitaBase;
+    }
+    return out;
+  });
+}
+
 // Aggiorna la bozza con gli articoli correnti del carrello (i congelati restano in coda)
 function _aggiornaBozzaOrdine(cart){
   if(!cart||!cart.bozzaOrdId)return;
@@ -233,7 +267,11 @@ function _aggiornaBozzaOrdine(cart){
     }));
   }
   var prevFrozen=(bozza.items||[]).filter(function(it){ return ordItemCongelato(it); }).map(function(it){ return JSON.parse(JSON.stringify(it)); });
-  var nextItems=JSON.parse(JSON.stringify(cart.items||[])).concat(prevFrozen);
+  var bozzaActive=(bozza.items||[]).filter(function(it){
+    return !(typeof ordItemCongelato === 'function' && ordItemCongelato(it));
+  });
+  var mergedCartBozza=_ordMergeCartItemsPreserveOfficePrices(cart.items||[], bozzaActive);
+  var nextItems=JSON.parse(JSON.stringify(mergedCartBozza)).concat(prevFrozen);
   var nextNome=cart.nome||'—';
   var nextNota=cart.nota||'';
   var prevItemsCanon=_canonItems(bozza.items||[]);
@@ -269,6 +307,19 @@ function _aggiornaOrdineDaCarrelloModifica(cart){
   if(typeof ensureFatturaState === 'function') ensureFatturaState(cart);
   var ord=ordini.find(function(o){ return o.id===cart.ordId; });
   if(!ord) return;
+  if(ord.stato === 'completato' && !ord.unlocked) return;
+
+  var ordActive = (ord.items || []).filter(function(it){
+    return !(typeof ordItemCongelato === 'function' && ordItemCongelato(it));
+  });
+  var cartActive = (cart.items || []).filter(function(it){
+    return !(typeof ordItemStornoReso === 'function' && ordItemStornoReso(it));
+  });
+  var ordPriced = ordActive.filter(_ordHasPricedLine).length;
+  var cartPriced = cartActive.filter(_ordHasPricedLine).length;
+  if(ordPriced > 0 && cartPriced < ordPriced){
+    console.warn('[CART→ORD] carrello senza prezzi vs ordine prezzato — merge conservativo');
+  }
   function _canonItems(arr){
     return JSON.stringify((arr||[]).map(function(it){
       return {
@@ -292,7 +343,8 @@ function _aggiornaOrdineDaCarrelloModifica(cart){
     }));
   }
   var prevFrozen=(ord.items||[]).filter(function(it){ return ordItemCongelato(it); }).map(function(it){ return JSON.parse(JSON.stringify(it)); });
-  var nextItems=JSON.parse(JSON.stringify(cart.items||[])).concat(prevFrozen);
+  var mergedCart = _ordMergeCartItemsPreserveOfficePrices(cart.items || [], ordActive);
+  var nextItems=JSON.parse(JSON.stringify(mergedCart)).concat(prevFrozen);
   var nextNome=cart.nome||ord.nomeCliente||'—';
   var nextNota=cart.nota||'';
   var prevItemsCanon=_canonItems(ord.items||[]);

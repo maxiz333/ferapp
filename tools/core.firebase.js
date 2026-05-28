@@ -242,6 +242,11 @@ function _scheduleDbSystemMaintenance(){
           }
         } else if(globalVarName === 'carrelliCestino' || globalVarName === 'ordiniCestino'){
           if(typeof renderCestino === 'function') renderCestino();
+          if(globalVarName === 'carrelliCestino'){
+            if(typeof renderCartTabs === 'function') renderCartTabs();
+            var cm = document.getElementById('cart-trash-modal');
+            if(cm && cm.classList.contains('open') && typeof renderCartTrash === 'function') renderCartTrash();
+          }
         } else if(globalVarName === 'movimenti'){
           if(typeof renderMovimenti === 'function') renderMovimenti();
         }
@@ -277,6 +282,24 @@ function _scheduleDbSystemMaintenance(){
     var _bozzaSnap={}; // snapshot JSON delle bozze per rilevare aggiornamenti
     ordini.forEach(function(o){if(o&&o.id){_idKnown[o.id]=true; if(o.stato==='bozza'){_bozzaKnown[o.id]=true; _bozzaSnap[o.id]=JSON.stringify(o);}}});
     var _first=true;
+    // Dopo creazione locale (banco invia ordine/bozza), marca gli id come già noti
+    // così il round-trip Firebase non scatena modal/notifica sullo stesso device
+    // (evita occhio "visto" da ordineSegnaVistoSeUfficio nel modal + falsi nuovi).
+    window.ordNotificaMarkOrdineIdsKnown = function(ids){
+      if(!ids) return;
+      if(!Array.isArray(ids)) ids = [ids];
+      ids.forEach(function(id){ if(id) _idKnown[id] = true; });
+    };
+    window.ordNotificaMarkBozzaKnown = function(bozza){
+      if(!bozza || !bozza.id) return;
+      _bozzaKnown[bozza.id] = true;
+      try{ _bozzaSnap[bozza.id] = JSON.stringify(bozza); }catch(e){}
+    };
+    _fbDb.ref('ordini_meta').on('value', function(snap){
+      var m = snap.val();
+      if(typeof _ordRemoteMeta !== 'undefined') _ordRemoteMeta = m;
+      window._ordRemoteMeta = m;
+    });
     _fbDb.ref('ordini').on('value',function(snap){
       var d=snap.val();
       var fresh=d ? _fbFix(d) : [];
@@ -294,9 +317,16 @@ function _scheduleDbSystemMaintenance(){
       if(JSON.stringify(fresh)===JSON.stringify(ordini)) return;
       _fbSyncing=true;
       try{
-        ordini=fresh;lsSet(ORDK,ordini);updateOrdBadge();updateOrdCounter();
-        var t=document.getElementById('to');
-        if(t&&t.classList.contains('active')) renderOrdini();
+        if(typeof _ordApplyRemoteSnapshot === 'function'){
+          _ordApplyRemoteSnapshot(fresh, _ordRemoteMeta, {
+            renderOrdini: true,
+            onlyIfTabActive: true
+          });
+        } else {
+          ordini=fresh;lsSet(ORDK,ordini);updateOrdBadge();updateOrdCounter();
+          var t=document.getElementById('to');
+          if(t&&t.classList.contains('active')) renderOrdini();
+        }
         // Solo ordini con stato 'nuovo' che NON erano già noti
         var nuovi=fresh.filter(function(o){return o.stato==='nuovo'&&!_idKnown[o.id];});
         if(nuovi.length){
@@ -326,14 +356,6 @@ function _scheduleDbSystemMaintenance(){
             _bozzaSnap[o.id]=newSnap;
           }
         });
-        var tc=document.getElementById('tc');
-        if(tc&&tc.classList.contains('active')){
-          if(typeof cartNoteFieldHasFocus==='function'&&cartNoteFieldHasFocus()){
-            /* evita renderCartTabs mentre si scrive nelle note */
-          }else if(typeof renderCartTabs==='function'){
-            renderCartTabs();
-          }
-        }
       }catch(e){console.error('FB ordini:',e);}
       _fbSyncing=false;
     });
@@ -360,7 +382,7 @@ function _scheduleDbSystemMaintenance(){
         var t = document.getElementById('tc');
         if(t && t.classList.contains('active')){
           if(typeof cartNoteFieldHasFocus === 'function' && cartNoteFieldHasFocus()){
-            /* evita renderCartTabs mentre si scrive nelle note: altrimenti si perde il focus */
+            /* evita renderCartTabs mentre si scrive in note / H·L / prezzo base */
           } else if(typeof renderCartTabs === 'function'){
             renderCartTabs();
           }
@@ -377,6 +399,7 @@ function _scheduleDbSystemMaintenance(){
     _applySharedValue('shared/movimenti', window.AppKeys.MOVIMENTI, 'movimenti', []);
     _applySharedValue('shared/clienti', window.AppKeys.CLIENTI, 'clienti', {});
     _applySharedValue('shared/fatture', window.AppKeys.FATTURE, 'fatture', []);
+    _applySharedValue('shared/anagrafica_clienti', window.AppKeys.ANAGRAFICA_CLIENTI, 'anagraficaClienti', []);
     _applySharedValue('shared/ordini_fornitori', window.AppKeys.ORDFORNITORI, 'ordFornitori', []);
     _applySharedValue('shared/forni_colore', window.AppKeys.FORNI_COLORE, 'forniColore', {});
     _applySharedValue('shared/ord_forn_storico', window.AppKeys.ORD_FORN_STORICO, 'ordFornStorico', []);

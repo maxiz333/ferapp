@@ -425,8 +425,12 @@ function ordDetailSetStato(stato){
   var ord=ordini.find(function(o){return o.id===_ordDetailId;});
   if(!ord)return;
   if(stato==='lavorazione') stato='nuovo';
+  var prevStato = (ord.stato === 'lavorazione') ? 'nuovo' : (ord.stato || '');
   ord.stato=stato;
-  saveOrdini();
+  var saveOpts = (typeof _ordSaveOptsForStateChange === 'function')
+    ? _ordSaveOptsForStateChange(prevStato, stato, ord.id)
+    : null;
+  saveOrdini(saveOpts || undefined);
   var SC={nuovo:'#f5c400',pronto:'#dd6b20',completato:'#38a169'};
   var LABEL={nuovo:'Nuovo',pronto:'Pronto',completato:'Completato'};
   var el=document.getElementById('odh-stato-badge');
@@ -434,10 +438,16 @@ function ordDetailSetStato(stato){
 }
 function ordDetailElimina(){
   showConfirm('Eliminare questo ordine?', function(){
+    var deletedId = _ordDetailId;
     var ord=ordini.find(function(o){return o.id===_ordDetailId;});
     if(ord) _rimuoviCarrelloDaOrdine(ord.id);
     ordini=ordini.filter(function(o){return o.id!==_ordDetailId;});
-    saveOrdini(); closeOrdDetail(); renderOrdini();
+    var saveOpts = (typeof _ordSaveOptsForDelete === 'function')
+      ? _ordSaveOptsForDelete(deletedId)
+      : null;
+    saveOrdini(saveOpts || undefined);
+    closeOrdDetail();
+    renderOrdini();
   });
 }
 function ordDetailStampa(){

@@ -5,6 +5,19 @@ if(typeof window.tcCompareSlots === 'undefined') window.tcCompareSlots = [];
 if(typeof window.tcCompareAreaOpen === 'undefined') window.tcCompareAreaOpen = false;
 if(typeof window.tcCompareHighlightDiff === 'undefined') window.tcCompareHighlightDiff = false;
 
+var _CART_ROW_BG_TINTS = [
+  'rgba(210, 105, 30, 0.05)',   // Arancione
+  'rgba(147, 112, 219, 0.05)',  // Viola lavanda
+  'rgba(107, 142, 35, 0.05)',   // Verde oliva
+  'rgba(255, 87, 51, 0.05)',    // Corallo
+  'rgba(0, 206, 209, 0.05)',    // Turchese
+  'rgba(255, 193, 7, 0.05)',    // Giallo oro
+  'rgba(139, 0, 139, 0.05)',    // Prugna
+  'rgba(46, 139, 87, 0.05)',    // Verde salvia
+  'rgba(218, 165, 32, 0.05)',   // Ambra
+  'rgba(0, 191, 255, 0.05)'     // Azzurro ciano
+];
+
 // --- RENDER CARRELLO ---------------------------------------
 
 /** Ordine/bozza collegato al carrello (per indicatore visto ufficio). */
@@ -251,21 +264,27 @@ function renderCartTabs(){
         : '';
       var codF = it.codF || '';
 
-      // Bordo card
-      var cardStyle = '';
-      if(isStorno)         cardStyle = 'border-color:#c05621;box-shadow:0 0 0 2px rgba(221,107,32,.5);background:rgba(154,52,18,.12)';
-      else if(isTuttoRotolo)    cardStyle = 'border-color:#e53e3e;box-shadow:0 0 0 2px #e53e3e55';
-      else if(it._ordColore) cardStyle = 'border-color:' + it._ordColore + ';box-shadow:0 0 0 1px ' + it._ordColore + '44';
+      // Bordo card + sfondo soft rotativo per distinguere le righe
+      var rowTint = _CART_ROW_BG_TINTS[displayPos % 10];
+      var cardStyle = 'background-color:' + rowTint;
+      var rowBgStyle = 'background-color:' + rowTint;
+      if(isStorno){
+        cardStyle = 'border-color:#c05621;box-shadow:0 0 0 2px rgba(221,107,32,.5);background:rgba(154,52,18,.12)';
+        rowBgStyle = 'background:rgba(154,52,18,.12)';
+      } else if(isTuttoRotolo){
+        cardStyle += ';border-color:#e53e3e;box-shadow:0 0 0 2px #e53e3e55';
+      } else if(it._ordColore){
+        cardStyle += ';border-color:' + it._ordColore + ';box-shadow:0 0 0 1px ' + it._ordColore + '44';
+      }
 
       var cardClass = 'ct-card' +
         (it._checked ? ' ct-card--checked' : '') +
         (cart.stato === 'modifica' ? ' ct-card--mod' : '');
 
-      h += '<div class="' + cardClass + '" id="cart-row-' + idx + '"' +
-           (cardStyle ? ' style="' + cardStyle + '"' : '') + '>';
+      h += '<div class="' + cardClass + '" id="cart-row-' + idx + '" style="' + cardStyle + '">';
 
-      // ── RIGA GRIGLIA: stessa struttura ord-grid 50%|15%|15%|20% ──────
-      h += '<div class="ord-grid ord-grid-row' + (displayPos%2===0 ? ' ord-grid-even' : ' ord-grid-odd') + '">';
+      // ord-grid-row: tint inline (sovrascrive .ord-grid-even/odd opachi di ordini.css)
+      h += '<div class="ord-grid ord-grid-row" style="' + rowBgStyle + '">';
 
       var units = (typeof UM_STANDARD !== 'undefined' && UM_STANDARD && UM_STANDARD.length) ? UM_STANDARD : ['pz','kg','MQ','mt','conf','CT','RT','FG'];
       var curUnit = (typeof normalizeUmValue === 'function') ? normalizeUmValue(it.unit || 'pz') : (it.unit || 'pz');
