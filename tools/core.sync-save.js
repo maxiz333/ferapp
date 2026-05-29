@@ -207,7 +207,11 @@ function _ordApplyRemoteSnapshot(fresh, meta, opts){
     if(!opts.onlyIfTabActive || (to && to.classList.contains('active'))) renderOrdini();
   }
   if(typeof _cassaModeActive !== 'undefined' && _cassaModeActive && typeof _cassaModeRender === 'function'){
-    _cassaModeRender();
+    if(typeof _cassaModeOpenOrdId !== 'undefined' && _cassaModeOpenOrdId){
+      // dettaglio aperto: dati aggiornati in memoria, DOM congelato
+    } else {
+      _cassaModeRender();
+    }
   }
   if(typeof renderCartTabs === 'function'){
     var tc = document.getElementById('tc');

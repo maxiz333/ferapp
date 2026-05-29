@@ -1,8 +1,14 @@
 // ══ MODALITÀ CASSA ══════════════════════════════════════════════════
 var _cassaModeActive = false;
+var _cassaModeOpenOrdId = null;
+
+function _cassaModeDetailOpen(){
+  return _cassaModeActive && !!_cassaModeOpenOrdId;
+}
 
 function _cassaModeOpen(){
   _cassaModeActive = true;
+  _cassaModeOpenOrdId = null;
   // Nascondi overlay login
   var ov = document.getElementById('auth-login-ov');
   if(ov) ov.style.display = 'none';
@@ -36,6 +42,7 @@ function _cassaModeOpen(){
 
 function _cassaModeClose(){
   _cassaModeActive = false;
+  _cassaModeOpenOrdId = null;
   _cassaModeStopRefresh();
   var cm = document.getElementById('cassa-mode-ov');
   if(cm) cm.style.display = 'none';
@@ -56,7 +63,7 @@ function _cassaModePullFromFirebase(){
   if(typeof fetchOrdiniFromFirebase !== 'function') return;
   fetchOrdiniFromFirebase({ renderOrdini: false, toast: false }, function(){
     _cassaLastJson = JSON.stringify(ordini);
-    if(_cassaModeActive) _cassaModeRender();
+    if(_cassaModeActive && !_cassaModeDetailOpen()) _cassaModeRender();
   });
 }
 
@@ -73,7 +80,7 @@ function _cassaModeRefreshManual(){
   fetchOrdiniFromFirebase({ renderOrdini: true, toast: true }, function(){
     _cassaRefreshBusy = false;
     _cassaLastJson = JSON.stringify(ordini);
-    if(_cassaModeActive) _cassaModeRender();
+    if(_cassaModeActive && !_cassaModeDetailOpen()) _cassaModeRender();
   });
 }
 
@@ -92,7 +99,7 @@ function _cassaModeStartRefresh(){
     if(freshJson !== _cassaLastJson){
       _cassaLastJson = freshJson;
       ordini = fresh;
-      _cassaModeRender();
+      if(!_cassaModeDetailOpen()) _cassaModeRender();
     }
   }, 3000);
 }
@@ -119,8 +126,14 @@ if(typeof window !== 'undefined'){
   window.addEventListener('focus', _cassaOnVisible);
 }
 
-// Render lista ordini per la cassa
-function _cassaModeRender(){
+function _cassaModeBackToList(){
+  _cassaModeOpenOrdId = null;
+  _cassaModeRender(true);
+}
+
+// Render lista ordini per la cassa (congelato se dettaglio ordine aperto)
+function _cassaModeRender(forceList){
+  if(_cassaModeDetailOpen() && forceList !== true) return;
   var cm = document.getElementById('cassa-mode-ov');
   if(!cm) return;
   // Filtra ordini da mostrare in cassa: solo ordini attivi, escludi "pronto"
@@ -190,6 +203,7 @@ function _cassaModeRender(){
 function _cassaModeApri(gi){
   var ord = ordini[gi];
   if(!ord) return;
+  _cassaModeOpenOrdId = ord.id || null;
   var cm = document.getElementById('cassa-mode-ov');
   if(!cm) return;
 
@@ -201,7 +215,7 @@ function _cassaModeApri(gi){
   // Header con tasto indietro
   h += '<div class="cassa-mode-header">';
   h += '<div style="display:flex;align-items:center;gap:12px;">';
-  h += '<button onclick="_cassaModeRender()" style="background:none;border:none;color:var(--accent);font-size:24px;cursor:pointer;padding:4px 8px;">←</button>';
+  h += '<button onclick="_cassaModeBackToList()" style="background:none;border:none;color:var(--accent);font-size:24px;cursor:pointer;padding:4px 8px;">←</button>';
   h += '<div>';
   h += '<div style="font-size:18px;font-weight:900;color:var(--text);">'+esc(ord.nomeCliente||'—')+'</div>';
   h += '<div style="font-size:11px;color:#666;">';
@@ -289,12 +303,12 @@ function _cassaModeFatto(btn, gi){
     saveOrdini({
       onBlocked: function(){
         _cassaLastJson = JSON.stringify(ordini);
-        _cassaModeRender();
       }
     });
   }
   _cassaLastJson = JSON.stringify(ordini);
-  _cassaModeRender();
+  _cassaModeOpenOrdId = null;
+  _cassaModeRender(true);
   showToastGen('green', '✅ Ordine completato!');
 }
 
@@ -313,7 +327,7 @@ function _cassaModeDelItem(el, gi, ii){
     _cassaLastJson = JSON.stringify(ordini);
     // Se non ci sono più articoli, torna alla lista
     if(!ord.items.length){
-      _cassaModeRender();
+      _cassaModeBackToList();
     } else {
       _cassaModeApri(gi);
     }
