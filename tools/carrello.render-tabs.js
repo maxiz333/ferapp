@@ -112,7 +112,10 @@ function renderCartTabs(forceRender){
     '<button id="ct-btn-clienti" onclick="ctApriClienti()" title="Scegli cliente">' +
       '👥 CLIENTI' + (nCl ? ' <span class="ct-pill-n">' + nCl + '</span>' : '') +
     '</button>' +
-    '<button id="ct-btn-ordfor" onclick="goTab(\'t-ordfor\');renderOrdFor()" title="Ordini per fornitore">📦 ORDINI</button>';
+    '<button id="ct-btn-ordfor" onclick="goTab(\'t-ordfor\');renderOrdFor()" title="Ordini per fornitore">📦 ORDINI</button>' +
+    '<button id="ct-btn-trash" onclick="cartTrashOpen()" title="Cestino ordini eliminati" aria-label="Cestino ordini eliminati">🗑️' +
+      (typeof carrelliCestino !== 'undefined' && carrelliCestino.length ? ' <span>' + carrelliCestino.length + '</span>' : '') +
+    '</button>';
 
   // ── DROPDOWN CLIENTI (creato una sola volta nel body) ─────────────────────
   if(!document.getElementById('ct-clienti-dropdown')){

@@ -559,6 +559,7 @@ function goTabDirect(id){
   if(id==='t11') renderMagazzino();
   if(id==='tc') renderCartTabs();
   if(id==='to'){renderOrdini();}
+  if(id==='t-ordfor' && typeof renderOrdFor === 'function') renderOrdFor();
   if(id==='tmov'){renderMovimenti();}
   if(id==='t6'){renderBackupSettings();}
   if(id==='t12') renderCatTree();
