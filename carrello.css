@@ -1312,6 +1312,43 @@ body.light-mode .ct-fattura-badge {
 }
 
 /* ══ CARD ARTICOLO ═══════════════════════════════════════════════════════ */
+
+/* ── Drag reorder carrello (SortableJS, mobile + desktop) ── */
+#tc #cart-sortable-list .ct-card{
+  cursor:grab;
+}
+#tc #cart-sortable-list .ct-card:active{
+  cursor:grabbing;
+}
+#tc #cart-sortable-list .ct-card input,
+#tc #cart-sortable-list .ct-card select,
+#tc #cart-sortable-list .ct-card button,
+#tc #cart-sortable-list .ct-card textarea{
+  cursor:auto;
+}
+#tc #cart-sortable-list .ct-card .ord-item-name[role="button"],
+#tc #cart-sortable-list .ct-card .ord-code-mag--toggle,
+#tc #cart-sortable-list .ct-card .ct-pb-tag--clickable{
+  cursor:pointer;
+}
+#tc #cart-sortable-list.ct-drag-active{
+  touch-action:none;
+}
+#tc #cart-sortable-list .ct-card.ct-row-chosen{
+  opacity:.92;
+  box-shadow:0 4px 16px rgba(0,0,0,.45);
+  z-index:5;
+  position:relative;
+}
+#tc #cart-sortable-list .ct-card.ct-row-ghost{
+  opacity:.55;
+  background:rgba(255,193,7,.12) !important;
+  outline:2px dashed var(--accent);
+}
+#tc #cart-sortable-list .ct-card.ct-row-drag{
+  background:#1a1a1a;
+}
+
 .ct-card {
   background: var(--ct-card);
   border: 1px solid var(--ct-border);

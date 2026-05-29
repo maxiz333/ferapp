@@ -22,6 +22,42 @@ function _cartSyncLinkedOrdine(cart){
     window.dispatchEvent(new CustomEvent('sync-orders',{detail:{source:'carrello'}}));
   }
 }
+
+/** Indici reali in cart.items[] nell'ordine DOM (ultimo aggiunto in cima). */
+function cart_buildDisplayIndices(cart){
+  var indices = [];
+  var items = (cart && cart.items) || [];
+  for(var i = items.length - 1; i >= 0; i--) indices.push(i);
+  return indices;
+}
+
+/** Riordina cart.items; from/to = indici Sortable (ordine DOM). */
+function cart_reorderItems(cartId, fromDisplayIdx, toDisplayIdx){
+  if(fromDisplayIdx === toDisplayIdx) return false;
+  if(typeof cartSearchFieldActive === 'function' && cartSearchFieldActive()) return false;
+  var cart = carrelli.find(function(c){ return c.id === cartId; });
+  if(!cart || !cart.items || !cart.items.length) return false;
+  if(typeof _cartPossoModificare === 'function' && !_cartPossoModificare(cart)) return false;
+
+  var realIndices = cart_buildDisplayIndices(cart);
+  if(fromDisplayIdx < 0 || toDisplayIdx < 0 ||
+     fromDisplayIdx >= realIndices.length || toDisplayIdx >= realIndices.length) return false;
+
+  var subset = realIndices.map(function(i){ return cart.items[i]; });
+  var moved = subset.splice(fromDisplayIdx, 1)[0];
+  subset.splice(toDisplayIdx, 0, moved);
+
+  var newItems = cart.items.slice();
+  realIndices.forEach(function(realIdx, displayIdx){
+    newItems[realIdx] = subset[displayIdx];
+  });
+  cart.items = newItems;
+
+  _cartSyncLinkedOrdine(cart);
+  saveCarrelli();
+  return true;
+}
+
 function cartAddItem(rowIdx){
   if(!activeCartId)return;
   var cart=carrelli.find(function(c){return c.id===activeCartId;});if(!cart)return;

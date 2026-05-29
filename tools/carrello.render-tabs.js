@@ -51,6 +51,40 @@ function _ctHtmlOrdineVistoBadge(cart){
 //  Card: nome a capo | codici 14px | prezzo blu/verde | qty interi
 // =============================================================================
 
+var _cartSortableInstance = null;
+
+function cart_initMobileReorder(cartId){
+  if(_cartSortableInstance){
+    try{ _cartSortableInstance.destroy(); }catch(e){}
+    _cartSortableInstance = null;
+  }
+  if(typeof Sortable === 'undefined') return;
+  var list = document.getElementById('cart-sortable-list');
+  if(!list) return;
+
+  _cartSortableInstance = Sortable.create(list, {
+    animation: 150,
+    delay: 450,
+    delayOnTouchOnly: true,
+    touchStartThreshold: 5,
+    filter: 'input, select, button, textarea, .ord-item-name, .ord-code-mag--toggle, .ct-pb-tag--clickable',
+    preventOnFilter: false,
+    ghostClass: 'ct-row-ghost',
+    chosenClass: 'ct-row-chosen',
+    dragClass: 'ct-row-drag',
+    disabled: (typeof cartSearchFieldActive === 'function' && cartSearchFieldActive()),
+    onStart: function(){ list.classList.add('ct-drag-active'); },
+    onEnd: function(evt){
+      list.classList.remove('ct-drag-active');
+      if(evt.oldIndex === evt.newIndex || evt.oldIndex == null || evt.newIndex == null) return;
+      if(typeof cart_reorderItems === 'function' &&
+         cart_reorderItems(cartId, evt.oldIndex, evt.newIndex)){
+        renderCartTabs(true);
+      }
+    }
+  });
+}
+
 function renderCartTabs(forceRender){
   if(!forceRender){
     if(typeof cartNoteFieldHasFocus === 'function' && cartNoteFieldHasFocus()) return;
@@ -209,6 +243,8 @@ function renderCartTabs(forceRender){
     h += '</div>';
     h += '</div>';
 
+    h += '<div id="cart-sortable-list">';
+
     // ── CARD ARTICOLI (ultimo aggiunto in cima; idx = indice reale in cart.items) ──
     var _items = cart.items || [];
     for(var _ri = _items.length - 1; _ri >= 0; _ri--){
@@ -259,7 +295,7 @@ function renderCartTabs(forceRender){
         (it._checked ? ' ct-card--checked' : '') +
         (cart.stato === 'modifica' ? ' ct-card--mod' : '');
 
-      h += '<div class="' + cardClass + '" id="cart-row-' + idx + '" style="' + cardStyle + '">';
+      h += '<div class="' + cardClass + '" id="cart-row-' + idx + '" data-cart-idx="' + idx + '" style="' + cardStyle + '">';
 
       // ord-grid-row: tint inline (sovrascrive .ord-grid-even/odd opachi di ordini.css)
       h += '<div class="ord-grid ord-grid-row" style="' + rowBgStyle + '">';
@@ -475,6 +511,8 @@ function renderCartTabs(forceRender){
       h += '</div>'; // fine ct-card
     } // fine loop items (ordine inverso)
 
+    h += '</div>'; // fine cart-sortable-list
+
   } // fine items.length > 0
 
   // ── NOTA ORDINE ───────────────────────────────────────────────────────────
@@ -520,6 +558,9 @@ function renderCartTabs(forceRender){
   h += '</div>'; // fine cart-pos-footer
 
   body.innerHTML = h;
+  if(document.getElementById('cart-sortable-list')){
+    cart_initMobileReorder(cart.id);
+  }
   if((window.tcCompareSlots||[]).length){
     setTimeout(function(){ if(typeof tcCompareHydratePhotos==='function') tcCompareHydratePhotos(); }, 0);
   }
