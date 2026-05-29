@@ -139,6 +139,9 @@ function renderCartTabs(forceRender){
   }
   var cart = carrelli.find(function(c){ return c.id === activeCartId; });
   if(!cart) return;
+  if(typeof cartEnsureInsertNums === 'function' && cartEnsureInsertNums(cart)){
+    if(typeof saveCarrelli === 'function') saveCarrelli();
+  }
 
   var h = '';
 
@@ -302,7 +305,7 @@ function renderCartTabs(forceRender){
 
       // Colonna prodotto: nome + codici
       h += '<div class="ord-gc-desc">';
-      var _progNum = idx + 1;
+      var _progNum = cartItemInsertNum(it, idx);
       var _canOpenEdit = it.rowIdx !== undefined && it.rowIdx !== null && it.rowIdx !== '' && rows && rows[parseInt(it.rowIdx, 10)];
       var _nameAttrs = _canOpenEdit
         ? ' role="button" tabindex="0" title="Apri scheda modifica articolo" style="cursor:pointer" onclick="ctOpenEditArticoloFromCart(\'' + cart.id + '\',' + idx + ',event)" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();ctOpenEditArticoloFromCart(\'' + cart.id + '\',' + idx + ',event);}"'

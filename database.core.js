@@ -510,6 +510,57 @@ function ordineIndiciItemsDisplay(items){
   return out;
 }
 
+/** Numero progressivo cronologico di inserimento (1-based); fallback indice array per legacy. */
+function cartItemInsertNum(it, fallbackIdx){
+  var n = parseInt(it && it._insertNum, 10);
+  if(!isNaN(n) && n > 0) return n;
+  return (fallbackIdx != null ? fallbackIdx : 0) + 1;
+}
+
+/** Prossimo _insertNum libero nel carrello. */
+function cartAllocInsertNum(cart){
+  var max = 0;
+  ((cart && cart.items) || []).forEach(function(it){
+    var n = parseInt(it && it._insertNum, 10);
+    if(!isNaN(n) && n > max) max = n;
+  });
+  return max + 1;
+}
+
+/** Backfill _insertNum per righe legacy (ordine array attuale → 1..n). */
+function cartEnsureInsertNums(cart){
+  if(!cart || !cart.items || !cart.items.length) return false;
+  var changed = false;
+  cart.items.forEach(function(it, i){
+    var n = parseInt(it && it._insertNum, 10);
+    if(isNaN(n) || n <= 0){
+      it._insertNum = i + 1;
+      changed = true;
+    }
+  });
+  return changed;
+}
+
+/** Indici display: attivi per _insertNum ASC, poi congelati ASC (solo visualizzazione). */
+function ordineIndiciItemsDisplayCronologico(items){
+  items = items || [];
+  var act = [], fr = [];
+  for(var i = 0; i < items.length; i++){
+    if(ordItemCongelato(items[i])) fr.push(i);
+    else act.push(i);
+  }
+  function byIns(a, b){
+    return cartItemInsertNum(items[a], a) - cartItemInsertNum(items[b], b);
+  }
+  act.sort(byIns);
+  fr.sort(byIns);
+  return act.concat(fr);
+}
+
+function ordineIndiciOrdineDisplayCronologico(ord){
+  return ordineIndiciItemsDisplayCronologico(ord.items || []);
+}
+
 /** Totale € solo righe non congelate (tab ordini, cassa, stampa). */
 function ordTotaleSenzaCongelati(ord){
   return (ord.items||[]).reduce(function(s,it){

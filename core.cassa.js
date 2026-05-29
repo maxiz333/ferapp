@@ -230,13 +230,16 @@ function _cassaModeApri(gi){
 
   // Lista articoli
   h += '<div class="cassa-mode-list">';
-  (ord.items||[]).forEach(function(it, i){
+  ordineIndiciOrdineDisplayCronologico(ord).forEach(function(i){
+    var it = ord.items[i];
+    if(!it) return;
     var pu = parsePriceIT(it.prezzoUnit);
     var q = parseFloat(it.qty||0);
     var sub = (pu*q).toFixed(2);
+    var _insNum = cartItemInsertNum(it, i);
     h += '<div class="cassa-mode-item">';
     h += '<div style="flex:1;min-width:0;">';
-    h += '<div style="font-size:15px;font-weight:700;color:var(--text);">'+esc(it.desc||'—')+'</div>';
+    h += '<div style="font-size:15px;font-weight:700;color:var(--text);"><span class="ct-card-num" aria-hidden="true">'+_insNum+'.</span> '+esc(it.desc||'—')+'</div>';
     h += '<div style="font-size:13px;color:#666;margin-top:2px;">';
     h += '<span class="cassa-mode-qty-pill">' + q + ' ' + esc(it.unit||'pz') + '</span>';
     h += '<span class="cassa-mode-unit-price">× €' + pu.toFixed(2) + '</span>';

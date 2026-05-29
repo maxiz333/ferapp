@@ -16,6 +16,9 @@ function openCassa(gi){
   document.getElementById('cassa-cliente').style.fontSize='18px';
   var tot=0;
   var itemsCassa=(ord.items||[]).filter(function(it){ return !ordItemCongelato(it); });
+  itemsCassa.sort(function(a, b){
+    return cartItemInsertNum(a, 0) - cartItemInsertNum(b, 0);
+  });
   var nItems=itemsCassa.length;
   var bodyH='';
   itemsCassa.forEach(function(it,i){
@@ -23,9 +26,10 @@ function openCassa(gi){
     var q=parseFloat(it.qty||0);
     var sub=(pu*q).toFixed(2);
     tot+=pu*q;
+    var _insNum=cartItemInsertNum(it, i);
     bodyH+='<div class="cassa-item" style="gap:10px;">';
     bodyH+='<div style="flex:1;min-width:0;">';
-    bodyH+='<div class="cassa-item-desc">'+esc(it.desc||'')+'</div>';
+    bodyH+='<div class="cassa-item-desc"><span class="ct-card-num" aria-hidden="true">'+_insNum+'.</span> '+esc(it.desc||'')+'</div>';
     bodyH+='<div class="cassa-meta-line">';
     if(it.codM)bodyH+='<span class="cassa-cod-prodotto">'+esc(it.codM)+'</span> ';
     if(it.codF)bodyH+='<span style="color:#fc8181;">'+esc(it.codF)+'</span>';

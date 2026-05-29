@@ -70,12 +70,13 @@ function _odRenderItems(ord){
   var el=document.getElementById('ord-detail-items');
   if(!el)return;
   var h='';
-  var idxs=ordineIndiciOrdineDisplay(ord);
+  var idxs=ordineIndiciOrdineDisplayCronologico(ord);
   for(var k=0;k<idxs.length;k++){
     var i=idxs[k];
     var it=(ord.items||[])[i];
     if(!it) continue;
     var isFz=ordItemCongelato(it);
+    var _insNum=cartItemInsertNum(it, i);
     var desc=it.desc||'';
     var qty=parseFloat(it.qty||1);
     var unit=(typeof normalizeUmValue === 'function') ? normalizeUmValue(it.unit||'pz') : (it.unit||'pz');
@@ -89,7 +90,7 @@ function _odRenderItems(ord){
       h+='<div style="opacity:.88;background:#1a1a22;border:1px solid #353540;border-radius:10px;margin-bottom:8px;overflow:hidden;" id="odi-'+i+'">';
       h+='<div style="padding:8px 10px;">';
       h+='<div style="font-size:10px;color:#9ca3af;margin-bottom:6px;font-weight:800;letter-spacing:.3px;">Rimosso dal banco</div>';
-      h+='<div style="font-size:13px;font-weight:700;color:#a0a0a8;">'+esc(desc)+'</div>';
+      h+='<div style="font-size:13px;font-weight:700;color:#a0a0a8;"><span class="ct-card-num" aria-hidden="true">'+_insNum+'.</span> '+esc(desc)+'</div>';
       h+='<div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap;">';
       h+='<span style="color:#888;font-size:12px;">'+qty+' '+esc(unit)+'</span>';
       h+='<span style="color:#444;">×</span>';
@@ -108,11 +109,14 @@ function _odRenderItems(ord){
     var _odHasInfo=(it.rowIdx!==undefined&&((_idbCache[it.rowIdx])||((magazzino[it.rowIdx]||{}).specs)));
     if(_odHasInfo){
       h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">';
+      h+='<span class="ct-card-num" aria-hidden="true">'+_insNum+'.</span>';
       h+='<button onclick="mostraFotoSpecifiche('+it.rowIdx+')" style="background:transparent;border:none;font-size:20px;cursor:pointer;padding:0;flex-shrink:0;line-height:1;" title="Vedi specifiche">-</button>';
       h+='<input value="'+esc(desc)+'" oninput="odUpd('+i+',\'desc\',this.value)" placeholder="Articolo..." style="background:transparent;border:none;border-bottom:1px solid #2a2a2a;color:var(--text);font-size:13px;font-weight:700;flex:1;outline:none;font-family:inherit;padding:2px 0;">';
       h+='</div>';
     } else {
-      h+='<input value="'+esc(desc)+'" oninput="odUpd('+i+',\'desc\',this.value)" placeholder="Articolo..." style="background:transparent;border:none;border-bottom:1px solid #2a2a2a;color:var(--text);font-size:13px;font-weight:700;width:100%;outline:none;font-family:inherit;padding:2px 0;margin-bottom:6px;">';
+      h+='<div style="display:flex;align-items:baseline;gap:4px;margin-bottom:6px;"><span class="ct-card-num" aria-hidden="true">'+_insNum+'.</span>';
+      h+='<input value="'+esc(desc)+'" oninput="odUpd('+i+',\'desc\',this.value)" placeholder="Articolo..." style="background:transparent;border:none;border-bottom:1px solid #2a2a2a;color:var(--text);font-size:13px;font-weight:700;flex:1;outline:none;font-family:inherit;padding:2px 0;">';
+      h+='</div>';
     }
 
     // Riga: codici

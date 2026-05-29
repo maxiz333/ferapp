@@ -75,6 +75,7 @@ function cartAddItem(rowIdx){
       if(typeof itemApplyPrezzoUnitaBase==='function') itemApplyPrezzoUnitaBase(newItem);
     }
   }
+  newItem._insertNum = cartAllocInsertNum(cart);
   (cart.items=cart.items||[]).push(newItem);
   // Sync immediata su bozza/ordine collegato per evitare lag o race di salvataggio.
   _cartSyncLinkedOrdine(cart);
@@ -630,6 +631,7 @@ function cartDuplicaItem(cartId,idx){
   copy.qty=1;
   copy._checked=false;
   copy._correlatiAperti=false;
+  copy._insertNum = cartAllocInsertNum(cart);
   (cart.items||[]).splice(idx+1,0,copy);
   feedbackAdd();
   saveCarrelli();renderCartTabs();

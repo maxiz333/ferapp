@@ -207,17 +207,13 @@ function storicoApriDettaglio(ordId){
 
 /** Riepilogo righe con prezzi (stile simile alla tab ordini: totali grandi / verde). */
 function storicoHtmlDettaglioGriglia(ord){
-  var indici=(function(){
-    if(typeof ordineIndiciOrdineDisplay==='function'){
-      var all=ordineIndiciOrdineDisplay(ord);
-      var attivi=all.filter(function(ii){ return !ordItemCongelato((ord.items||[])[ii]); }).reverse();
-      var cong=all.filter(function(ii){ return ordItemCongelato((ord.items||[])[ii]); });
-      return attivi.concat(cong);
-    }
-    var out=[];
-    for(var j=0;j<(ord.items||[]).length;j++)out.push(j);
-    return out;
-  })();
+  var indici = (typeof ordineIndiciOrdineDisplayCronologico === 'function')
+    ? ordineIndiciOrdineDisplayCronologico(ord)
+    : (function(){
+        var out=[];
+        for(var j=0;j<(ord.items||[]).length;j++)out.push(j);
+        return out;
+      })();
 
   var h='<div class="ord-items-wrap ord-storico-detail-grid">';
   h+='<div class="ord-grid ord-grid-head">';
@@ -246,7 +242,7 @@ function storicoHtmlDettaglioGriglia(ord){
 
     h+='<div class="ord-grid ord-grid-row'+(stripe%2===0?' ord-grid-even':' ord-grid-odd')+(isFz?' ord-grid-row--congelato':'')+'">';
     h+='<div class="ord-gc-desc">';
-    h+='<div class="ord-item-name">'+esc(it.desc||'—')+'</div>';
+    h+='<div class="ord-item-name"><span class="ct-card-num" aria-hidden="true">'+cartItemInsertNum(it, ii)+'.</span> '+esc(it.desc||'—')+'</div>';
     if(isFz)h+='<div class="ord-congelato-badge">Rimosso dal banco</div>';
     h+='<div class="ord-item-codes-line">';
     if(it.codM)h+='<span class="ord-code-mag">'+esc(it.codM)+'</span>';

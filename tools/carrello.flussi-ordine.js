@@ -6,6 +6,8 @@ function ripetiOrdine(ordIdx,cartId){
   (ord.items||[]).forEach(function(it){
     var copy=JSON.parse(JSON.stringify(it));
     delete copy._checked;delete copy._scaglioniAperti;
+    delete copy._insertNum;
+    copy._insertNum = cartAllocInsertNum(cart);
     (cart.items=cart.items||[]).push(copy);
   });
   saveCarrelli();renderCartTabs();

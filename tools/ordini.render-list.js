@@ -148,12 +148,7 @@ function renderOrdini(){
 
       // _canEdit — già calcolato sopra
 
-      var indiciDisplay=(function(){
-        var all=ordineIndiciOrdineDisplay(ord);
-        var attivi=all.filter(function(ii){ return !ordItemCongelato((ord.items||[])[ii]); }).reverse();
-        var congelati=all.filter(function(ii){ return ordItemCongelato((ord.items||[])[ii]); });
-        return attivi.concat(congelati);
-      })();
+      var indiciDisplay = ordineIndiciOrdineDisplayCronologico(ord);
       indiciDisplay.forEach(function(ii, stripe){
         var it=ord.items[ii];
         var isFz=ordItemCongelato(it);
@@ -180,7 +175,7 @@ function renderOrdini(){
 
         // Colonna prodotto: nome + codici sotto (codF editabile con dblclick)
         h+='<div class="ord-gc-desc">';
-        h+='<div class="ord-item-name" onclick="openSchedaFromOrdine('+gi+','+ii+')" style="cursor:pointer;">'+esc(it.desc||'\u2014')+'</div>';
+        h+='<div class="ord-item-name" onclick="openSchedaFromOrdine('+gi+','+ii+')" style="cursor:pointer;"><span class="ct-card-num" aria-hidden="true">'+cartItemInsertNum(it, ii)+'.</span> '+esc(it.desc||'\u2014')+'</div>';
         if(isFz) h+='<div class="ord-congelato-badge">Rimosso dal banco</div>';
         var codes='';
         codes+='<div class="ord-item-codes-line">';
