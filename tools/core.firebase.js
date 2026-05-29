@@ -383,6 +383,8 @@ function _scheduleDbSystemMaintenance(){
         if(t && t.classList.contains('active')){
           if(typeof cartNoteFieldHasFocus === 'function' && cartNoteFieldHasFocus()){
             /* evita renderCartTabs mentre si scrive in note / H·L / prezzo base */
+          } else if(typeof cartSearchFieldActive === 'function' && cartSearchFieldActive()){
+            /* evita renderCartTabs mentre si cerca un articolo */
           } else if(typeof renderCartTabs === 'function'){
             renderCartTabs();
           }

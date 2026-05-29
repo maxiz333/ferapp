@@ -51,7 +51,11 @@ function _ctHtmlOrdineVistoBadge(cart){
 //  Card: nome a capo | codici 14px | prezzo blu/verde | qty interi
 // =============================================================================
 
-function renderCartTabs(){
+function renderCartTabs(forceRender){
+  if(!forceRender){
+    if(typeof cartNoteFieldHasFocus === 'function' && cartNoteFieldHasFocus()) return;
+    if(typeof cartSearchFieldActive === 'function' && cartSearchFieldActive()) return;
+  }
   var body = document.getElementById('cart-body');
   if(!body) return;
 
@@ -1036,6 +1040,7 @@ if(typeof window !== 'undefined' && !window.__CART_ORDINI_SYNC_BOUND__){
     var tc = document.getElementById('tc');
     if(!tc || !tc.classList.contains('active') || typeof renderCartTabs !== 'function') return;
     if(typeof cartNoteFieldHasFocus === 'function' && cartNoteFieldHasFocus()) return;
+    if(typeof cartSearchFieldActive === 'function' && cartSearchFieldActive()) return;
     renderCartTabs();
   }
   window.addEventListener('sync-orders', _ctRefreshIfCartTabActive);

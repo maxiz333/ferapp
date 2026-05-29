@@ -8,6 +8,14 @@ function renderCartSearch(){
   _cartSearchTimer = setTimeout(_doCartSearch, 120);
 }
 
+/** True se l'input ricerca carrello contiene testo (congela renderCartTabs automatico). */
+function cartSearchFieldActive(){
+  var inp = document.getElementById('cart-search');
+  if(!inp) return false;
+  return String(inp.value || '').trim().length > 0;
+}
+if(typeof window !== 'undefined') window.cartSearchFieldActive = cartSearchFieldActive;
+
 /** Haystack coerente con ricerca globale (desc, codici, marca, specs, pos, fornitore). */
 function _cartSearchHayRaw(r, m){
   var codF = String(r.codF || '');
@@ -91,7 +99,12 @@ function _doCartSearch(){
   var q=(document.getElementById('cart-search')||{}).value||'';
   var res=document.getElementById('cart-search-results');if(!res)return;
   _cartSearchMoreState = { q: '', matches: [], shown: 0 };
-  if(!q||q.trim().length<2){res.innerHTML='';return;}
+  if(!q || !q.trim()){
+    res.innerHTML = '';
+    if(typeof renderCartTabs === 'function') renderCartTabs(true);
+    return;
+  }
+  if(q.trim().length < 2){ res.innerHTML = ''; return; }
   // Database non ancora caricato: avvisa l'utente
   if(!rows||!rows.length){
     res.innerHTML='<div style="padding:12px;color:var(--accent);font-size:13px;text-align:center;">⏳ Database in caricamento, attendi...</div>';

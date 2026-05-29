@@ -216,7 +216,8 @@ function _ordApplyRemoteSnapshot(fresh, meta, opts){
   if(typeof renderCartTabs === 'function'){
     var tc = document.getElementById('tc');
     if(tc && tc.classList.contains('active') &&
-       !(typeof cartNoteFieldHasFocus === 'function' && cartNoteFieldHasFocus())){
+       !(typeof cartNoteFieldHasFocus === 'function' && cartNoteFieldHasFocus()) &&
+       !(typeof cartSearchFieldActive === 'function' && cartSearchFieldActive())){
       renderCartTabs();
     }
   }
