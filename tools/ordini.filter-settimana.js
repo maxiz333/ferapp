@@ -47,6 +47,45 @@ function _ordOrderMatchesWeekdayFilter(ord){
   return ordDate === _ordWeekdayTargetISO(_ordWeekdayFilter, _ordWeekdayScorso);
 }
 
+function _ordDateFromISO(iso){
+  if(!iso) return null;
+  var p = String(iso).slice(0, 10).split('-');
+  if(p.length < 3) return null;
+  var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/** 1=Lun … 6=Sab; null se domenica o data assente. */
+function _ordOrderWeekdayIdx(ord){
+  var d = _ordDateFromISO(_ordGetFilterDateISO(ord));
+  if(!d) return null;
+  var jsDay = d.getDay();
+  return jsDay === 0 ? null : jsDay;
+}
+
+function _ordOrderWeekdayLabel(ord){
+  var idx = _ordOrderWeekdayIdx(ord);
+  return idx != null ? (_ORD_WDAY_LABELS[idx] || '') : '';
+}
+
+function _ordOrderIsMonSat(ord){
+  return _ordOrderWeekdayIdx(ord) != null;
+}
+
+function _ordOrderDateGroupLabel(ord){
+  var d = _ordDateFromISO(_ordGetFilterDateISO(ord));
+  if(!d) return ord.data || '—';
+  var oggi = new Date();
+  oggi.setHours(0, 0, 0, 0);
+  var ieri = new Date(oggi);
+  ieri.setDate(ieri.getDate() - 1);
+  var dD = new Date(d);
+  dD.setHours(0, 0, 0, 0);
+  if(dD.getTime() === oggi.getTime()) return 'OGGI';
+  if(dD.getTime() === ieri.getTime()) return 'IERI';
+  return d.toLocaleDateString('it-IT', {weekday: 'long', day: 'numeric', month: 'long'}).toUpperCase();
+}
+
 function _ordCloseWeekdayDropdown(){
   _ordWeekdayDropdown = null;
   var dd = document.getElementById('ord-wday-dropdown');

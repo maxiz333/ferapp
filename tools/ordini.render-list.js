@@ -21,8 +21,9 @@ function renderOrdini(){
   if(typeof ordUpdateWeekdayButtonsUI === 'function') ordUpdateWeekdayButtonsUI();
   var searchVal=(document.getElementById('ord-search')||{}).value||'';
   var searchLow=searchVal.trim().toLowerCase();
+  var crossDaySearch=!!searchLow;
 
-  // Fonte unica: ordini[] arriva dal realtime Firebase (niente merge locale)
+  // Fonte unica: ordini[] attivo (Firebase/localStorage). Storico (ordiniArchivio) e cestino (ordiniCestino) esclusi.
 
   // Bozze incluse nel flusso normale (filtro "nuovo" o "tutti")
   var filtered = ordini.filter(function(o){
@@ -33,7 +34,9 @@ function renderOrdini(){
       var statoNorm = (o.stato==='lavorazione') ? 'nuovo' : o.stato;
       if(ordFiltro!=='tutti' && statoNorm!==ordFiltro) return false;
     }
-    if(typeof _ordOrderMatchesWeekdayFilter === 'function'){
+    if(crossDaySearch){
+      if(typeof _ordOrderIsMonSat === 'function' && !_ordOrderIsMonSat(o)) return false;
+    } else if(typeof _ordOrderMatchesWeekdayFilter === 'function'){
       if(!_ordOrderMatchesWeekdayFilter(o)) return false;
     }
     if(!searchLow) return true;
@@ -57,15 +60,20 @@ function renderOrdini(){
   // Raggruppa per data
   var gruppi={},gruppiOrd=[];
   filtered.forEach(function(o){
-    var dk=o.data||'—';
-    var iso=o.createdAt||'';
-    if(iso){
-      var d=new Date(iso),oggi=new Date();oggi.setHours(0,0,0,0);
-      var ieri=new Date(oggi);ieri.setDate(ieri.getDate()-1);
-      var dD=new Date(d);dD.setHours(0,0,0,0);
-      if(dD.getTime()===oggi.getTime())dk='OGGI';
-      else if(dD.getTime()===ieri.getTime())dk='IERI';
-      else dk=d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}).toUpperCase();
+    var dk;
+    if(crossDaySearch && typeof _ordOrderDateGroupLabel === 'function'){
+      dk = _ordOrderDateGroupLabel(o);
+    } else {
+      dk=o.data||'—';
+      var iso=o.createdAt||'';
+      if(iso){
+        var d=new Date(iso),oggi=new Date();oggi.setHours(0,0,0,0);
+        var ieri=new Date(oggi);ieri.setDate(ieri.getDate()-1);
+        var dD=new Date(d);dD.setHours(0,0,0,0);
+        if(dD.getTime()===oggi.getTime())dk='OGGI';
+        else if(dD.getTime()===ieri.getTime())dk='IERI';
+        else dk=d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'}).toUpperCase();
+      }
     }
     if(!gruppi[dk]){gruppi[dk]=[];gruppiOrd.push(dk);}
     gruppi[dk].push(o);
@@ -136,6 +144,10 @@ function renderOrdini(){
         h+='<div class="ord-cliente-nome">'+esc(ord.nomeCliente||'—')+'</div>';
       }
       h+='<div class="ord-cliente-meta">';
+      if(crossDaySearch){
+        var _wDayLbl = typeof _ordOrderWeekdayLabel === 'function' ? _ordOrderWeekdayLabel(ord) : '';
+        if(_wDayLbl) h+='<span class="ord-search-day-badge">'+esc(_wDayLbl)+'</span> ';
+      }
       h+=esc(ord.data||'')+(ord.ora?' · '+ord.ora:'');
       h+=' · '+nArt+' articol'+(nArt===1?'o':'i');
       h+='</div>';

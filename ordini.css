@@ -592,6 +592,20 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
   border-radius: 12px;
 }
 
+.ord-search-day-badge {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 1px 8px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  background: rgba(245, 196, 0, 0.15);
+  color: var(--accent, #f5c400);
+  border: 1px solid rgba(245, 196, 0, 0.35);
+  vertical-align: middle;
+}
+
 #to button[onclick*="filterOrdini"] {
   min-height: 40px;
   white-space: nowrap;
