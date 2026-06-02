@@ -103,7 +103,8 @@ function deleteCart(id, toastMsg){
   carrelli=carrelli.filter(function(c){return c.id!==id;});
   if(activeCartId===id)activeCartId=carrelli.length?carrelli[carrelli.length-1].id:null;
   saveCarrelli();renderCartTabs();
-  showToastGen('green', toastMsg != null ? toastMsg : '🗑️ Carrello eliminato');
+  if(toastMsg === null || toastMsg === '') return;
+  showToastGen('green', toastMsg === undefined ? '🗑️ Carrello eliminato' : toastMsg);
 }
 
 function cartTrashEnsureModal(){

@@ -15,22 +15,6 @@
 var CARTK=window.AppKeys.CARRELLI, ORDK=window.AppKeys.ORDINI, CART_CK=window.AppKeys.CARRELLI_CESTINO;
 var carrelli=lsGet(CARTK)||[], ordini=lsGet(ORDK)||[];
 var carrelliCestino=lsGet(CART_CK)||[];
-// Pulizia giornaliera: rimuovi carrelli creati prima di oggi (tranne inviati/modifica)
-(function(){
-  var oggi=new Date().toISOString().slice(0,10);
-  var prima=carrelli.length;
-  carrelli=carrelli.filter(function(c){
-    if(c.stato==='inviato'||c.stato==='modifica') return true;
-    var hasDaOrd=(c.items||[]).some(function(it){ return it&&it.daOrdinare; });
-    if(hasDaOrd) return true;
-    var cData='';
-    if(c.creatoAtISO) cData=c.creatoAtISO.slice(0,10);
-    else if(c.dataCreazione) cData=new Date(c.dataCreazione).toISOString().slice(0,10);
-    if(!cData) return true;
-    return cData>=oggi;
-  });
-  if(carrelli.length<prima){ lsSet(CARTK,carrelli); }
-})();
 var activeCartId=carrelli.length?carrelli[carrelli.length-1].id:null;
 var ordFiltro='nuovo';
 var ORDK_ARCH=window.AppKeys.ORDINI_ARCHIVIO;

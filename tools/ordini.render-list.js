@@ -18,6 +18,7 @@ function renderOrdini(){
   var isDesktop=window.matchMedia('(min-width: 769px)').matches;
   updateOrdCounter();
   _updateBozzaBadge();
+  if(typeof ordUpdateWeekdayButtonsUI === 'function') ordUpdateWeekdayButtonsUI();
   var searchVal=(document.getElementById('ord-search')||{}).value||'';
   var searchLow=searchVal.trim().toLowerCase();
 
@@ -31,6 +32,9 @@ function renderOrdini(){
     } else {
       var statoNorm = (o.stato==='lavorazione') ? 'nuovo' : o.stato;
       if(ordFiltro!=='tutti' && statoNorm!==ordFiltro) return false;
+    }
+    if(typeof _ordOrderMatchesWeekdayFilter === 'function'){
+      if(!_ordOrderMatchesWeekdayFilter(o)) return false;
     }
     if(!searchLow) return true;
     var hay=(o.nomeCliente||'');

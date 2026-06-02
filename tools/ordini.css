@@ -456,6 +456,89 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
   white-space: nowrap;
 }
 
+/* Filtro settimanale Lun–Sab */
+.ord-weekday-row {
+  position: relative;
+  margin-bottom: 8px;
+  overflow: visible;
+  z-index: 20;
+}
+.ord-weekday-scroll {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  align-items: center;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.ord-weekday-scroll::-webkit-scrollbar {
+  display: none;
+}
+.ord-wday-btn {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: #1a1a1a;
+  color: var(--text, #e2e8f0);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.ord-wday-btn.ord-wday-today {
+  border-color: var(--accent, #f5c400);
+  box-shadow: 0 0 8px rgba(245, 196, 0, 0.45);
+}
+.ord-wday-btn.ord-wday-active {
+  background: var(--accent, #f5c400);
+  color: #111;
+  border-color: var(--accent, #f5c400);
+}
+.ord-wday-btn.ord-wday-active.ord-wday-scorso::after {
+  content: ' · Scorso';
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+.ord-wday-dropdown {
+  position: fixed;
+  z-index: 10050;
+  min-width: 160px;
+  background: #222;
+  border: 1px solid var(--accent, #f5c400);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55), 0 0 12px rgba(245, 196, 0, 0.15);
+  overflow: hidden;
+  display: none;
+}
+.ord-wday-dropdown.ord-wday-dropdown--open {
+  display: block;
+}
+.ord-wday-dropdown-pick {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: var(--accent, #f5c400);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+.ord-wday-dropdown-pick:hover,
+.ord-wday-dropdown-pick:active {
+  background: rgba(245, 196, 0, 0.12);
+}
+
 #ord-counter-banner .ord-counter-pulse > div:first-child {
   font-size: 32px;
 }

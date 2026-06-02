@@ -1195,6 +1195,19 @@ body.light-mode #confirm-overlay > div { background:#fff; }
     <button onclick="toggleCestinoOrdini()" id="ord-f-cestino" style="padding:4px 10px;border-radius:14px;border:1px solid #222;background:transparent;color:#444;font-size:10px;cursor:pointer;">🗑️</button>
     <button onclick="toggleStoricoOrdini()" id="ord-f-storico" style="padding:4px 10px;border-radius:14px;border:1px solid #333;background:transparent;color:#805ad5;font-size:10px;font-weight:600;cursor:pointer;">📂 Storico</button>
   </div>
+  <div id="ord-weekday-row" class="ord-weekday-row">
+    <div class="ord-weekday-scroll">
+      <button type="button" id="ord-wday-1" class="ord-wday-btn" onclick="ordClickWeekday(1,event)">Lunedì</button>
+      <button type="button" id="ord-wday-2" class="ord-wday-btn" onclick="ordClickWeekday(2,event)">Martedì</button>
+      <button type="button" id="ord-wday-3" class="ord-wday-btn" onclick="ordClickWeekday(3,event)">Mercoledì</button>
+      <button type="button" id="ord-wday-4" class="ord-wday-btn" onclick="ordClickWeekday(4,event)">Giovedì</button>
+      <button type="button" id="ord-wday-5" class="ord-wday-btn" onclick="ordClickWeekday(5,event)">Venerdì</button>
+      <button type="button" id="ord-wday-6" class="ord-wday-btn" onclick="ordClickWeekday(6,event)">Sabato</button>
+    </div>
+    <div id="ord-wday-dropdown" class="ord-wday-dropdown" style="display:none;">
+      <button type="button" class="ord-wday-dropdown-pick" onclick="ordPickWeekdayScorso(_ordWeekdayDropdown)">Scorso</button>
+    </div>
+  </div>
   <div style="margin-bottom:12px;">
     <input type="text" id="ord-search" placeholder="🔍 Cerca cliente o articolo..." oninput="renderOrdini()"
       style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#1a1a1a;color:var(--text);font-size:13px;box-sizing:border-box;">
@@ -1633,6 +1646,7 @@ body.light-mode #confirm-overlay > div { background:#fff; }
 <script src="ordini.render-list.js"></script>
 <script src="ordini.poll-counter.js"></script>
 <script src="ordini.calendario.js"></script>
+<script src="ordini.filter-settimana.js"></script>
 <script src="ordini.cassa.js"></script>
 <script src="ordini.correlati.js"></script>
 <script src="ordini.nota-cart.js"></script>

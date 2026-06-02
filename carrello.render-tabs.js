@@ -90,6 +90,7 @@ function renderCartTabs(forceRender){
     if(typeof cartNoteFieldHasFocus === 'function' && cartNoteFieldHasFocus()) return;
     if(typeof cartSearchFieldActive === 'function' && cartSearchFieldActive()) return;
   }
+  if(typeof ctRotazioneGiornoCarrelli === 'function') ctRotazioneGiornoCarrelli();
   var body = document.getElementById('cart-body');
   if(!body) return;
 
@@ -102,10 +103,8 @@ function renderCartTabs(forceRender){
   if(oldRow2) oldRow2.remove();
 
   // Riga unica: NUOVO + CLIENTI + ORDINI (in ordine di importanza)
-  var _oggiC = new Date().toISOString().slice(0,10);
   var nCl = carrelli.filter(function(c){
-    var d = c.creatoAtISO ? c.creatoAtISO.slice(0,10) : '';
-    return d === _oggiC || c.stato === 'inviato' || c.stato === 'modifica';
+    return typeof ctCartIsGiornaliero === 'function' && ctCartIsGiornaliero(c);
   }).length;
   row1.innerHTML =
     '<button class="ct-pill--new" onclick="newCart()">＋ NUOVO</button>' +
