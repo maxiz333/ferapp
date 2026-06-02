@@ -3,6 +3,13 @@
    TAB ORDINI — redesign v2
    ═══════════════════════════════════════════════════════════════════ */
 
+@media (min-width: 769px) {
+  .mobile-only { display: none !important; }
+}
+@media (max-width: 768px) {
+  .desktop-only { display: none !important; }
+}
+
 /* ── Contatore filtrato ── */
 .ord-fcount {
   display:inline-flex; align-items:center; justify-content:center;
@@ -472,6 +479,43 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
   padding-left: 10px !important;
   padding-right: 10px !important;
   line-height: 1;
+}
+
+@media (max-width: 768px) {
+  #to .ord-header-top {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  #to .ord-header-top .mobile-only.ord-filter-actions {
+    display: flex !important;
+    flex-shrink: 0;
+    margin-left: 0;
+    gap: 4px;
+  }
+
+  #to .ord-header-top .mobile-only .ord-filter-emoji {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    margin: 0 2px !important;
+  }
+
+  #to .ord-filter-toolbar {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  #to .ord-filter-toolbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .ord-search-wrap {

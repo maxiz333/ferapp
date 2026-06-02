@@ -1171,6 +1171,11 @@ body.light-mode #confirm-overlay > div { background:#fff; }
     <h2 style="margin:0;border:none;padding:0;">📋 Ordini</h2>
     <span id="ord-filter-count" class="ord-fcount">0</span>
     <div style="flex:1;"></div>
+    <div class="ord-filter-actions mobile-only">
+      <button onclick="toggleDaOrdinareView()" class="ord-filter-emoji" style="padding:6px 10px;border-radius:14px;border:2px solid #e53e3e;background:transparent;color:#fc8181;font-size:16px;font-weight:900;cursor:pointer;" title="Da ordinare">🚚</button>
+      <button onclick="toggleCestinoOrdini()" class="ord-filter-emoji" style="padding:6px 10px;border-radius:14px;border:1px solid #222;background:transparent;color:#444;font-size:16px;cursor:pointer;" title="Cestino">🗑️</button>
+      <button onclick="toggleStoricoOrdini()" class="ord-filter-emoji" style="padding:6px 10px;border-radius:14px;border:1px solid #333;background:transparent;color:#805ad5;font-size:16px;font-weight:600;cursor:pointer;" title="Storico">📁</button>
+    </div>
     <button onclick="toggleOrdCalendario()" id="ord-cal-btn" style="padding:6px 14px;border-radius:12px;border:2px solid #555;background:transparent;color:#aaa;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:4px;">📅 Calendario</button>
   </div>
   <!-- Calendario (nascosto di default) -->
@@ -1191,7 +1196,7 @@ body.light-mode #confirm-overlay > div { background:#fff; }
     <button onclick="filterOrdini('tutti')" id="ord-f-tutti" style="padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;">Tutti</button>
     <span style="color:#333;font-size:10px;">|</span>
     <button onclick="filterOrdini('pronto')" id="ord-f-pronto" style="padding:4px 10px;border-radius:14px;border:1px solid #222;background:transparent;color:#555;font-size:10px;font-weight:600;cursor:pointer;">📦 Pronto</button>
-    <div class="ord-filter-actions">
+    <div class="ord-filter-actions desktop-only">
       <button onclick="toggleDaOrdinareView()" id="ord-f-daordinare" class="ord-filter-emoji" style="padding:6px 10px;border-radius:14px;border:2px solid #e53e3e;background:transparent;color:#fc8181;font-size:16px;font-weight:900;cursor:pointer;" title="Da ordinare">🚚</button>
       <button onclick="toggleCestinoOrdini()" id="ord-f-cestino" class="ord-filter-emoji" style="padding:6px 10px;border-radius:14px;border:1px solid #222;background:transparent;color:#444;font-size:16px;cursor:pointer;" title="Cestino">🗑️</button>
       <button onclick="toggleStoricoOrdini()" id="ord-f-storico" class="ord-filter-emoji" style="padding:6px 10px;border-radius:14px;border:1px solid #333;background:transparent;color:#805ad5;font-size:16px;font-weight:600;cursor:pointer;" title="Storico">📁</button>
