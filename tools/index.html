@@ -1167,7 +1167,7 @@ body.light-mode #confirm-overlay > div { background:#fff; }
 <div id="to" class="tab-content">
 <div class="panel">
   <!-- Titolo + contatore filtrato + calendario -->
-  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+  <div class="ord-header-top" style="display:flex;align-items:center;gap:10px;">
     <h2 style="margin:0;border:none;padding:0;">📋 Ordini</h2>
     <span id="ord-filter-count" class="ord-fcount">0</span>
     <div style="flex:1;"></div>
@@ -1183,17 +1183,19 @@ body.light-mode #confirm-overlay > div { background:#fff; }
     </div>
     <div id="ord-cal-results"></div>
   </div>
-  <!-- Contatore ordini in attesa -->
-  <div id="ord-counter-banner" style="display:none;margin-bottom:12px;"></div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center;">
+  <!-- Contatore ordini in attesa (nascosto via CSS — badge titolo resta attivo) -->
+  <div id="ord-counter-banner" style="display:none;"></div>
+  <div class="ord-filter-toolbar">
     <button onclick="filterOrdini('nuovo')" id="ord-f-nuovo" style="padding:8px 18px;border-radius:20px;border:1px solid var(--accent);background:var(--accent);color:#111;font-size:13px;font-weight:800;cursor:pointer;">🆕 Nuovi</button>
     <button onclick="filterOrdini('completato')" id="ord-f-completato" style="padding:8px 18px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:13px;font-weight:800;cursor:pointer;">✅ Fatti</button>
     <button onclick="filterOrdini('tutti')" id="ord-f-tutti" style="padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;">Tutti</button>
     <span style="color:#333;font-size:10px;">|</span>
     <button onclick="filterOrdini('pronto')" id="ord-f-pronto" style="padding:4px 10px;border-radius:14px;border:1px solid #222;background:transparent;color:#555;font-size:10px;font-weight:600;cursor:pointer;">📦 Pronto</button>
-    <button onclick="toggleDaOrdinareView()" id="ord-f-daordinare" style="padding:8px 14px;border-radius:20px;border:2px solid #e53e3e;background:transparent;color:#fc8181;font-size:12px;font-weight:900;cursor:pointer;margin-left:auto;letter-spacing:.5px;">🚚 Da ordinare</button>
-    <button onclick="toggleCestinoOrdini()" id="ord-f-cestino" style="padding:4px 10px;border-radius:14px;border:1px solid #222;background:transparent;color:#444;font-size:10px;cursor:pointer;">🗑️</button>
-    <button onclick="toggleStoricoOrdini()" id="ord-f-storico" style="padding:4px 10px;border-radius:14px;border:1px solid #333;background:transparent;color:#805ad5;font-size:10px;font-weight:600;cursor:pointer;">📂 Storico</button>
+    <div class="ord-filter-actions">
+      <button onclick="toggleDaOrdinareView()" id="ord-f-daordinare" class="ord-filter-emoji" style="padding:6px 10px;border-radius:14px;border:2px solid #e53e3e;background:transparent;color:#fc8181;font-size:16px;font-weight:900;cursor:pointer;" title="Da ordinare">🚚</button>
+      <button onclick="toggleCestinoOrdini()" id="ord-f-cestino" class="ord-filter-emoji" style="padding:6px 10px;border-radius:14px;border:1px solid #222;background:transparent;color:#444;font-size:16px;cursor:pointer;" title="Cestino">🗑️</button>
+      <button onclick="toggleStoricoOrdini()" id="ord-f-storico" class="ord-filter-emoji" style="padding:6px 10px;border-radius:14px;border:1px solid #333;background:transparent;color:#805ad5;font-size:16px;font-weight:600;cursor:pointer;" title="Storico">📁</button>
+    </div>
   </div>
   <div id="ord-weekday-row" class="ord-weekday-row">
     <div class="ord-weekday-scroll">
@@ -1208,7 +1210,7 @@ body.light-mode #confirm-overlay > div { background:#fff; }
       <button type="button" class="ord-wday-dropdown-pick" onclick="ordPickWeekdayScorso(_ordWeekdayDropdown)">Scorso</button>
     </div>
   </div>
-  <div style="margin-bottom:12px;">
+  <div id="ord-main-search-wrap" class="ord-search-wrap">
     <input type="text" id="ord-search" placeholder="🔍 Cerca cliente o articolo..." oninput="renderOrdini()"
       style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#1a1a1a;color:var(--text);font-size:13px;box-sizing:border-box;">
   </div>

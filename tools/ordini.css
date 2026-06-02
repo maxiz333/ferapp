@@ -431,18 +431,51 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
    ═══════════════════════════════════════════════════════════════ */
 
 #to .panel {
-  padding: 10px 10px 140px;
+  padding: 8px 10px 140px;
 }
 
-#to .panel > div[style*="flex"][style*="wrap"] {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding-bottom: 4px;
+#ord-counter-banner {
+  display: none !important;
+  margin: 0;
+  padding: 0;
+  height: 0;
+  overflow: hidden;
 }
-#to .panel > div[style*="flex"][style*="wrap"]::-webkit-scrollbar {
-  display: none;
+
+.ord-header-top {
+  margin-bottom: 6px;
+}
+
+.ord-filter-toolbar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  width: 100%;
+  min-width: 0;
+}
+.ord-filter-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.ord-filter-toolbar button {
+  min-height: 40px;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+.ord-filter-emoji {
+  min-width: 40px;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+  line-height: 1;
+}
+
+.ord-search-wrap {
+  margin-bottom: 8px;
 }
 
 #ord-search {
@@ -459,7 +492,8 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
 /* Filtro settimanale Lun–Sab */
 .ord-weekday-row {
   position: relative;
-  margin-bottom: 8px;
+  width: 100%;
+  margin-bottom: 4px;
   overflow: visible;
   z-index: 20;
 }
@@ -468,6 +502,7 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
   flex-wrap: nowrap;
   gap: 6px;
   align-items: center;
+  width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -537,10 +572,6 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
 .ord-wday-dropdown-pick:hover,
 .ord-wday-dropdown-pick:active {
   background: rgba(245, 196, 0, 0.12);
-}
-
-#ord-counter-banner .ord-counter-pulse > div:first-child {
-  font-size: 32px;
 }
 
 /* Filtri fornitore (4 slot + Tutti) — tab Ordini fornitore / Da ordinare */
