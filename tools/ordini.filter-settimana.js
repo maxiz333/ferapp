@@ -79,6 +79,7 @@ function ordPickWeekdayScorso(weekday){
   _ordWeekdayScorso = true;
   _ordCloseWeekdayDropdown();
   ordUpdateWeekdayButtonsUI();
+  if(typeof ordCloseSpecialViews==='function')ordCloseSpecialViews();
   if(typeof renderOrdini === 'function') renderOrdini();
 }
 
@@ -87,6 +88,7 @@ function ordClearWeekdayFilter(){
   _ordWeekdayScorso = false;
   _ordCloseWeekdayDropdown();
   ordUpdateWeekdayButtonsUI();
+  if(typeof ordCloseSpecialViews==='function')ordCloseSpecialViews();
   if(typeof renderOrdini === 'function') renderOrdini();
 }
 
@@ -102,6 +104,7 @@ function ordClickWeekday(weekday, ev){
     _ordWeekdayScorso = false;
     _ordCloseWeekdayDropdown();
     ordUpdateWeekdayButtonsUI();
+    if(typeof ordCloseSpecialViews==='function')ordCloseSpecialViews();
     if(typeof renderOrdini === 'function') renderOrdini();
     return;
   }
@@ -110,6 +113,7 @@ function ordClickWeekday(weekday, ev){
     _ordWeekdayScorso = false;
     _ordCloseWeekdayDropdown();
     ordUpdateWeekdayButtonsUI();
+    if(typeof ordCloseSpecialViews==='function')ordCloseSpecialViews();
     if(typeof renderOrdini === 'function') renderOrdini();
     return;
   }

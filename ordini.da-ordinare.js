@@ -4,21 +4,23 @@
 var _daOrdView=false;
 
 function toggleDaOrdinareView(){
-  _daOrdView=!_daOrdView;
   var btn=document.getElementById('ord-f-daordinare');
   var listEl=document.getElementById('ord-list');
   var daoEl=document.getElementById('ord-daordinare-view');
   if(!daoEl)return;
   if(_daOrdView){
+    _daOrdView=false;
+    if(btn){btn.style.background='transparent';btn.style.color='#fc8181';}
+    daoEl.style.display='none';
+    ordCloseSpecialViews();
+  } else {
+    ordCloseSpecialViews('daordinare');
+    _daOrdView=true;
     if(btn){btn.style.background='#e53e3e';btn.style.color='#fff';}
     if(listEl)listEl.style.display='none';
     daoEl.style.display='block';
     _daOrdColorFilter=null;
     renderDaOrdinareView();
-  } else {
-    if(btn){btn.style.background='transparent';btn.style.color='#fc8181';}
-    if(listEl)listEl.style.display='';
-    daoEl.style.display='none';
   }
 }
 
@@ -42,7 +44,6 @@ function renderDaOrdinareView(){
   var forniMap=ctGetForniColore();
 
   var h='';
-  h+='<div style="font-size:13px;font-weight:900;color:var(--text);margin-bottom:8px;">🚚 Da ordinare</div>';
   if(typeof ctHtmlBarraFiltriFornitore==='function'){
     h+=ctHtmlBarraFiltriFornitore(byColor,_daOrdColorFilter,{ fnFilter:'daOrdFilterColor', fnReset:'daOrdResetFiltri' });
   }

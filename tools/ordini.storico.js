@@ -6,23 +6,41 @@ var _storicoFornHex=null;
 var _storicoShown=20;
 var STORICO_PAGE=20;
 
-function toggleStoricoOrdini(){
-  _storicoOpen=!_storicoOpen;
-  var btn=document.getElementById('ord-f-storico');
-  if(btn){
-    btn.style.background=_storicoOpen?'#805ad533':'transparent';
-    btn.style.borderColor=_storicoOpen?'#805ad5':'#333';
+function storicoSetMainSearchVisible(visible){
+  if(typeof ordSetStandardHeaderVisible==='function'){
+    ordSetStandardHeaderVisible(!!visible);
+    return;
   }
+  var wrap=document.getElementById('ord-main-search-wrap');
+  if(!wrap){
+    var s=document.getElementById('ord-search');
+    wrap=s&&s.parentNode?s.parentNode:null;
+  }
+  if(wrap)wrap.style.display=visible?'':'none';
+}
+
+function toggleStoricoOrdini(){
+  var btn=document.getElementById('ord-f-storico');
   var listEl=document.getElementById('ord-list');
   if(_storicoOpen){
+    _storicoOpen=false;
+    if(btn){
+      btn.style.background='transparent';
+      btn.style.borderColor='#333';
+    }
+    var sv=document.getElementById('ord-storico-view');
+    if(sv)sv.style.display='none';
+    ordCloseSpecialViews();
+  } else {
+    ordCloseSpecialViews('storico');
+    _storicoOpen=true;
+    if(btn){
+      btn.style.background='#805ad533';
+      btn.style.borderColor='#805ad5';
+    }
     _storicoShown=STORICO_PAGE;
     renderStoricoOrdini();
     if(listEl)listEl.style.display='none';
-  } else {
-    var sv=document.getElementById('ord-storico-view');
-    if(sv)sv.style.display='none';
-    if(listEl)listEl.style.display='';
-    storicoChiudiDettaglio();
   }
 }
 
@@ -122,8 +140,6 @@ function renderStoricoOrdini(){
     });
   }
   h+='</div></div>';
-
-  h+='<div class="ord-storico-head">📂 Storico — '+total+' ordini'+(total!==arch.length?' (filtrati su '+arch.length+')':'')+'</div>';
 
   if(!arch.length){
     sv.innerHTML=h+'<div class="ord-storico-empty">Nessun ordine archiviato.<br><small>Gli ordini completati da 7+ giorni vengono archiviati automaticamente.</small></div>';

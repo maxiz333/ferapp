@@ -26,29 +26,28 @@ function deleteOrdine(gi){
 }
 
 function toggleCestinoOrdini(){
-  _cestinoOrdOpen = !_cestinoOrdOpen;
   var btn = document.getElementById('ord-f-cestino');
-  if(btn){
-    btn.style.background = _cestinoOrdOpen ? '#e53e3e22' : 'transparent';
-    btn.style.borderColor = _cestinoOrdOpen ? '#e53e3e' : '#222';
-    btn.style.color = _cestinoOrdOpen ? '#fc8181' : '#444';
-  }
   var listEl = document.getElementById('ord-list');
   if(_cestinoOrdOpen){
-    if(typeof _storicoOpen!=='undefined'&&_storicoOpen){
-      _storicoOpen=false;
-      var sb=document.getElementById('ord-f-storico');
-      if(sb){sb.style.background='transparent';sb.style.borderColor='#333';}
-      var sv=document.getElementById('ord-storico-view');
-      if(sv)sv.style.display='none';
-      if(typeof storicoSetMainSearchVisible==='function') storicoSetMainSearchVisible(true);
+    _cestinoOrdOpen = false;
+    if(btn){
+      btn.style.background = 'transparent';
+      btn.style.borderColor = '#222';
+      btn.style.color = '#444';
+    }
+    var cv = document.getElementById('ord-cestino-view');
+    if(cv) cv.style.display = 'none';
+    ordCloseSpecialViews();
+  } else {
+    ordCloseSpecialViews('cestino');
+    _cestinoOrdOpen = true;
+    if(btn){
+      btn.style.background = '#e53e3e22';
+      btn.style.borderColor = '#e53e3e';
+      btn.style.color = '#fc8181';
     }
     if(listEl) listEl.style.display = 'none';
     renderCestinoOrdini();
-  } else {
-    var cv = document.getElementById('ord-cestino-view');
-    if(cv) cv.style.display = 'none';
-    if(listEl) listEl.style.display = '';
   }
 }
 
@@ -66,7 +65,7 @@ function renderCestinoOrdini(){
     cv.innerHTML = '<div style="text-align:center;color:#555;padding:30px;font-size:13px;">Cestino vuoto.</div>';
     return;
   }
-  var h = '<div style="padding:8px 0 12px;text-align:center;font-size:12px;font-weight:700;color:#fc8181;">🗑️ CESTINO — ' + ordiniCestino.length + ' ordini eliminati</div>';
+  var h = '';
   ordiniCestino.forEach(function(ord,ci){
     var nArt = (ord.items||[]).length;
     var tot = 0;

@@ -28,6 +28,10 @@ function storicoToggleDaySum(el, dayKey, ev){
 }
 
 function storicoSetMainSearchVisible(visible){
+  if(typeof ordSetStandardHeaderVisible==='function'){
+    ordSetStandardHeaderVisible(!!visible);
+    return;
+  }
   var wrap=document.getElementById('ord-main-search-wrap');
   if(!wrap){
     var s=document.getElementById('ord-search');
@@ -37,38 +41,27 @@ function storicoSetMainSearchVisible(visible){
 }
 
 function toggleStoricoOrdini(){
-  _storicoOpen=!_storicoOpen;
   var btn=document.getElementById('ord-f-storico');
-  if(btn){
-    btn.style.background=_storicoOpen?'#805ad533':'transparent';
-    btn.style.borderColor=_storicoOpen?'#805ad5':'#333';
-  }
   var listEl=document.getElementById('ord-list');
   if(_storicoOpen){
-    if(typeof _daOrdView!=='undefined'&&_daOrdView){
-      _daOrdView=false;
-      var dbtn=document.getElementById('ord-f-daordinare');
-      if(dbtn){dbtn.style.background='transparent';dbtn.style.color='#fc8181';}
-      var daoEl=document.getElementById('ord-daordinare-view');
-      if(daoEl)daoEl.style.display='none';
+    _storicoOpen=false;
+    if(btn){
+      btn.style.background='transparent';
+      btn.style.borderColor='#333';
     }
-    if(typeof _cestinoOrdOpen!=='undefined'&&_cestinoOrdOpen){
-      _cestinoOrdOpen=false;
-      var cb=document.getElementById('ord-f-cestino');
-      if(cb){cb.style.background='transparent';cb.style.borderColor='#222';cb.style.color='#444';}
-      var cv=document.getElementById('ord-cestino-view');
-      if(cv)cv.style.display='none';
-    }
-    _storicoShown=STORICO_PAGE;
-    storicoSetMainSearchVisible(false);
-    renderStoricoOrdini();
-    if(listEl)listEl.style.display='none';
-  } else {
     var sv=document.getElementById('ord-storico-view');
     if(sv)sv.style.display='none';
-    if(listEl)listEl.style.display='';
-    storicoSetMainSearchVisible(true);
-    storicoChiudiDettaglio();
+    ordCloseSpecialViews();
+  } else {
+    ordCloseSpecialViews('storico');
+    _storicoOpen=true;
+    if(btn){
+      btn.style.background='#805ad533';
+      btn.style.borderColor='#805ad5';
+    }
+    _storicoShown=STORICO_PAGE;
+    renderStoricoOrdini();
+    if(listEl)listEl.style.display='none';
   }
 }
 
@@ -165,8 +158,6 @@ function renderStoricoOrdini(){
   h+='<input type="search" id="ord-storico-search" class="ord-storico-search" placeholder="Cerca cliente o prodotto…" value="'+esc(_storicoSearch)+'" ';
   h+='oninput="storicoOnSearch(this.value)" autocomplete="off">';
   h+='</div>';
-
-  h+='<div class="ord-storico-head">📂 Storico — '+total+' ordini'+(total!==arch.length?' (filtrati su '+arch.length+')':'')+'</div>';
 
   if(!arch.length){
     sv.innerHTML=h+'<div class="ord-storico-empty">Nessun ordine archiviato.<br><small>Gli ordini completati da 7+ giorni vengono archiviati automaticamente.</small></div>';
