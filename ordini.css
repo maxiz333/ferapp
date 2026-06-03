@@ -1367,6 +1367,43 @@ body.light-mode .ord-forn-line {
   padding: 4px 8px 16px;
   box-sizing: border-box;
 }
+.ord-storico-weekday-row {
+  position: relative;
+  margin-bottom: 6px;
+  overflow: visible;
+  z-index: 25;
+}
+.ord-storico-filter-meta {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9ca3af;
+  margin: 0 0 8px 2px;
+}
+.ord-storico-older-wrap {
+  margin: 8px 0 10px;
+}
+.ord-storico-older-btn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #444;
+  background: #1a1a1a;
+  color: #c4b5fd;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  touch-action: manipulation;
+}
+.ord-storico-older-btn:hover,
+.ord-storico-older-btn:active {
+  background: rgba(128, 90, 213, 0.15);
+  border-color: #805ad5;
+}
+#ord-storico-wday-dropdown.ord-wday-dropdown {
+  min-width: 200px;
+}
 .ord-storico-toolbar {
   margin-bottom: 8px;
 }

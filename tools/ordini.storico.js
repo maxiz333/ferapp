@@ -1,10 +1,22 @@
-// ordini.storico.js — storico ordini archiviati (leggero: paginazione, filtri, ricerca, dettaglio)
+// ordini.storico.js — storico ordini archiviati (filtro settimanale, ricerca, dettaglio)
 
 var _storicoOpen=false;
 var _storicoSearch='';
-var _storicoFornHex=null;
-var _storicoShown=20;
-var STORICO_PAGE=20;
+var _storicoWeekdayFilter=null;
+var _storicoWeeksAgo=0;
+var _storicoWeekdayDropdown=null;
+var _storicoBeyond6=false;
+var _storicoFilterFallbackMode=null;
+var _STORICO_WDAY_LABELS=['','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+var _storicoWdayDocClickBound=false;
+
+function _storicoNormalizeArch(arch){
+  if(!arch) return [];
+  if(Array.isArray(arch)) return arch;
+  if(typeof _fbFix==='function') return _fbFix(arch);
+  if(typeof arch==='object') return Object.values(arch).filter(function(x){ return x!=null; });
+  return [];
+}
 
 function storicoSetMainSearchVisible(visible){
   if(typeof ordSetStandardHeaderVisible==='function'){
@@ -38,7 +50,9 @@ function toggleStoricoOrdini(){
       btn.style.background='#805ad533';
       btn.style.borderColor='#805ad5';
     }
-    _storicoShown=STORICO_PAGE;
+    _storicoBeyond6=false;
+    _storicoInitWeekdayOnOpen();
+    _storicoBindWdayDocClickOnce();
     renderStoricoOrdini();
     if(listEl)listEl.style.display='none';
   }
@@ -46,26 +60,34 @@ function toggleStoricoOrdini(){
 
 function storicoOnSearch(val){
   _storicoSearch=(val||'').trim().toLowerCase();
-  _storicoShown=STORICO_PAGE;
   renderStoricoOrdini();
 }
 
-function storicoSetFornitore(hex){
-  _storicoFornHex = (_storicoFornHex === hex) ? null : hex;
-  _storicoShown=STORICO_PAGE;
-  renderStoricoOrdini();
+function _storicoTodayWeekdayIdx(){
+  var jsDay=new Date().getDay();
+  return jsDay===0?null:jsDay;
 }
 
-/** Reset solo filtro fornitore (la ricerca testuale resta). */
-function storicoResetFornitore(){
-  _storicoFornHex=null;
-  _storicoShown=STORICO_PAGE;
-  renderStoricoOrdini();
+function _storicoWeekdayTargetISO(weekdayIdx,weeksAgo){
+  var today=new Date();
+  today.setHours(0,0,0,0);
+  var jsDay=today.getDay();
+  var currentWeekday=jsDay===0?7:jsDay;
+  var diff=weekdayIdx-currentWeekday-(7*(weeksAgo||0));
+  var target=new Date(today);
+  target.setDate(target.getDate()+diff);
+  return target.getFullYear()+'-'+
+    String(target.getMonth()+1).padStart(2,'0')+'-'+
+    String(target.getDate()).padStart(2,'0');
 }
 
-function storicoCaricaAltri(){
-  _storicoShown+=STORICO_PAGE;
-  renderStoricoOrdini();
+function _storicoOlderCutoffISO(){
+  var d=new Date();
+  d.setHours(0,0,0,0);
+  d.setDate(d.getDate()-42);
+  return d.getFullYear()+'-'+
+    String(d.getMonth()+1).padStart(2,'0')+'-'+
+    String(d.getDate()).padStart(2,'0');
 }
 
 function _storicoSortNewestFirst(arr){
@@ -74,6 +96,261 @@ function _storicoSortNewestFirst(arr){
     var tb=(b.completatoAtISO||b.createdAt||b.dataISO||'')+'';
     return tb.localeCompare(ta);
   });
+}
+
+function _storicoDateObj(ord){
+  var raw=ord&&(ord.completatoAtISO||ord.createdAt||ord.dataISO||'');
+  if(raw){
+    var d=new Date(raw);
+    if(!isNaN(d.getTime()))return d;
+  }
+  var data=String(ord&&ord.data||'').trim();
+  var m=data.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m){
+    var year=m[3].length===2?('20'+m[3]):m[3];
+    var d2=new Date(Number(year),Number(m[2])-1,Number(m[1]));
+    if(!isNaN(d2.getTime()))return d2;
+  }
+  return null;
+}
+
+function _storicoGetFilterDateISO(ord){
+  if(typeof _ordCardDateISO==='function') return _ordCardDateISO(ord);
+  if(!ord)return '';
+  if(ord.dataISO){
+    var s0=String(ord.dataISO).slice(0,10);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s0))return s0;
+  }
+  var data=String(ord.data||'').trim();
+  var m=data.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m){
+    var year=m[3].length===2?('20'+m[3]):m[3];
+    return year+'-'+String(Number(m[2])).padStart(2,'0')+'-'+String(Number(m[1])).padStart(2,'0');
+  }
+  if(ord.createdAt){
+    var s1=String(ord.createdAt).slice(0,10);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s1))return s1;
+  }
+  if(ord.completatoAtISO){
+    var s2=String(ord.completatoAtISO).slice(0,10);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s2))return s2;
+  }
+  return '';
+}
+
+function _storicoMatchWeekdayLoose(ord){
+  if(_storicoBeyond6||_storicoWeekdayFilter==null)return false;
+  var targetIso=_storicoWeekdayTargetISO(_storicoWeekdayFilter,_storicoWeeksAgo);
+  if(!targetIso)return false;
+  if(_storicoOrderWeekdayIdx(ord)!==_storicoWeekdayFilter)return false;
+  var ordIso=_storicoGetFilterDateISO(ord);
+  if(!ordIso)return false;
+  var tp=targetIso.split('-');
+  var op=ordIso.split('-');
+  var tMs=new Date(Number(tp[0]),Number(tp[1])-1,Number(tp[2])).getTime();
+  var oMs=new Date(Number(op[0]),Number(op[1])-1,Number(op[2])).getTime();
+  if(isNaN(tMs)||isNaN(oMs))return false;
+  return Math.abs(oMs-tMs)<=24*60*60*1000;
+}
+
+function _storicoOrderWeekdayIdx(ord){
+  var iso=_storicoGetFilterDateISO(ord);
+  if(!iso)return null;
+  var p=iso.split('-');
+  if(p.length<3)return null;
+  var d=new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));
+  if(isNaN(d.getTime()))return null;
+  var jsDay=d.getDay();
+  return jsDay===0?null:jsDay;
+}
+
+function _storicoDayKey(ord){
+  var iso=_storicoGetFilterDateISO(ord);
+  return iso||'senza-data';
+}
+
+function _storicoDayLabel(key){
+  if(key==='senza-data')return 'Senza data';
+  var d=new Date(key+'T00:00:00');
+  if(isNaN(d.getTime()))return key;
+  var oggi=new Date();oggi.setHours(0,0,0,0);
+  var ieri=new Date(oggi);ieri.setDate(ieri.getDate()-1);
+  if(d.getTime()===oggi.getTime())return 'Oggi';
+  if(d.getTime()===ieri.getTime())return 'Ieri';
+  return d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+
+function _storicoMatchWeekday(ord){
+  if(_storicoBeyond6){
+    if(_storicoWeekdayFilter==null)return false;
+    var iso=_storicoGetFilterDateISO(ord);
+    if(!iso)return false;
+    if(_storicoOrderWeekdayIdx(ord)!==_storicoWeekdayFilter)return false;
+    return iso<_storicoOlderCutoffISO();
+  }
+  if(_storicoWeekdayFilter==null)return true;
+  var ordIso=_storicoGetFilterDateISO(ord);
+  if(!ordIso)return false;
+  return ordIso===_storicoWeekdayTargetISO(_storicoWeekdayFilter,_storicoWeeksAgo);
+}
+
+function storicoCloseWeekdayDropdown(){
+  _storicoWeekdayDropdown=null;
+  var dd=document.getElementById('ord-storico-wday-dropdown');
+  if(!dd)return;
+  dd.style.display='none';
+  dd.classList.remove('ord-wday-dropdown--open');
+}
+
+function storicoOpenWeekdayDropdown(weekday){
+  _storicoWeekdayDropdown=weekday;
+  var dd=document.getElementById('ord-storico-wday-dropdown');
+  var btn=document.getElementById('ord-storico-wday-'+weekday);
+  if(!dd||!btn)return;
+  var label=_STORICO_WDAY_LABELS[weekday]||'';
+  var inner='';
+  for(var w=1;w<=6;w++){
+    var txt=w===1?(label+' scorso'):(w+' '+label+' fa');
+    inner+='<button type="button" class="ord-wday-dropdown-pick" onclick="storicoPickWeekdayAgo('+w+')">'+esc(txt)+'</button>';
+  }
+  inner+='<button type="button" class="ord-wday-dropdown-pick" onclick="storicoPickWeekdayBeyond6()">Oltre 6 '+esc(label)+' fa</button>';
+  dd.innerHTML=inner;
+  var btnRect=btn.getBoundingClientRect();
+  dd.style.display='block';
+  dd.classList.add('ord-wday-dropdown--open');
+  dd.style.position='fixed';
+  dd.style.left=Math.round(btnRect.left)+'px';
+  dd.style.top=Math.round(btnRect.bottom+4)+'px';
+  dd.style.zIndex='10050';
+}
+
+function storicoPickWeekdayAgo(weeksAgo){
+  var wd=_storicoWeekdayDropdown!=null?_storicoWeekdayDropdown:_storicoWeekdayFilter;
+  if(wd==null)return;
+  _storicoWeekdayFilter=wd;
+  _storicoWeeksAgo=weeksAgo||0;
+  _storicoBeyond6=false;
+  storicoCloseWeekdayDropdown();
+  storicoUpdateWeekdayButtonsUI();
+  renderStoricoOrdini();
+}
+
+function storicoPickWeekdayBeyond6(){
+  var wd=_storicoWeekdayDropdown!=null?_storicoWeekdayDropdown:_storicoWeekdayFilter;
+  if(wd==null)return;
+  _storicoWeekdayFilter=wd;
+  _storicoBeyond6=true;
+  _storicoWeeksAgo=0;
+  storicoCloseWeekdayDropdown();
+  storicoUpdateWeekdayButtonsUI();
+  renderStoricoOrdini();
+}
+
+function storicoClickWeekday(weekday,ev){
+  if(ev&&typeof ev.stopPropagation==='function')ev.stopPropagation();
+  _storicoBeyond6=false;
+  if(_storicoWeekdayFilter!==weekday){
+    _storicoWeekdayFilter=weekday;
+    _storicoWeeksAgo=0;
+    storicoCloseWeekdayDropdown();
+    storicoUpdateWeekdayButtonsUI();
+    renderStoricoOrdini();
+    return;
+  }
+  if(_storicoWeeksAgo>0||_storicoBeyond6){
+    _storicoWeeksAgo=0;
+    _storicoBeyond6=false;
+    storicoCloseWeekdayDropdown();
+    storicoUpdateWeekdayButtonsUI();
+    renderStoricoOrdini();
+    return;
+  }
+  var dd=document.getElementById('ord-storico-wday-dropdown');
+  var ddOpen=dd&&(dd.style.display==='block'||dd.classList.contains('ord-wday-dropdown--open'));
+  if(_storicoWeekdayDropdown===weekday&&ddOpen){
+    storicoCloseWeekdayDropdown();
+    return;
+  }
+  storicoOpenWeekdayDropdown(weekday);
+}
+
+function storicoUpdateWeekdayButtonsUI(){
+  var todayIdx=_storicoTodayWeekdayIdx();
+  for(var i=1;i<=6;i++){
+    var btn=document.getElementById('ord-storico-wday-'+i);
+    if(!btn)continue;
+    btn.classList.toggle('ord-wday-today',todayIdx===i);
+    var active=_storicoWeekdayFilter===i;
+    btn.classList.toggle('ord-wday-active',active);
+    btn.classList.toggle('ord-wday-scorso',active&&(_storicoWeeksAgo>0||_storicoBeyond6));
+  }
+}
+
+function _storicoWdayOnDocClick(ev){
+  var dd=document.getElementById('ord-storico-wday-dropdown');
+  if(!dd||dd.style.display==='none')return;
+  if(dd.contains(ev.target))return;
+  if(_storicoWeekdayDropdown){
+    var activeBtn=document.getElementById('ord-storico-wday-'+_storicoWeekdayDropdown);
+    if(activeBtn&&activeBtn.contains(ev.target))return;
+  }
+  storicoCloseWeekdayDropdown();
+}
+
+function _storicoBindWdayDocClickOnce(){
+  if(_storicoWdayDocClickBound)return;
+  _storicoWdayDocClickBound=true;
+  document.addEventListener('click',_storicoWdayOnDocClick,true);
+}
+
+function _storicoInitWeekdayOnOpen(){
+  if(_storicoWeekdayFilter!=null)return;
+  var todayIdx=_storicoTodayWeekdayIdx();
+  if(todayIdx!=null){
+    _storicoWeekdayFilter=todayIdx;
+    _storicoWeeksAgo=0;
+  }
+}
+
+function storicoHtmlWeekdayBar(){
+  var h='<div class="ord-storico-weekday-row ord-weekday-row">';
+  h+='<div class="ord-weekday-scroll">';
+  for(var i=1;i<=6;i++){
+    h+='<button type="button" id="ord-storico-wday-'+i+'" class="ord-wday-btn" onclick="storicoClickWeekday('+i+',event)">'+_STORICO_WDAY_LABELS[i]+'</button>';
+  }
+  h+='</div>';
+  h+='<div id="ord-storico-wday-dropdown" class="ord-wday-dropdown" style="display:none;"></div>';
+  h+='</div>';
+  return h;
+}
+
+function storicoHtmlFilterMeta(total){
+  if(_storicoFilterFallbackMode==='all'&&_storicoWeekdayFilter!=null){
+    var isoAll=_storicoWeekdayTargetISO(_storicoWeekdayFilter,_storicoWeeksAgo);
+    var lblAll=_storicoDayLabel(isoAll);
+    return '<div class="ord-storico-filter-meta">Nessun match esatto per '+esc(lblAll)+'; mostrati tutti gli archiviati'+(total!=null?' · '+total+' ordini':'')+'</div>';
+  }
+  if(_storicoFilterFallbackMode==='loose'&&_storicoWeekdayFilter!=null){
+    var isoLoose=_storicoWeekdayTargetISO(_storicoWeekdayFilter,_storicoWeeksAgo);
+    var lblLoose=_storicoDayLabel(isoLoose);
+    return '<div class="ord-storico-filter-meta">Data approssimata per '+esc(lblLoose)+(total!=null?' · '+total+' ordini':'')+'</div>';
+  }
+  if(_storicoBeyond6&&_storicoWeekdayFilter!=null){
+    var cut=_storicoOlderCutoffISO();
+    var d=new Date(cut+'T00:00:00');
+    var cutLbl=isNaN(d.getTime())?cut:d.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'});
+    var dayLbl=(_STORICO_WDAY_LABELS[_storicoWeekdayFilter]||'').toLowerCase();
+    return '<div class="ord-storico-filter-meta">Tutti i '+esc(dayLbl)+' prima del '+esc(cutLbl)+(total!=null?' · '+total+' ordini':'')+'</div>';
+  }
+  if(_storicoWeekdayFilter!=null){
+    var iso=_storicoWeekdayTargetISO(_storicoWeekdayFilter,_storicoWeeksAgo);
+    var lbl=_storicoDayLabel(iso);
+    var suffix='';
+    if(_storicoWeeksAgo===1)suffix=' · scorso';
+    else if(_storicoWeeksAgo>1)suffix=' · '+_storicoWeeksAgo+' settimane fa';
+    return '<div class="ord-storico-filter-meta">'+esc(lbl)+suffix+(total!=null?' · '+total+' ordini':'')+'</div>';
+  }
+  return '';
 }
 
 function _storicoMatchSearch(ord,q){
@@ -85,25 +362,32 @@ function _storicoMatchSearch(ord,q){
   return hay.toLowerCase().indexOf(q)>=0;
 }
 
-function _storicoMatchFornitore(ord,hex){
-  if(!hex)return true;
-  var nomeSlot=typeof ctEtichettaFornitore==='function'?ctEtichettaFornitore(hex):'';
-  var hit=false;
-  (ord.items||[]).forEach(function(it){
-    if(it._ordColore===hex)hit=true;
-    if(nomeSlot&&it._ordFornitoreNome&&String(it._ordFornitoreNome).trim()===String(nomeSlot).trim())hit=true;
-  });
-  return hit;
-}
-
 function storicoGetFiltered(){
+  _storicoFilterFallbackMode=null;
   var arch=typeof getOrdiniArchivio==='function'?getOrdiniArchivio():(lsGet(ORDK_ARCH)||[]);
-  if(!arch||!arch.length)return[];
+  arch=_storicoNormalizeArch(arch);
+  if(!arch.length)return[];
   var q=_storicoSearch;
-  var hex=_storicoFornHex;
-  return _storicoSortNewestFirst(arch.filter(function(ord){
-    return _storicoMatchSearch(ord,q)&&_storicoMatchFornitore(ord,hex);
-  }));
+  function baseFilter(matchFn){
+    return arch.filter(function(ord){
+      return _storicoMatchSearch(ord,q)&&matchFn(ord);
+    });
+  }
+  var strict=baseFilter(_storicoMatchWeekday);
+  if(strict.length) return _storicoSortNewestFirst(strict);
+  if(_storicoBeyond6) return [];
+  if(_storicoWeekdayFilter!=null&&_storicoWeeksAgo>0){
+    var loose=baseFilter(_storicoMatchWeekdayLoose);
+    if(loose.length){
+      _storicoFilterFallbackMode='loose';
+      return _storicoSortNewestFirst(loose);
+    }
+  }
+  if(_storicoWeekdayFilter!=null){
+    _storicoFilterFallbackMode='all';
+    return _storicoSortNewestFirst(arch.filter(function(ord){ return _storicoMatchSearch(ord,q); }));
+  }
+  return [];
 }
 
 function renderStoricoOrdini(){
@@ -118,39 +402,30 @@ function renderStoricoOrdini(){
   sv.style.display='block';
   sv.className='ord-storico-view';
 
-  var arch=typeof getOrdiniArchivio==='function'?getOrdiniArchivio():(lsGet(ORDK_ARCH)||[]);
+  var arch=_storicoNormalizeArch(typeof getOrdiniArchivio==='function'?getOrdiniArchivio():(lsGet(ORDK_ARCH)||[]));
   var filtered=storicoGetFiltered();
   var total=filtered.length;
-  var slice=filtered.slice(0,_storicoShown);
-  var hasMore=total>_storicoShown;
 
   var h='';
+  h+=storicoHtmlWeekdayBar();
+  h+=storicoHtmlFilterMeta(total);
   h+='<div class="ord-storico-toolbar">';
   h+='<input type="search" id="ord-storico-search" class="ord-storico-search" placeholder="Cerca cliente o prodotto…" value="'+esc(_storicoSearch)+'" ';
   h+='oninput="storicoOnSearch(this.value)" autocomplete="off">';
-  h+='<div class="ord-storico-forn-filt">';
-  h+='<button type="button" class="ord-storico-f-tutti'+(!_storicoFornHex?' ord-storico-f--on':'')+'" onclick="storicoResetFornitore()">Tutti i fornitori</button>';
-  if(typeof CT_FORN_CANON_HEX!=='undefined'&&typeof ctEtichettaFornitore==='function'){
-    CT_FORN_CANON_HEX.forEach(function(col){
-      var nm=ctEtichettaFornitore(col);
-      var on=_storicoFornHex===col;
-      h+='<button type="button" class="ord-storico-f-slot'+(on?' ord-storico-f--on':'')+'" style="'+(on?'border-color:'+col+';color:'+col+';background:'+col+'18':'')+'" onclick="storicoSetFornitore(\''+col+'\')">';
-      h+='<span class="ord-storico-f-dot" style="background:'+col+'"></span>'+esc(nm);
-      h+='</button>';
-    });
-  }
-  h+='</div></div>';
+  h+='</div>';
 
   if(!arch.length){
-    sv.innerHTML=h+'<div class="ord-storico-empty">Nessun ordine archiviato.<br><small>Gli ordini completati da 7+ giorni vengono archiviati automaticamente.</small></div>';
+    sv.innerHTML=h+'<div class="ord-storico-empty">Nessun ordine archiviato.<br><small>Gli ordini completati da 13+ giorni vengono archiviati automaticamente.</small></div>';
+    storicoUpdateWeekdayButtonsUI();
     return;
   }
   if(!total){
     sv.innerHTML=h+'<div class="ord-storico-empty">Nessun ordine corrisponde ai filtri.</div>';
+    storicoUpdateWeekdayButtonsUI();
     return;
   }
 
-  slice.forEach(function(ord){
+  filtered.forEach(function(ord){
     var oid=ord.id!=null?String(ord.id):'';
     var sid=oid.replace(/"/g,'&quot;');
     var nArt=(ord.items||[]).length;
@@ -171,17 +446,12 @@ function renderStoricoOrdini(){
     h+='</div>';
   });
 
-  if(hasMore){
-    h+='<div class="ord-storico-more-wrap">';
-    h+='<button type="button" class="ord-storico-more" onclick="storicoCaricaAltri()">Carica altri ('+(total-_storicoShown)+' rimanenti)</button>';
-    h+='</div>';
-  }
-
   h+='<div class="ord-storico-clear-wrap">';
   h+='<button type="button" class="ord-storico-clear" onclick="clearStorico()">🗑️ Svuota storico</button>';
   h+='</div>';
 
   sv.innerHTML=h;
+  storicoUpdateWeekdayButtonsUI();
 }
 
 function storicoFindById(id){
@@ -299,7 +569,6 @@ function clearStorico(){
   showConfirm('Eliminare tutto lo storico archiviato?',function(){
     ordiniArchivio=[];
     lsSet(ORDK_ARCH,[]);
-    _storicoShown=STORICO_PAGE;
     renderStoricoOrdini();
     showToastGen('purple','Storico svuotato');
   });

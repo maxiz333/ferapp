@@ -161,7 +161,15 @@ function _ordSaveOptsForDelete(orderOrIds){
 }
 window._ordSaveOptsForDelete = _ordSaveOptsForDelete;
 
+function _ordSaveOptsForArchive(orderIds){
+  if(!orderIds || !orderIds.length) return null;
+  var ids = orderIds.filter(function(id){ return !!id; });
+  return ids.length ? { intentionalDelete: { ids: ids } } : null;
+}
+window._ordSaveOptsForArchive = _ordSaveOptsForArchive;
+
 function _ordShouldBlockFirebasePush(localArr, remoteArr, remoteMeta, opts){
+  if(opts && opts.reconciliation) return false;
   var localM = _ordCountMetrics(localArr);
   var remoteM = _ordCountMetrics(remoteArr);
   if(!remoteM.total) return false;

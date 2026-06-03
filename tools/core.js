@@ -22,32 +22,186 @@ var ORDK_ARCH=window.AppKeys.ORDINI_ARCHIVIO;
 var ordiniArchivio;
 var ordFornStorico=lsGet(window.AppKeys.ORD_FORN_STORICO,[]);
 
+function _normalizeOrdiniArchivio(raw){
+  if(raw == null) return [];
+  if(Array.isArray(raw)) return raw;
+  if(typeof _fbFix === 'function') return _fbFix(raw);
+  if(typeof raw === 'object') return Object.values(raw).filter(function(x){ return x != null; });
+  return [];
+}
+
 function getOrdiniArchivio(){
   if(ordiniArchivio===undefined||ordiniArchivio===null)
-    ordiniArchivio=lsGet(ORDK_ARCH)||[];
+    ordiniArchivio=_normalizeOrdiniArchivio(lsGet(ORDK_ARCH));
+  else if(!Array.isArray(ordiniArchivio))
+    ordiniArchivio=_normalizeOrdiniArchivio(ordiniArchivio);
   return ordiniArchivio;
 }
 
-// Archivia ordini completati da 7+ giorni
-(function(){
-  var now=Date.now();
-  var SETTE_GG=7*24*60*60*1000;
-  var daArch=[];
-  ordini=ordini.filter(function(o){
-    if(o.stato!=='completato') return true;
-    var compAt=o.completatoAtISO?new Date(o.completatoAtISO).getTime():
-               (o.createdAt?new Date(o.createdAt).getTime():0);
-    if(!compAt) return true;
-    if(now-compAt>SETTE_GG){ daArch.push(o); return false; }
-    return true;
-  });
-  if(daArch.length){
-    var prev=lsGet(ORDK_ARCH)||[];
-    ordiniArchivio=daArch.concat(prev);
-    lsSet(ORDK,ordini);
-    lsSet(ORDK_ARCH,ordiniArchivio);
+var SETTE_GG_MS = 13 * 24 * 60 * 60 * 1000;
+/** Fallback: forza eleggibilità archivio se manca ogni data affidabile. */
+var _ORD_COMPLETATO_FALLBACK_MS = 14 * 24 * 60 * 60 * 1000;
+
+/** Data giorno per filtri UI (priorità data sulla card). */
+function _ordCardDateISO(ord){
+  if(!ord) return '';
+  if(ord.dataISO){
+    var s0=String(ord.dataISO).slice(0,10);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s0)) return s0;
   }
-})();
+  var fromMs=_ordParseItalianDataMs(ord.data);
+  if(fromMs){
+    var d0=new Date(fromMs);
+    if(!isNaN(d0.getTime())){
+      return d0.getFullYear()+'-'+
+        String(d0.getMonth()+1).padStart(2,'0')+'-'+
+        String(d0.getDate()).padStart(2,'0');
+    }
+  }
+  if(ord.createdAt){
+    var s1=String(ord.createdAt).slice(0,10);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s1)) return s1;
+  }
+  if(ord.completatoAtISO){
+    var s2=String(ord.completatoAtISO).slice(0,10);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s2)) return s2;
+  }
+  return '';
+}
+window._ordCardDateISO=_ordCardDateISO;
+
+function _ordBelongsInArchivio(o, now){
+  if(!o || o.stato !== 'completato' || o.unlocked === true) return false;
+  return (now || Date.now()) - _ordCompletatoAtMs(o) > SETTE_GG_MS;
+}
+
+function _ordParseItalianDataMs(dataStr){
+  var data = String(dataStr || '').trim();
+  var m = data.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(!m) return 0;
+  var year = m[3].length === 2 ? ('20' + m[3]) : m[3];
+  var d = new Date(Number(year), Number(m[2]) - 1, Number(m[1]));
+  var t = d.getTime();
+  return isNaN(t) ? 0 : t;
+}
+
+/** Timestamp completamento per regola archivio 13 giorni (ms). */
+function _ordCompletatoAtMs(o){
+  if(!o) return 0;
+  var candidates = [o.completatoAtISO, o.createdAt, o.dataISO];
+  for(var i = 0; i < candidates.length; i++){
+    var raw = candidates[i];
+    if(!raw) continue;
+    var t = new Date(raw).getTime();
+    if(!isNaN(t) && t > 0) return t;
+  }
+  var fromData = _ordParseItalianDataMs(o.data);
+  if(fromData) return fromData;
+  return Date.now() - _ORD_COMPLETATO_FALLBACK_MS;
+}
+
+/**
+ * Archivia ordini completati da 13+ giorni (dopo sync Firebase).
+ * @returns {number} quanti ordini spostati
+ */
+function eseguiArchiviazioneAutomatica(){
+  if(!Array.isArray(ordini)) return 0;
+  var now = Date.now();
+  var candidates = [];
+  ordini.forEach(function(o){
+    if(!o || o.stato !== 'completato') return;
+    if(o.unlocked === true) return;
+    var compAt = _ordCompletatoAtMs(o);
+    if(now - compAt > SETTE_GG_MS){
+      if(!o.completatoAtISO || isNaN(new Date(o.completatoAtISO).getTime())){
+        o.completatoAtISO = new Date(compAt).toISOString();
+      }
+      candidates.push(o);
+    }
+  });
+  if(!candidates.length) return 0;
+
+  var prev = getOrdiniArchivio();
+  if(!Array.isArray(prev)) prev = [];
+  ordiniArchivio = candidates.concat(prev);
+  lsSet(ORDK_ARCH, ordiniArchivio);
+
+  var ids = candidates.map(function(o){ return o.id; }).filter(Boolean);
+  var archVerify = getOrdiniArchivio();
+  var archIdSet = {};
+  (archVerify || []).forEach(function(o){ if(o && o.id) archIdSet[o.id] = true; });
+  var allInArch = ids.every(function(id){ return archIdSet[id]; });
+  if(!allInArch){
+    console.warn('[Ordini] archiviazione: verifica archivio locale fallita, annullato');
+    return 0;
+  }
+
+  var idSet = {};
+  ids.forEach(function(id){ idSet[id] = true; });
+  ordini = ordini.filter(function(o){ return !o || !idSet[o.id]; });
+  lsSet(ORDK, ordini);
+
+  var opts = (typeof _ordSaveOptsForArchive === 'function')
+    ? _ordSaveOptsForArchive(ids)
+    : (ids.length ? { intentionalDelete: { ids: ids } } : null);
+
+  if(typeof saveOrdini === 'function'){
+    saveOrdini(opts || {});
+  }
+  return candidates.length;
+}
+window.eseguiArchiviazioneAutomatica = eseguiArchiviazioneAutomatica;
+
+/**
+ * Unisce ordini[] e ordiniArchivio[]: ogni id in un solo bucket (attivo vs archivio, soglia 13 gg).
+ * @returns {{ attivi: number, archivio: number, changed: boolean }}
+ */
+function eseguiRiconciliazioneOrdini(){
+  if(!Array.isArray(ordini)) ordini = [];
+  var arch = _normalizeOrdiniArchivio(getOrdiniArchivio());
+  var byId = {};
+
+  function mergeOrder(o){
+    if(!o || o.id == null || o.id === '') return;
+    var id = String(o.id);
+    if(!byId[id] || JSON.stringify(o).length > JSON.stringify(byId[id]).length){
+      byId[id] = o;
+    }
+  }
+  ordini.forEach(mergeOrder);
+  arch.forEach(mergeOrder);
+
+  var now = Date.now();
+  var newActive = [], newArch = [];
+  Object.keys(byId).forEach(function(id){
+    var o = byId[id];
+    if(_ordBelongsInArchivio(o, now)) newArch.push(o);
+    else newActive.push(o);
+  });
+
+  var changed = JSON.stringify(newActive) !== JSON.stringify(ordini) ||
+    JSON.stringify(newArch) !== JSON.stringify(arch);
+
+  ordini = newActive;
+  ordiniArchivio = newArch;
+  lsSet(ORDK, ordini);
+  lsSet(ORDK_ARCH, ordiniArchivio);
+
+  if(typeof updateOrdBadge === 'function') updateOrdBadge();
+  if(typeof updateOrdCounter === 'function') updateOrdCounter();
+
+  console.log('[Ordini] Riconciliazione:', newActive.length, 'attivi,', newArch.length, 'archivio');
+
+  if(changed && typeof saveOrdini === 'function'){
+    saveOrdini({ reconciliation: true });
+  }
+  if(changed && typeof showToastGen === 'function'){
+    showToastGen('blue', 'Ordini allineati: ' + newActive.length + ' attivi, ' + newArch.length + ' in storico');
+  }
+
+  return { attivi: newActive.length, archivio: newArch.length, changed: changed };
+}
+window.eseguiRiconciliazioneOrdini = eseguiRiconciliazioneOrdini;
 
 /** True se l'ordine è segnato visto (boolean o valori legacy da Firebase/export). */
 function _ordVistoCoerceBool(v){
