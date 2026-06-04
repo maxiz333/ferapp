@@ -709,3 +709,11 @@ body.light-mode .cassa-mode-item { border-color: #eee; }
   }
   #ct-tab-temp{ border:1px solid #805ad566 !important; }
 }
+
+#ct-list tr.ct-row-cross-active{
+  background:linear-gradient(90deg,rgba(229,62,62,.32),rgba(229,62,62,.12)) !important;
+  box-shadow:inset 3px 0 0 #e53e3e;
+}
+#ct-list tr.ct-row-cross-active td{
+  background:transparent;
+}

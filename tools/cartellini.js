@@ -100,6 +100,35 @@ function ctCodiceArticolo(r){
 function ct_isDafare(r){ return r && !r.fatto && !r.temp; }
 function ct_isTemp(r){ return r && !r.fatto && !!r.temp; }
 function ct_isFatto(r){ return r && !!r.fatto; }
+
+/** Evidenziazione cross-tab: peerInOther = anche in Temp (su Da fare) o in Da fare (su Temp). */
+function ct_crossTabRowStyle(rowStyle, code, peerInOther, peerInFatti){
+  var out = { rowStyle: rowStyle, crossActive: false, showInDafareBadge: false };
+  if(!code) return out;
+  var inOther = !!peerInOther;
+  var inFatti = !!peerInFatti;
+  if(inOther && inFatti){
+    out.rowStyle = out.rowStyle.replace(/border-left:3px solid [^;]+;/, '');
+    out.rowStyle += 'box-shadow:inset 3px 0 0 #e53e3e,inset 6px 0 0 #38a169;';
+    out.rowStyle += 'background:linear-gradient(90deg,rgba(229,62,62,.14),rgba(56,161,105,.14));';
+    out.crossActive = true;
+    out.showInDafareBadge = true;
+    return out;
+  }
+  if(inOther){
+    out.rowStyle = out.rowStyle.replace(/border-left:3px solid [^;]+;/, 'border-left:3px solid #e53e3e;');
+    out.rowStyle += 'background:linear-gradient(90deg,rgba(229,62,62,.18),rgba(229,62,62,.06));';
+    out.crossActive = true;
+    out.showInDafareBadge = true;
+    return out;
+  }
+  if(inFatti){
+    out.rowStyle = out.rowStyle.replace(/border-left:3px solid [^;]+;/, 'border-left:3px solid #38a169;');
+    out.rowStyle += 'background:linear-gradient(90deg,rgba(56,161,105,.18),rgba(56,161,105,.06));';
+  }
+  return out;
+}
+
 function ct_filterPrintable(rows){
   return (rows || []).filter(function(r){ return ct_isDafare(r); });
 }
@@ -347,11 +376,17 @@ var CT = {
     }
     var fattiCodes = {};
     var tempCodes = {};
+    var dafareCodes = {};
     ctRows.forEach(function(r){
       var code = ctCodiceArticolo(r);
       if(!code) return;
       if(ct_isFatto(r)) fattiCodes[code] = true;
       if(ct_isTemp(r)) tempCodes[code] = true;
+      if(ct_isDafare(r)) dafareCodes[code] = true;
+    });
+    var crossDafareTempCodes = {};
+    Object.keys(dafareCodes).forEach(function(code){
+      if(tempCodes[code]) crossDafareTempCodes[code] = true;
     });
 
     if(!realIndices.length){
@@ -401,30 +436,26 @@ var CT = {
       var isDup = !!(dupCode && dupCount > 1);
       var rowStyle = 'border-bottom:1px solid #222;border-left:3px solid '+(isDup ? '#f6ad55' : c.dot)+';';
       if(isDup) rowStyle += 'background:rgba(246,173,85,.14);box-shadow:inset 0 0 0 1px rgba(246,173,85,.38);';
-      if(isDafare && !isDup){
-        var codDf = ctCodiceArticolo(r);
-        var inTemp = !!(codDf && tempCodes[codDf]);
-        var inFatti = !!(codDf && fattiCodes[codDf]);
-        if(inTemp && inFatti){
-          rowStyle = rowStyle.replace(/border-left:3px solid [^;]+;/, '');
-          rowStyle += 'box-shadow:inset 3px 0 0 #e53e3e,inset 6px 0 0 #38a169;';
-          rowStyle += 'background:linear-gradient(90deg,rgba(229,62,62,.14),rgba(56,161,105,.14));';
-        } else if(inTemp){
-          rowStyle = rowStyle.replace(/border-left:3px solid [^;]+;/, 'border-left:3px solid #e53e3e;');
-          rowStyle += 'background:linear-gradient(90deg,rgba(229,62,62,.18),rgba(229,62,62,.06));';
-        } else if(inFatti){
-          rowStyle = rowStyle.replace(/border-left:3px solid [^;]+;/, 'border-left:3px solid #38a169;');
-          rowStyle += 'background:linear-gradient(90deg,rgba(56,161,105,.18),rgba(56,161,105,.06));';
-        }
+      var crossMeta = { crossActive: false, showInDafareBadge: false };
+      if(!isDup && (isDafare || isTemp)){
+        var codCross = ctCodiceArticolo(r);
+        var peerOther = isDafare
+          ? !!(codCross && (crossDafareTempCodes[codCross] || tempCodes[codCross]))
+          : !!(codCross && (crossDafareTempCodes[codCross] || dafareCodes[codCross]));
+        var peerFatti = !!(codCross && fattiCodes[codCross]);
+        crossMeta = ct_crossTabRowStyle(rowStyle, codCross, peerOther, peerFatti);
+        rowStyle = crossMeta.rowStyle;
       }
 
-      h += '<tr data-real-idx="'+realIdx+'" style="'+rowStyle+'">';
+      var trClass = crossMeta.crossActive ? ' ct-row-cross-active' : '';
+      h += '<tr data-real-idx="'+realIdx+'" class="'+trClass.trim()+'" style="'+rowStyle+'">';
 
       // Prodotto
       h += '<td style="padding:6px 4px;">';
       h += '<div style="font-size:12px;font-weight:700;color:#e8e8e8;line-height:1.2;">'+esc(r.desc||'—')+'</div>';
       if(r.codM) h += '<div style="font-size:9px;color:var(--accent);margin-top:1px;">'+esc(r.codM)+'</div>';
       if(isDup) h += '<div style="display:inline-block;margin-top:3px;padding:2px 6px;border-radius:999px;background:#f6ad55;color:#111;font-size:9px;font-weight:900;letter-spacing:.3px;">DUPLICATO x'+dupCount+'</div>';
+      if(isTemp && crossMeta.showInDafareBadge) h += '<div style="display:inline-block;margin-top:3px;padding:2px 6px;border-radius:999px;background:#e53e3e;color:#fff;font-size:9px;font-weight:900;letter-spacing:.3px;">ANCHE IN DA FARE</div>';
       if(r.fatto) h += '<div style="font-size:9px;color:#38a169;margin-top:1px;">✅ '+esc(r.fattoData||'')+'</div>';
       h += '</td>';
 

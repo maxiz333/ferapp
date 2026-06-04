@@ -1056,6 +1056,13 @@ body.light-mode .cassa-mode-item { border-color: #eee; }
 #ct-list tr.ct-row-drag{
   background:#1a1a1a;
 }
+#ct-list tr.ct-row-cross-active{
+  background:linear-gradient(90deg,rgba(229,62,62,.32),rgba(229,62,62,.12)) !important;
+  box-shadow:inset 3px 0 0 #e53e3e;
+}
+#ct-list tr.ct-row-cross-active td{
+  background:transparent;
+}
 
 /* ══ LIGHT MODE FINAL OVERRIDES — dopo vecchie regole legacy ══════ */
 body.light-mode .app-header,
