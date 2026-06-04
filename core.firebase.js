@@ -203,19 +203,6 @@ function _scheduleDbSystemMaintenance(){
   _dbMaintInterval = setInterval(function(){ dbSystemMaintenance({ reason: 'health-check' }); }, 30 * 60 * 1000);
 }
 
-window._ordFbBoot = { ordini: false, archivio: false };
-
-function _ordRunPostBootPipeline(){
-  if(window._ordBootReconcileDone) return;
-  if(!window._ordFbBoot || !window._ordFbBoot.ordini || !window._ordFbBoot.archivio) return;
-  window._ordBootReconcileDone = true;
-  if(typeof eseguiRiconciliazioneOrdini === 'function') eseguiRiconciliazioneOrdini();
-  if(typeof eseguiArchiviazioneAutomatica === 'function'){
-    var n = eseguiArchiviazioneAutomatica();
-    if(n > 0) console.log('[Ordini] archiviazione automatica:', n);
-  }
-}
-
 (function(){
   function _safeLsGet(k, d){
     try{
@@ -227,11 +214,6 @@ function _ordRunPostBootPipeline(){
     _fbDb.ref(path).on('value', function(snap){
       var d = snap.val();
       if(d == null){
-        if(globalVarName === 'ordiniArchivio'){
-          window._ordFbBoot = window._ordFbBoot || { ordini: false, archivio: false };
-          window._ordFbBoot.archivio = true;
-          _ordRunPostBootPipeline();
-        }
         if(typeof window[globalVarName] !== 'undefined'){
           // Primo bootstrap: se Firebase è vuoto ma esiste locale, pubblica il locale.
           var local = _safeLsGet(key, fallbackDefault);
@@ -248,12 +230,6 @@ function _ordRunPostBootPipeline(){
       try{
         if(globalVarName === 'fornitoriSettings' && d != null && !Array.isArray(d) && typeof d === 'object'){
           d = Object.keys(d).map(function(k){ return d[k]; }).filter(function(x){ return x && typeof x === 'object'; });
-        }
-        if(globalVarName === 'ordiniArchivio' && d != null){
-          if(typeof _fbFix === 'function') d = _fbFix(d);
-          else if(!Array.isArray(d) && typeof d === 'object'){
-            d = Object.values(d).filter(function(x){ return x != null; });
-          }
         }
         window[globalVarName] = d;
         window.AppStorage.set(key, d);
@@ -273,13 +249,6 @@ function _ordRunPostBootPipeline(){
           }
         } else if(globalVarName === 'movimenti'){
           if(typeof renderMovimenti === 'function') renderMovimenti();
-        } else if(globalVarName === 'ordiniArchivio'){
-          window._ordFbBoot = window._ordFbBoot || { ordini: false, archivio: false };
-          window._ordFbBoot.archivio = true;
-          _ordRunPostBootPipeline();
-          if(typeof _storicoOpen !== 'undefined' && _storicoOpen && typeof renderStoricoOrdini === 'function'){
-            renderStoricoOrdini();
-          }
         }
       }catch(e){
         console.error('FB shared sync apply errore:', path, e);
@@ -346,10 +315,16 @@ function _ordRunPostBootPipeline(){
         fresh.forEach(function(o){if(o&&o.id){_idKnown[o.id]=true; if(o.stato==='bozza'){_bozzaKnown[o.id]=true; _bozzaSnap[o.id]=JSON.stringify(o);}}});
         _first=false;
       }
-      window._ordFbBoot = window._ordFbBoot || { ordini: false, archivio: false };
-      window._ordFbBoot.ordini = true;
-      if(isBoot) _ordRunPostBootPipeline();
       if(JSON.stringify(fresh)===JSON.stringify(ordini)){
+        if(isBoot && !window._ordArchivAutoBootScheduled){
+          window._ordArchivAutoBootScheduled = true;
+          setTimeout(function(){
+            if(typeof eseguiArchiviazioneAutomatica === 'function'){
+              var n = eseguiArchiviazioneAutomatica();
+              if(n > 0) console.log('[Ordini] archiviazione automatica:', n);
+            }
+          }, 400);
+        }
         return;
       }
       _fbSyncing=true;
@@ -395,7 +370,15 @@ function _ordRunPostBootPipeline(){
         });
       }catch(e){console.error('FB ordini:',e);}
       _fbSyncing=false;
-      if(isBoot) _ordRunPostBootPipeline();
+      if(isBoot && !window._ordArchivAutoBootScheduled){
+        window._ordArchivAutoBootScheduled = true;
+        setTimeout(function(){
+          if(typeof eseguiArchiviazioneAutomatica === 'function'){
+            var n = eseguiArchiviazioneAutomatica();
+            if(n > 0) console.log('[Ordini] archiviazione automatica:', n);
+          }
+        }, 400);
+      }
     });
     _fbDb.ref('carrelli').on('value',function(snap){
       // Flag SEPARATO: non interferisce con la sync degli ordini

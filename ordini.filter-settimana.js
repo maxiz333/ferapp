@@ -16,11 +16,11 @@ function _ordTodayWeekdayIdx(){
 function _ordGetFilterDateISO(ord){
   if(!ord) return '';
   var stato = ord.stato === 'lavorazione' ? 'nuovo' : ord.stato;
-  if(stato === 'completato' && typeof _ordCardDateISO === 'function'){
-    return _ordCardDateISO(ord);
+  if(stato === 'completato' && ord.completatoAtISO){
+    return String(ord.completatoAtISO).slice(0, 10);
   }
   if(typeof _getOrdDataISO === 'function') return _getOrdDataISO(ord);
-  if(ord.dataISO) return String(ord.dataISO).slice(0, 10);
+  if(ord.dataISO) return ord.dataISO;
   if(ord.createdAt) return String(ord.createdAt).slice(0, 10);
   return '';
 }
@@ -204,8 +204,11 @@ function _ordWdayOnDocClick(ev){
 }
 
 function ordInitWeekdayFilter(){
-  _ordWeekdayFilter = null;
-  _ordWeekdayScorso = false;
+  var todayIdx = _ordTodayWeekdayIdx();
+  if(todayIdx != null){
+    _ordWeekdayFilter = todayIdx;
+    _ordWeekdayScorso = false;
+  }
   ordUpdateWeekdayButtonsUI();
 
   for(var i = 1; i <= 6; i++){

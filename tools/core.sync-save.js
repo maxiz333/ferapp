@@ -169,7 +169,6 @@ function _ordSaveOptsForArchive(orderIds){
 window._ordSaveOptsForArchive = _ordSaveOptsForArchive;
 
 function _ordShouldBlockFirebasePush(localArr, remoteArr, remoteMeta, opts){
-  if(opts && opts.reconciliation) return false;
   var localM = _ordCountMetrics(localArr);
   var remoteM = _ordCountMetrics(remoteArr);
   if(!remoteM.total) return false;

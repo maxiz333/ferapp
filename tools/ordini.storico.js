@@ -6,17 +6,8 @@ var _storicoWeekdayFilter=null;
 var _storicoWeeksAgo=0;
 var _storicoWeekdayDropdown=null;
 var _storicoBeyond6=false;
-var _storicoFilterFallbackMode=null;
 var _STORICO_WDAY_LABELS=['','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
 var _storicoWdayDocClickBound=false;
-
-function _storicoNormalizeArch(arch){
-  if(!arch) return [];
-  if(Array.isArray(arch)) return arch;
-  if(typeof _fbFix==='function') return _fbFix(arch);
-  if(typeof arch==='object') return Object.values(arch).filter(function(x){ return x!=null; });
-  return [];
-}
 
 function storicoSetMainSearchVisible(visible){
   if(typeof ordSetStandardHeaderVisible==='function'){
@@ -115,42 +106,20 @@ function _storicoDateObj(ord){
 }
 
 function _storicoGetFilterDateISO(ord){
-  if(typeof _ordCardDateISO==='function') return _ordCardDateISO(ord);
   if(!ord)return '';
-  if(ord.dataISO){
-    var s0=String(ord.dataISO).slice(0,10);
-    if(/^\d{4}-\d{2}-\d{2}$/.test(s0))return s0;
+  if(ord.completatoAtISO){
+    var s=String(ord.completatoAtISO).slice(0,10);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
   }
+  if(ord.dataISO)return String(ord.dataISO).slice(0,10);
+  if(ord.createdAt)return String(ord.createdAt).slice(0,10);
   var data=String(ord.data||'').trim();
   var m=data.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
   if(m){
     var year=m[3].length===2?('20'+m[3]):m[3];
     return year+'-'+String(Number(m[2])).padStart(2,'0')+'-'+String(Number(m[1])).padStart(2,'0');
   }
-  if(ord.createdAt){
-    var s1=String(ord.createdAt).slice(0,10);
-    if(/^\d{4}-\d{2}-\d{2}$/.test(s1))return s1;
-  }
-  if(ord.completatoAtISO){
-    var s2=String(ord.completatoAtISO).slice(0,10);
-    if(/^\d{4}-\d{2}-\d{2}$/.test(s2))return s2;
-  }
   return '';
-}
-
-function _storicoMatchWeekdayLoose(ord){
-  if(_storicoBeyond6||_storicoWeekdayFilter==null)return false;
-  var targetIso=_storicoWeekdayTargetISO(_storicoWeekdayFilter,_storicoWeeksAgo);
-  if(!targetIso)return false;
-  if(_storicoOrderWeekdayIdx(ord)!==_storicoWeekdayFilter)return false;
-  var ordIso=_storicoGetFilterDateISO(ord);
-  if(!ordIso)return false;
-  var tp=targetIso.split('-');
-  var op=ordIso.split('-');
-  var tMs=new Date(Number(tp[0]),Number(tp[1])-1,Number(tp[2])).getTime();
-  var oMs=new Date(Number(op[0]),Number(op[1])-1,Number(op[2])).getTime();
-  if(isNaN(tMs)||isNaN(oMs))return false;
-  return Math.abs(oMs-tMs)<=24*60*60*1000;
 }
 
 function _storicoOrderWeekdayIdx(ord){
@@ -325,16 +294,6 @@ function storicoHtmlWeekdayBar(){
 }
 
 function storicoHtmlFilterMeta(total){
-  if(_storicoFilterFallbackMode==='all'&&_storicoWeekdayFilter!=null){
-    var isoAll=_storicoWeekdayTargetISO(_storicoWeekdayFilter,_storicoWeeksAgo);
-    var lblAll=_storicoDayLabel(isoAll);
-    return '<div class="ord-storico-filter-meta">Nessun match esatto per '+esc(lblAll)+'; mostrati tutti gli archiviati'+(total!=null?' · '+total+' ordini':'')+'</div>';
-  }
-  if(_storicoFilterFallbackMode==='loose'&&_storicoWeekdayFilter!=null){
-    var isoLoose=_storicoWeekdayTargetISO(_storicoWeekdayFilter,_storicoWeeksAgo);
-    var lblLoose=_storicoDayLabel(isoLoose);
-    return '<div class="ord-storico-filter-meta">Data approssimata per '+esc(lblLoose)+(total!=null?' · '+total+' ordini':'')+'</div>';
-  }
   if(_storicoBeyond6&&_storicoWeekdayFilter!=null){
     var cut=_storicoOlderCutoffISO();
     var d=new Date(cut+'T00:00:00');
@@ -363,31 +322,12 @@ function _storicoMatchSearch(ord,q){
 }
 
 function storicoGetFiltered(){
-  _storicoFilterFallbackMode=null;
   var arch=typeof getOrdiniArchivio==='function'?getOrdiniArchivio():(lsGet(ORDK_ARCH)||[]);
-  arch=_storicoNormalizeArch(arch);
-  if(!arch.length)return[];
+  if(!arch||!arch.length)return[];
   var q=_storicoSearch;
-  function baseFilter(matchFn){
-    return arch.filter(function(ord){
-      return _storicoMatchSearch(ord,q)&&matchFn(ord);
-    });
-  }
-  var strict=baseFilter(_storicoMatchWeekday);
-  if(strict.length) return _storicoSortNewestFirst(strict);
-  if(_storicoBeyond6) return [];
-  if(_storicoWeekdayFilter!=null&&_storicoWeeksAgo>0){
-    var loose=baseFilter(_storicoMatchWeekdayLoose);
-    if(loose.length){
-      _storicoFilterFallbackMode='loose';
-      return _storicoSortNewestFirst(loose);
-    }
-  }
-  if(_storicoWeekdayFilter!=null){
-    _storicoFilterFallbackMode='all';
-    return _storicoSortNewestFirst(arch.filter(function(ord){ return _storicoMatchSearch(ord,q); }));
-  }
-  return [];
+  return _storicoSortNewestFirst(arch.filter(function(ord){
+    return _storicoMatchSearch(ord,q)&&_storicoMatchWeekday(ord);
+  }));
 }
 
 function renderStoricoOrdini(){
@@ -402,7 +342,7 @@ function renderStoricoOrdini(){
   sv.style.display='block';
   sv.className='ord-storico-view';
 
-  var arch=_storicoNormalizeArch(typeof getOrdiniArchivio==='function'?getOrdiniArchivio():(lsGet(ORDK_ARCH)||[]));
+  var arch=typeof getOrdiniArchivio==='function'?getOrdiniArchivio():(lsGet(ORDK_ARCH)||[]);
   var filtered=storicoGetFiltered();
   var total=filtered.length;
 
