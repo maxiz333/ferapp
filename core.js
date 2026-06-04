@@ -174,10 +174,58 @@ function feedbackSend(){
   }catch(e){}
 }
 
-// --- NUMERO ORDINE PROGRESSIVO --------------------------------
+// --- NUMERO ORDINE PROGRESSIVO (giornaliero, riparte ogni giorno) ---
+function _ordCounterDayKey(){
+  var d = new Date();
+  return d.getFullYear() + '-' +
+    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getDate()).padStart(2, '0');
+}
+
+function _ordOrderDayISO(ord){
+  if(!ord) return '';
+  if(typeof _ordGetFilterDateISO === 'function') return _ordGetFilterDateISO(ord);
+  if(ord.dataISO) return ord.dataISO;
+  if(ord.createdAt) return String(ord.createdAt).slice(0, 10);
+  if(ord.data){
+    var p = String(ord.data).trim().split('/');
+    if(p.length === 3){
+      var y = p[2].length === 2 ? ('20' + p[2]) : p[2];
+      return y + '-' + p[1].padStart(2, '0') + '-' + p[0].padStart(2, '0');
+    }
+  }
+  return '';
+}
+
+/** Massimo numero ordine già usato oggi (ordini attivi in memoria). */
+function _ordMaxNumeroOggi(){
+  var oggi = _ordCounterDayKey();
+  var max = 0;
+  (ordini || []).forEach(function(o){
+    if(!o || o.numero == null || o.numero === '') return;
+    if(_ordOrderDayISO(o) !== oggi) return;
+    var n = parseInt(o.numero, 10);
+    if(!isNaN(n) && n > max) max = n;
+  });
+  return max;
+}
+
 function getNextOrdNum(){
-  var num=parseInt(localStorage.getItem(window.AppKeys.ORD_COUNTER)||'0')+1;
-  localStorage.setItem(window.AppKeys.ORD_COUNTER,String(num));
+  var oggi = _ordCounterDayKey();
+  var dayK = window.AppKeys.ORD_COUNTER + '_day';
+  var lastDay = '';
+  try{ lastDay = localStorage.getItem(dayK) || ''; }catch(e){}
+  var stored = 0;
+  if(lastDay === oggi){
+    stored = parseInt(localStorage.getItem(window.AppKeys.ORD_COUNTER) || '0', 10);
+    if(isNaN(stored)) stored = 0;
+  }
+  stored = Math.max(stored, _ordMaxNumeroOggi());
+  var num = stored + 1;
+  try{
+    localStorage.setItem(window.AppKeys.ORD_COUNTER, String(num));
+    localStorage.setItem(dayK, oggi);
+  }catch(e){}
   return num;
 }
 

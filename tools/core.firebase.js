@@ -393,11 +393,13 @@ function _scheduleDbSystemMaintenance(){
         carrelli = fresh;
         lsSet(CARTK, carrelli);
         updateCartBadge();
-        // Se activeCartId non esiste più tra i carrelli attivi, prendi l'ultimo attivo
-        var cartAttivoEsiste = carrelli.find(function(c){ return c.id === activeCartId && c.stato !== 'inviato'; });
-        if(!cartAttivoEsiste){
-          var attivi = carrelli.filter(function(c){ return c.stato !== 'inviato'; });
-          activeCartId = attivi.length ? attivi[attivi.length-1].id : (carrelli.length ? carrelli[carrelli.length-1].id : null);
+        // Se activeCartId non è valido (inviato storico / assente), risolvi come dopo deleteCart
+        var cartAttivoOk = carrelli.find(function(c){
+          return c && c.id === activeCartId && c.stato !== 'inviato' &&
+            (typeof ctCartCreatoOggi !== 'function' || ctCartCreatoOggi(c));
+        });
+        if(!cartAttivoOk && typeof _cartResolveActiveId === 'function'){
+          activeCartId = _cartResolveActiveId();
           console.log('[CART] activeCartId corretto a:', activeCartId);
         }
         var t = document.getElementById('tc');

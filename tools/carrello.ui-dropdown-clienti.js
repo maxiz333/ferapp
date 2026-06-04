@@ -37,8 +37,64 @@ function ctCartActivityDayKey(cart){
     String(d.getDate()).padStart(2, '0');
 }
 
+/** Giorno di creazione (mai ultimaModificaISO). */
+function ctCartCreatoDayKey(cart){
+  if(!cart) return '';
+  if(cart.creatoAtISO){
+    var d = new Date(cart.creatoAtISO);
+    if(!isNaN(d.getTime())){
+      return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+    }
+  }
+  if(cart.dataCreazione != null){
+    var d2 = new Date(cart.dataCreazione);
+    if(!isNaN(d2.getTime())){
+      return d2.getFullYear() + '-' +
+        String(d2.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d2.getDate()).padStart(2, '0');
+    }
+  }
+  return '';
+}
+
+function ctCartCreatoOggi(cart){
+  return ctCartCreatoDayKey(cart) === ctOggiDateKey();
+}
+
+/** Ordine/bozza collegato al carrello con data di oggi (stessa logica tab Ordini). */
+function ctCartLinkedOrdineOggi(cart){
+  if(!cart || typeof ordini === 'undefined' || !ordini) return false;
+  var oid = cart.bozzaOrdId || cart.ordId;
+  if(!oid) return false;
+  var ord = ordini.find(function(o){ return o && o.id === oid; });
+  if(!ord) return false;
+  var ordDay = typeof _ordGetFilterDateISO === 'function'
+    ? _ordGetFilterDateISO(ord)
+    : (ord.dataISO || (ord.createdAt ? String(ord.createdAt).slice(0, 10) : ''));
+  return ordDay === ctOggiDateKey();
+}
+
+/**
+ * Dropdown CLIENTI "Oggi": creati oggi, in modifica, o collegati a ordine/bozza di oggi;
+ * mai inviati alla cassa creati in giorni precedenti senza legame ordine di oggi.
+ */
 function ctCartIsGiornaliero(cart){
-  return ctCartActivityDayKey(cart) === ctOggiDateKey();
+  if(!cart) return false;
+  if(ctCartCreatoOggi(cart)) return true;
+  if(cart.stato === 'modifica') return true;
+  if(ctCartLinkedOrdineOggi(cart)) return true;
+  if(cart.stato === 'inviato') return false;
+  return false;
+}
+
+/** Evita che un carrello storico "ringiovanisca" aggiornando ultimaModificaISO. */
+function ctCartShouldTouchUltimaModifica(cart){
+  if(!cart) return false;
+  if(cart.stato === 'inviato' && !ctCartCreatoOggi(cart)) return false;
+  if(!ctCartCreatoOggi(cart) && cart.stato !== 'modifica') return false;
+  return true;
 }
 
 function ctCartActivityMs(cart){
@@ -102,6 +158,9 @@ function ctRenderClientiList(){
   });
 
   entries.sort(function(a, b){
+    var aInv = a.cart.stato === 'inviato' ? 1 : 0;
+    var bInv = b.cart.stato === 'inviato' ? 1 : 0;
+    if(aInv !== bInv) return aInv - bInv;
     return ctCartActivityMs(b.cart) - ctCartActivityMs(a.cart);
   });
 

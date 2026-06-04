@@ -410,8 +410,10 @@ function cartSetScaglioneQta(cartId, idx, val){
   saveCarrelli = function(){
     try{
       if(typeof carrelli!=='undefined'&&carrelli&&typeof activeCartId==='string'&&activeCartId){
-        var _touch=carrelli.find(function(c){return c&&c.id===activeCartId;});
-        if(_touch) _touch.ultimaModificaISO=new Date().toISOString();
+        var _touch = carrelli.find(function(c){ return c && c.id === activeCartId; });
+        if(_touch && (typeof ctCartShouldTouchUltimaModifica !== 'function' || ctCartShouldTouchUltimaModifica(_touch))){
+          _touch.ultimaModificaISO = new Date().toISOString();
+        }
       }
     }catch(_e){}
     _origSaveCarrelli();

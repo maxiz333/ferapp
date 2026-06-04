@@ -7,6 +7,19 @@ function newCart(){
   document.getElementById('nc-overlay').classList.add('open');
   setTimeout(function(){if(el)el.focus();},100);
 }
+function _cartNextClienteLabelOggi(){
+  var maxN = 0;
+  (carrelli || []).forEach(function(c){
+    if(typeof ctCartCreatoOggi === 'function' && !ctCartCreatoOggi(c)) return;
+    var m = String(c && c.nome || '').trim().match(/^Cliente\s+(\d+)$/i);
+    if(m){
+      var n = parseInt(m[1], 10);
+      if(!isNaN(n) && n > maxN) maxN = n;
+    }
+  });
+  return 'Cliente ' + (maxN + 1);
+}
+
 function confirmNewCart(){
   var el=document.getElementById('nc-input');
   var nome=el?el.value.trim():'';
@@ -18,7 +31,7 @@ function confirmNewCart(){
   if(nome&&sconto)setClienteSconto(nome,sconto);
   var id='cart_'+Date.now();
   var nowIso=new Date().toISOString();
-  carrelli.push({id:id,nome:nome||('Cliente '+(carrelli.length+1)),
+  carrelli.push({id:id,nome:nome||_cartNextClienteLabelOggi(),
     createdAt:new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}),
     dataCreazione:Date.now(),
     creatoAtISO:nowIso,
@@ -49,6 +62,47 @@ function ncAutoSconto(){
 function switchCart(idx){
   if(carrelli[idx])activeCartId=carrelli[idx].id;
   renderCartTabs();
+}
+
+/** Carrello vuoto con timestamp di oggi (senza overlay NUOVO). */
+function _cartCreateVuotoOggi(nome){
+  var id = 'cart_' + Date.now();
+  var nowIso = new Date().toISOString();
+  var label = (nome && String(nome).trim()) || (typeof _cartNextClienteLabelOggi === 'function' ? _cartNextClienteLabelOggi() : 'Cliente 1');
+  carrelli.push({
+    id: id,
+    nome: label,
+    createdAt: new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+    dataCreazione: Date.now(),
+    creatoAtISO: nowIso,
+    ultimaModificaISO: nowIso,
+    items: [],
+    scontoGlobale: null,
+    fatturaRichiesta: false,
+    fatturaCliente: null,
+    salvaFatturaInRubrica: false
+  });
+  return id;
+}
+
+/** Dopo eliminazione/sync: carrello aperto creato oggi, altrimenti null (schermata NUOVO). */
+function _cartResolveActiveId(){
+  var oggi = typeof ctOggiDateKey === 'function' ? ctOggiDateKey() : '';
+  var best = null;
+  var bestMs = 0;
+  (carrelli || []).forEach(function(c){
+    if(!c || c.stato === 'inviato') return;
+    if(typeof ctCartCreatoOggi === 'function' && !ctCartCreatoOggi(c)) return;
+    if(typeof ctCartCreatoDayKey === 'function' && ctCartCreatoDayKey(c) !== oggi) return;
+    var iso = (typeof ctCartActivityIso === 'function') ? ctCartActivityIso(c) : (c.ultimaModificaISO || c.creatoAtISO || '');
+    var ms = iso ? new Date(iso).getTime() : 0;
+    if(isNaN(ms)) ms = 0;
+    if(!best || ms >= bestMs){
+      best = c;
+      bestMs = ms;
+    }
+  });
+  return best ? best.id : null;
 }
 
 function _cartTrashSave(){
@@ -101,7 +155,11 @@ function deleteCart(id, toastMsg){
   carrelliCestino.unshift(cart);
   _cartTrashSave();
   carrelli=carrelli.filter(function(c){return c.id!==id;});
-  if(activeCartId===id)activeCartId=carrelli.length?carrelli[carrelli.length-1].id:null;
+  if(activeCartId===id){
+    activeCartId = typeof _cartResolveActiveId === 'function'
+      ? _cartResolveActiveId()
+      : null;
+  }
   saveCarrelli();renderCartTabs();
   if(toastMsg === null || toastMsg === '') return;
   showToastGen('green', toastMsg === undefined ? '🗑️ Carrello eliminato' : toastMsg);
