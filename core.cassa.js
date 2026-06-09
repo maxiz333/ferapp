@@ -167,7 +167,7 @@ function _cassaModeRender(forceList){
   }
   lista.forEach(function(ord){
     var gi = ordini.indexOf(ord);
-    var nArt = (ord.items||[]).length;
+    var nArt = (ord.items||[]).filter(function(it){ return !ordItemCongelato(it); }).length;
     var tot = ordTotaleSenzaCongelati(ord);
     var SC_C = {nuovo:'#f5c400', pronto:'#dd6b20'};
     var SL_C = {nuovo:'NUOVO', pronto:'PRONTO'};
@@ -207,9 +207,9 @@ function _cassaModeApri(gi){
   var cm = document.getElementById('cassa-mode-ov');
   if(!cm) return;
 
-  var nArt = (ord.items||[]).length;
-  var tot = 0;
-  (ord.items||[]).forEach(function(it){ tot += parsePriceIT(it.prezzoUnit) * parseFloat(it.qty||0); });
+  var itemsAttivi = (ord.items||[]).filter(function(it){ return !ordItemCongelato(it); });
+  var nArt = itemsAttivi.length;
+  var tot = ordTotaleSenzaCongelati(ord);
 
   var h = '';
   // Header con tasto indietro
@@ -233,6 +233,7 @@ function _cassaModeApri(gi){
   ordineIndiciOrdineDisplayCronologico(ord).forEach(function(i){
     var it = ord.items[i];
     if(!it) return;
+    if(ordItemCongelato(it)) return;
     var pu = parsePriceIT(it.prezzoUnit);
     var q = parseFloat(it.qty||0);
     var sub = (pu*q).toFixed(2);
