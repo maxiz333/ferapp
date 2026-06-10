@@ -3,7 +3,9 @@
 var _storicoOpen=false;
 var _storicoSearch='';
 var _storicoWeekdayFilter=null;
-var _storicoWeeksAgo=0;
+/** Le ultime 2 settimane vivono nella tab attiva: lo Storico parte da "3 settimane fa". */
+var _STORICO_MIN_WEEKS=3;
+var _storicoWeeksAgo=_STORICO_MIN_WEEKS;
 var _storicoWeekdayDropdown=null;
 var _storicoBeyond6=false;
 var _STORICO_WDAY_LABELS=['','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
@@ -94,13 +96,13 @@ function _storicoWeekdayTargetISO(weekdayIdx,weeksAgo){
     String(target.getDate()).padStart(2,'0');
 }
 
+/**
+ * Cutoff per "Oltre 6 X fa": la data esatta del giorno selezionato 6 settimane fa.
+ * Tutti gli ordini di quel giorno più vecchi del 6° ricorrere finiscono in "Oltre".
+ */
 function _storicoOlderCutoffISO(){
-  var d=new Date();
-  d.setHours(0,0,0,0);
-  d.setDate(d.getDate()-42);
-  return d.getFullYear()+'-'+
-    String(d.getMonth()+1).padStart(2,'0')+'-'+
-    String(d.getDate()).padStart(2,'0');
+  var wd=_storicoWeekdayFilter!=null?_storicoWeekdayFilter:(_storicoTodayWeekdayIdx()||1);
+  return _storicoWeekdayTargetISO(wd,6);
 }
 
 function _storicoGetFilterDateISO(ord){
@@ -160,8 +162,9 @@ function storicoOpenWeekdayDropdown(weekday){
   if(!dd||!btn)return;
   var label=_STORICO_WDAY_LABELS[weekday]||'';
   var inner='';
-  for(var w=1;w<=6;w++){
-    var txt=w===1?(label+' scorso'):(w+' '+label+' fa');
+  // "3 … fa" è già la vista di default: in tendina si parte da "4 … fa"
+  for(var w=_STORICO_MIN_WEEKS+1;w<=6;w++){
+    var txt=w+' '+label+' fa';
     inner+='<button type="button" class="ord-wday-dropdown-pick" onclick="storicoPickWeekdayAgo('+w+')">'+esc(txt)+'</button>';
   }
   inner+='<button type="button" class="ord-wday-dropdown-pick" onclick="storicoPickWeekdayBeyond6()">Oltre 6 '+esc(label)+' fa</button>';
@@ -179,7 +182,7 @@ function storicoPickWeekdayAgo(weeksAgo){
   var wd=_storicoWeekdayDropdown!=null?_storicoWeekdayDropdown:_storicoWeekdayFilter;
   if(wd==null)return;
   _storicoWeekdayFilter=wd;
-  _storicoWeeksAgo=weeksAgo||0;
+  _storicoWeeksAgo=Math.max(weeksAgo||_STORICO_MIN_WEEKS,_STORICO_MIN_WEEKS);
   _storicoBeyond6=false;
   storicoCloseWeekdayDropdown();
   storicoUpdateWeekdayButtonsUI();
@@ -191,7 +194,7 @@ function storicoPickWeekdayBeyond6(){
   if(wd==null)return;
   _storicoWeekdayFilter=wd;
   _storicoBeyond6=true;
-  _storicoWeeksAgo=0;
+  _storicoWeeksAgo=_STORICO_MIN_WEEKS;
   storicoCloseWeekdayDropdown();
   storicoUpdateWeekdayButtonsUI();
   renderStoricoOrdini();
@@ -199,23 +202,25 @@ function storicoPickWeekdayBeyond6(){
 
 function storicoClickWeekday(weekday,ev){
   if(ev&&typeof ev.stopPropagation==='function')ev.stopPropagation();
-  _storicoBeyond6=false;
   if(_storicoWeekdayFilter!==weekday){
     _storicoWeekdayFilter=weekday;
-    _storicoWeeksAgo=0;
-    storicoCloseWeekdayDropdown();
-    storicoUpdateWeekdayButtonsUI();
-    renderStoricoOrdini();
-    return;
-  }
-  if(_storicoWeeksAgo>0||_storicoBeyond6){
-    _storicoWeeksAgo=0;
+    _storicoWeeksAgo=_STORICO_MIN_WEEKS;
     _storicoBeyond6=false;
     storicoCloseWeekdayDropdown();
     storicoUpdateWeekdayButtonsUI();
     renderStoricoOrdini();
     return;
   }
+  // Giorno già attivo: se siamo oltre la vista base, il tap riporta a "3 … fa"
+  if(_storicoWeeksAgo>_STORICO_MIN_WEEKS||_storicoBeyond6){
+    _storicoWeeksAgo=_STORICO_MIN_WEEKS;
+    _storicoBeyond6=false;
+    storicoCloseWeekdayDropdown();
+    storicoUpdateWeekdayButtonsUI();
+    renderStoricoOrdini();
+    return;
+  }
+  // Già sulla vista base: apre/chiude la tendina settimane
   var dd=document.getElementById('ord-storico-wday-dropdown');
   var ddOpen=dd&&(dd.style.display==='block'||dd.classList.contains('ord-wday-dropdown--open'));
   if(_storicoWeekdayDropdown===weekday&&ddOpen){
@@ -233,7 +238,8 @@ function storicoUpdateWeekdayButtonsUI(){
     btn.classList.toggle('ord-wday-today',todayIdx===i);
     var active=_storicoWeekdayFilter===i;
     btn.classList.toggle('ord-wday-active',active);
-    btn.classList.toggle('ord-wday-scorso',active&&(_storicoWeeksAgo>0||_storicoBeyond6));
+    // Nello Storico weeksAgo è sempre >=3: evidenzia solo la modalità "Oltre 6"
+    btn.classList.toggle('ord-wday-scorso',active&&_storicoBeyond6);
   }
 }
 
@@ -255,12 +261,13 @@ function _storicoBindWdayDocClickOnce(){
 }
 
 function _storicoInitWeekdayOnOpen(){
+  // Normalizza sempre: il minimo nello Storico è "3 settimane fa"
+  if(_storicoWeeksAgo<_STORICO_MIN_WEEKS)_storicoWeeksAgo=_STORICO_MIN_WEEKS;
   if(_storicoWeekdayFilter!=null)return;
   var todayIdx=_storicoTodayWeekdayIdx();
-  if(todayIdx!=null){
-    _storicoWeekdayFilter=todayIdx;
-    _storicoWeeksAgo=0;
-  }
+  // Domenica (todayIdx null): fallback su Sabato
+  _storicoWeekdayFilter=todayIdx!=null?todayIdx:6;
+  _storicoWeeksAgo=_STORICO_MIN_WEEKS;
 }
 
 function storicoHtmlWeekdayBar(){
@@ -286,9 +293,7 @@ function storicoHtmlFilterMeta(total){
   if(_storicoWeekdayFilter!=null){
     var iso=_storicoWeekdayTargetISO(_storicoWeekdayFilter,_storicoWeeksAgo);
     var lbl=_storicoDayLabel(iso);
-    var suffix='';
-    if(_storicoWeeksAgo===1)suffix=' · scorso';
-    else if(_storicoWeeksAgo>1)suffix=' · '+_storicoWeeksAgo+' settimane fa';
+    var suffix=' · '+_storicoWeeksAgo+' settimane fa';
     return '<div class="ord-storico-filter-meta">'+esc(lbl)+suffix+(total!=null?' · '+total+' ordini':'')+'</div>';
   }
   return '';
@@ -378,7 +383,7 @@ function renderStoricoOrdini(){
   h+='</div>';
 
   if(!arch.length){
-    sv.innerHTML=h+'<div class="ord-storico-empty">Nessun ordine archiviato.<br><small>Gli ordini completati da 13+ giorni vengono archiviati automaticamente.</small></div>';
+    sv.innerHTML=h+'<div class="ord-storico-empty">Nessun ordine archiviato.<br><small>Qui finiscono gli ordini antecedenti alle ultime 2 settimane, archiviati automaticamente ogni lunedì.</small></div>';
     storicoUpdateWeekdayButtonsUI();
     return;
   }

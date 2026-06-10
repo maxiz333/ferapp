@@ -213,15 +213,17 @@ function _scheduleDbSystemMaintenance(){
   function _applySharedValue(path, key, globalVarName, fallbackDefault){
     _fbDb.ref(path).on('value', function(snap){
       var d = snap.val();
+      // Primo snapshot dell'archivio ricevuto: l'archiviazione automatica può partire
+      if(path === 'shared/ordini_archivio') window._ordArchSnapshotDone = true;
       if(d == null){
-        if(typeof window[globalVarName] !== 'undefined'){
-          // Primo bootstrap: se Firebase è vuoto ma esiste locale, pubblica il locale.
-          var local = _safeLsGet(key, fallbackDefault);
-          if(local != null && (Array.isArray(local) ? local.length : Object.keys(local || {}).length)){
-            _fbSharedSyncing[path] = true;
-            try{ _fbDb.ref(path).set(local); }catch(e){}
-            setTimeout(function(){ _fbSharedSyncing[path] = false; }, 250);
-          }
+        // Primo bootstrap: se Firebase è vuoto ma esiste locale, pubblica il locale.
+        // NB: si controlla il localStorage, non la variabile globale (che per i
+        // dataset lazy come ordiniArchivio è undefined all'avvio).
+        var local = _safeLsGet(key, fallbackDefault);
+        if(local != null && (Array.isArray(local) ? local.length : Object.keys(local || {}).length)){
+          _fbSharedSyncing[path] = true;
+          try{ _fbDb.ref(path).set(local); }catch(e){}
+          setTimeout(function(){ _fbSharedSyncing[path] = false; }, 250);
         }
         return;
       }
@@ -300,6 +302,38 @@ function _scheduleDbSystemMaintenance(){
       if(typeof _ordRemoteMeta !== 'undefined') _ordRemoteMeta = m;
       window._ordRemoteMeta = m;
     });
+    // Archiviazione automatica al boot: parte solo quando ANCHE lo snapshot di
+    // shared/ordini_archivio è arrivato (window._ordArchSnapshotDone), così
+    // l'archivio locale non viene aggiornato su una base stantia (race al boot).
+    // Ritenta ogni 500ms per max ~15s, poi parte comunque.
+    function _ordScheduleArchivBoot(){
+      if(window._ordArchivAutoBootScheduled) return;
+      window._ordArchivAutoBootScheduled = true;
+      var tentativi = 0;
+      function attendi(){
+        tentativi++;
+        if(!window._ordArchSnapshotDone && tentativi < 30){
+          setTimeout(attendi, 500);
+          return;
+        }
+        if(typeof eseguiArchiviazioneAutomatica === 'function'){
+          var n = eseguiArchiviazioneAutomatica();
+          if(n > 0) console.log('[Ordini] archiviazione automatica:', n);
+        }
+      }
+      // Prima esecuzione differita (mai dentro il callback del listener ordini)
+      setTimeout(attendi, 400);
+      // Dispositivi sempre accesi (tablet/cassa): ricontrolla ogni 6 ore,
+      // la funzione è idempotente e a vuoto non costa nulla.
+      if(!window._ordArchivAutoInterval){
+        window._ordArchivAutoInterval = setInterval(function(){
+          if(typeof eseguiArchiviazioneAutomatica === 'function'){
+            var n = eseguiArchiviazioneAutomatica();
+            if(n > 0) console.log('[Ordini] archiviazione automatica (periodica):', n);
+          }
+        }, 6 * 60 * 60 * 1000);
+      }
+    }
     _fbDb.ref('ordini').on('value',function(snap){
       var isBoot = _first;
       var d=snap.val();
@@ -316,15 +350,7 @@ function _scheduleDbSystemMaintenance(){
         _first=false;
       }
       if(JSON.stringify(fresh)===JSON.stringify(ordini)){
-        if(isBoot && !window._ordArchivAutoBootScheduled){
-          window._ordArchivAutoBootScheduled = true;
-          setTimeout(function(){
-            if(typeof eseguiArchiviazioneAutomatica === 'function'){
-              var n = eseguiArchiviazioneAutomatica();
-              if(n > 0) console.log('[Ordini] archiviazione automatica:', n);
-            }
-          }, 400);
-        }
+        if(isBoot) _ordScheduleArchivBoot();
         return;
       }
       _fbSyncing=true;
@@ -370,15 +396,7 @@ function _scheduleDbSystemMaintenance(){
         });
       }catch(e){console.error('FB ordini:',e);}
       _fbSyncing=false;
-      if(isBoot && !window._ordArchivAutoBootScheduled){
-        window._ordArchivAutoBootScheduled = true;
-        setTimeout(function(){
-          if(typeof eseguiArchiviazioneAutomatica === 'function'){
-            var n = eseguiArchiviazioneAutomatica();
-            if(n > 0) console.log('[Ordini] archiviazione automatica:', n);
-          }
-        }, 400);
-      }
+      if(isBoot) _ordScheduleArchivBoot();
     });
     _fbDb.ref('carrelli').on('value',function(snap){
       // Flag SEPARATO: non interferisce con la sync degli ordini.

@@ -28,9 +28,22 @@ function getOrdiniArchivio(){
   return ordiniArchivio;
 }
 
-var SETTE_GG_MS = 7 * 24 * 60 * 60 * 1000;
-/** Fallback: forza eleggibilità archivio se manca ogni data affidabile. */
-var _ORD_COMPLETATO_FALLBACK_MS = 8 * 24 * 60 * 60 * 1000;
+/**
+ * Mezzanotte del lunedì della settimana SCORSA (ms).
+ * La tab attiva conserva la settimana corrente + tutta la settimana scorsa:
+ * ciò che è più vecchio di questo cutoff "scivola" nello Storico.
+ * La domenica è considerata parte della settimana che si chiude.
+ */
+function _ordCutoffArchivioMs(){
+  var d = new Date();
+  d.setHours(0, 0, 0, 0);
+  var jsDay = d.getDay();                        // 0=Dom … 6=Sab
+  var daLunedi = (jsDay === 0 ? 6 : jsDay - 1);  // distanza dal lunedì corrente
+  d.setDate(d.getDate() - daLunedi - 7);         // lunedì della settimana scorsa
+  return d.getTime();
+}
+/** Fallback se manca ogni data affidabile: 15 giorni fa → sempre oltre il cutoff (max 13 gg). */
+var _ORD_COMPLETATO_FALLBACK_MS = 15 * 24 * 60 * 60 * 1000;
 
 function _ordParseItalianDataMs(dataStr){
   var data = String(dataStr || '').trim();
@@ -42,7 +55,7 @@ function _ordParseItalianDataMs(dataStr){
   return isNaN(t) ? 0 : t;
 }
 
-/** Timestamp completamento per regola 7 giorni (ms). */
+/** Timestamp completamento per il calcolo del cutoff di archiviazione (ms). */
 function _ordCompletatoAtMs(o){
   if(!o) return 0;
   var candidates = [o.completatoAtISO, o.createdAt, o.dataISO];
@@ -58,21 +71,77 @@ function _ordCompletatoAtMs(o){
 }
 
 /**
- * Archivia ordini completati da 7+ giorni (dopo sync Firebase).
+ * Unione per id di due archivi ordini: nessun lato può cancellare ordini
+ * archiviati dall'altro. In caso di id presente su entrambi vince il locale.
+ * Le voci senza id vengono mantenute (dal remoto solo se non duplicate).
+ */
+function _ordArchMergeById(localArr, remoteArr){
+  localArr = Array.isArray(localArr) ? localArr : [];
+  remoteArr = Array.isArray(remoteArr) ? remoteArr : [];
+  var localIds = {};
+  localArr.forEach(function(o){ if(o && o.id != null) localIds[String(o.id)] = true; });
+  var merged = localArr.slice();
+  remoteArr.forEach(function(ro){
+    if(!ro) return;
+    if(ro.id != null && localIds[String(ro.id)]) return;
+    merged.push(ro);
+  });
+  return merged;
+}
+
+/**
+ * Push esplicito dell'archivio su shared/ordini_archivio via transaction
+ * con merge per id: non viene mai "saltato" (a differenza del lsSet patchato,
+ * che ignora il push quando _fbSharedSyncing è attivo) e non sovrascrive
+ * ciecamente ordini archiviati da altri dispositivi.
+ */
+function _ordArchPushFirebase(){
+  if(typeof _fbReady === 'undefined' || !_fbReady || !_fbDb) return;
+  var localSnapshot = (getOrdiniArchivio() || []).slice();
+  try{
+    _fbDb.ref('shared/ordini_archivio').transaction(function(remoteRaw){
+      var remoteArr = remoteRaw
+        ? (Array.isArray(remoteRaw) ? remoteRaw : Object.values(remoteRaw)).filter(function(x){ return x != null; })
+        : [];
+      var merged = _ordArchMergeById(localSnapshot, remoteArr);
+      return merged.length ? merged : null;
+    }, function(err, committed, snap){
+      if(err){ console.error('[ARCH] push archivio Firebase FALLITO:', err); return; }
+      if(!committed) return;
+      // Allinea anche lo stato locale al valore confermato (può contenere
+      // ordini archiviati da altri dispositivi recuperati dal merge).
+      try{
+        var confirmed = snap && snap.val();
+        if(confirmed){
+          var arr = Array.isArray(confirmed) ? confirmed : Object.values(confirmed);
+          arr = arr.filter(function(x){ return x != null; });
+          ordiniArchivio = arr;
+          if(typeof window !== 'undefined' && window.AppStorage) window.AppStorage.set(ORDK_ARCH, arr);
+        }
+      }catch(e){}
+    }, false);
+  }catch(e){ console.error('[ARCH] push archivio Firebase errore:', e); }
+}
+window._ordArchPushFirebase = _ordArchPushFirebase;
+
+/**
+ * Archivia gli ordini completati usciti dalle 2 settimane attive
+ * (settimana corrente + settimana scorsa), dopo il sync Firebase.
+ * Gli ordini "unlocked" vengono comunque archiviati se superano il cutoff.
  * @returns {number} quanti ordini spostati
  */
 function eseguiArchiviazioneAutomatica(){
   if(!Array.isArray(ordini)) return 0;
-  var now = Date.now();
+  var cutoffMs = _ordCutoffArchivioMs();
   var daArch = [];
   ordini = ordini.filter(function(o){
     if(!o || o.stato !== 'completato') return true;
-    if(o.unlocked === true) return true;
     var compAt = _ordCompletatoAtMs(o);
-    if(now - compAt > SETTE_GG_MS){
+    if(compAt < cutoffMs){
       if(!o.completatoAtISO || isNaN(new Date(o.completatoAtISO).getTime())){
         o.completatoAtISO = new Date(compAt).toISOString();
       }
+      if(o.unlocked === true) o.unlocked = false;
       daArch.push(o);
       return false;
     }
@@ -82,8 +151,27 @@ function eseguiArchiviazioneAutomatica(){
 
   var prev = getOrdiniArchivio();
   if(!Array.isArray(prev)) prev = [];
-  ordiniArchivio = daArch.concat(prev);
-  lsSet(ORDK_ARCH, ordiniArchivio);
+  // Dedupe per id: un doppio giro non deve duplicare le card nello Storico.
+  // NB: gli id rimossi da ordini[] (per il push con intentionalDelete) restano
+  // quelli di TUTTI gli ordini filtrati, anche se già presenti in archivio.
+  var prevIds = {};
+  prev.forEach(function(o){ if(o && o.id != null) prevIds[String(o.id)] = true; });
+  var daArchNuovi = daArch.filter(function(o){
+    return !(o && o.id != null && prevIds[String(o.id)]);
+  });
+  ordiniArchivio = daArchNuovi.concat(prev);
+  // Evita il set() cieco del lsSet patchato su shared/ordini_archivio:
+  // il push lo fa SOLO _ordArchPushFirebase con merge per id (transaction).
+  var _archPath = 'shared/ordini_archivio';
+  var _hasFlag = (typeof _fbSharedSyncing !== 'undefined');
+  var _flagPrec = _hasFlag ? _fbSharedSyncing[_archPath] : undefined;
+  if(_hasFlag) _fbSharedSyncing[_archPath] = true;
+  try{
+    lsSet(ORDK_ARCH, ordiniArchivio);
+  } finally {
+    if(_hasFlag) _fbSharedSyncing[_archPath] = _flagPrec || false;
+  }
+  _ordArchPushFirebase();
 
   var ids = daArch.map(function(o){ return o.id; }).filter(Boolean);
   var opts = (typeof _ordSaveOptsForArchive === 'function')
