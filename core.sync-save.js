@@ -342,16 +342,111 @@ if(typeof lsSet === 'function' && !window.__LSSET_FB_SHARED_PATCHED__){
   };
 }
 
+// ══ CARRELLI: push con merge per-id (anti-sovrascrittura) ════════════════════
+// Il vecchio set() cieco dell'intero nodo permetteva a un dispositivo con lista
+// stantia di cancellare i carrelli creati dagli altri. Ora ogni salvataggio fa
+// il merge per id con il valore corrente del server dentro una transaction.
+var _cartFirstSyncDone = false;  // true dopo il primo snapshot del nodo 'carrelli'
+var _cartPushPending = false;    // push richiesto ma rimandato (boot / apply remoto in corso)
+
+/** Id presenti nel cestino carrelli = eliminazioni intenzionali (deleteCart, rotazione, ordine eliminato). */
+function _cartTrashIdSet(){
+  var set = {};
+  var trash = (typeof carrelliCestino !== 'undefined' && carrelliCestino) || [];
+  trash.forEach(function(c){ if(c && c.id) set[c.id] = true; });
+  return set;
+}
+
+function _cartActivityMsForMerge(cart){
+  if(typeof ctCartActivityMs === 'function') return ctCartActivityMs(cart);
+  var iso = (cart && (cart.ultimaModificaISO || cart.creatoAtISO)) || '';
+  var t = iso ? new Date(iso).getTime() : Number(cart && cart.dataCreazione || 0);
+  return isNaN(t) ? 0 : t;
+}
+
+/**
+ * Unione per id di carrelli locali e remoti: nessun lato può cancellare
+ * carrelli che non conosce. Le uniche rimozioni ammesse sono quelle
+ * registrate nel cestino (eliminazioni volontarie).
+ * Ritorna { merged: [], resurrected: n }.
+ */
+function _cartMergeById(localArr, remoteArr){
+  localArr = localArr || [];
+  remoteArr = remoteArr || [];
+  var trashIds = _cartTrashIdSet();
+  var localById = {};
+  localArr.forEach(function(c){ if(c && c.id) localById[c.id] = c; });
+  var merged = [];
+  var seen = {};
+  var resurrected = 0;
+  remoteArr.forEach(function(rc){
+    if(!rc) return;
+    if(!rc.id){ merged.push(rc); return; }
+    if(trashIds[rc.id]) return; // eliminato volutamente da qualche dispositivo
+    seen[rc.id] = true;
+    var lc = localById[rc.id];
+    if(lc){
+      // Stesso carrello su entrambi i lati: vince l'attività più recente (parità → locale)
+      merged.push(_cartActivityMsForMerge(rc) > _cartActivityMsForMerge(lc) ? rc : lc);
+    } else {
+      // Presente solo sul server e non eliminato: va preservato (creato altrove)
+      merged.push(rc);
+      resurrected++;
+    }
+  });
+  localArr.forEach(function(lc){
+    if(!lc) return;
+    if(!lc.id){ merged.push(lc); return; }
+    if(seen[lc.id]) return;
+    if(trashIds[lc.id]) return; // già nel cestino: non ripubblicarlo
+    merged.push(lc);
+  });
+  return { merged: merged, resurrected: resurrected };
+}
+
+/** Push del nodo 'carrelli' via transaction (merge con il server, mai sovrascrittura cieca). */
+function _cartPushToFirebase(){
+  if(!_fbReady || !_fbDb){
+    _cartPushPending = true; // verrà eseguito al primo snapshot dopo la connessione
+    return;
+  }
+  if(!_cartFirstSyncDone || _fbSyncingCart){
+    // Mai pubblicare prima di aver visto il server (race all'avvio) né durante
+    // l'applicazione di un aggiornamento remoto: il push parte subito dopo.
+    _cartPushPending = true;
+    return;
+  }
+  var localSnapshot = (carrelli || []).slice();
+  var mergeInfo = null;
+  try{
+    _fbDb.ref('carrelli').transaction(function(remoteRaw){
+      var remoteArr = remoteRaw ? (typeof _fbFix === 'function' ? _fbFix(remoteRaw) : remoteRaw) : [];
+      mergeInfo = _cartMergeById(localSnapshot, remoteArr);
+      return mergeInfo.merged.length ? mergeInfo.merged : null;
+    }, function(err, committed){
+      if(err){ console.error('[CART] saveCarrelli Firebase FALLITO (transaction):', err); return; }
+      if(!committed) return;
+      if(mergeInfo && mergeInfo.resurrected > 0){
+        console.log('[CART] merge: ripristinati ' + mergeInfo.resurrected + ' carrelli presenti solo sul server');
+      }
+      console.log('[CART] saveCarrelli — Firebase aggiornato (merge), totale condiviso:', mergeInfo ? mergeInfo.merged.length : 0);
+    }, false); // applyLocally=false: il listener riceve solo il valore confermato dal server
+  }catch(e){ console.error('[CART] saveCarrelli Firebase FALLITO:', e); }
+}
+
+/** Esegue un push rimandato (chiamata dal listener dopo ogni snapshot applicato). */
+function _cartFlushPendingPush(){
+  if(!_cartPushPending) return;
+  if(!_fbReady || !_fbDb || !_cartFirstSyncDone || _fbSyncingCart) return;
+  _cartPushPending = false;
+  _cartPushToFirebase();
+}
+
 function saveCarrelli(){
   _takeSnapshot();
   lsSet(CARTK, carrelli);
   updateCartBadge();
-  if(_fbReady && _fbDb && !_fbSyncingCart){
-    try{
-      _fbDb.ref('carrelli').set(carrelli.length ? carrelli : null);
-      console.log('[CART] saveCarrelli — Firebase aggiornato, totale condiviso:', carrelli.length);
-    }catch(e){ console.error('[CART] saveCarrelli Firebase FALLITO:', e); }
-  }
+  _cartPushToFirebase();
   if(typeof renderOrdini==='function'){
     if(typeof cartNoteFieldHasFocus!=='function' || !cartNoteFieldHasFocus()) renderOrdini();
   }

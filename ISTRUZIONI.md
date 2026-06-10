@@ -31,8 +31,8 @@ Due interfacce: Banco (vendita) e Ufficio (gestione).
 
 ## Nodi Firebase
 - magazzino_ext — 19.000 articoli
-- ordini — ordini sincronizzati real-time
-- carrelli — carrelli attivi (solo non-inviati)
+- ordini — ordini sincronizzati real-time (push protetto da guardie anti-regressione + ordini_meta)
+- carrelli — tutti i carrelli della giornata, inclusi quelli inviati alla cassa. Il push NON usa mai set() cieco: saveCarrelli → _cartPushToFirebase (core.sync-save.js) fa una transaction con merge per-id (_cartMergeById). Un dispositivo con lista stantia non può cancellare i carrelli degli altri; le uniche rimozioni ammesse sono quelle registrate in carrelliCestino. Nessun push prima del primo snapshot ricevuto (_cartFirstSyncDone).
 - auth — account, PIN, nomi, colori
 - cartellini — lista cartellini
 - ordiniLocks — lock collaborativo ordini

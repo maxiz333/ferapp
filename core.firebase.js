@@ -381,12 +381,19 @@ function _scheduleDbSystemMaintenance(){
       }
     });
     _fbDb.ref('carrelli').on('value',function(snap){
-      // Flag SEPARATO: non interferisce con la sync degli ordini
+      // Flag SEPARATO: non interferisce con la sync degli ordini.
+      // NB: il flag è attivo solo per la durata SINCRONA dell'applicazione
+      // (niente finestra di 300ms): nessun evento remoto viene più scartato.
       if(_fbSyncingCart) return;
       var d = snap.val();
       // Firebase manda null se non ci sono carrelli — normale
       var fresh = d ? _fbFix(d) : [];
-      if(JSON.stringify(fresh) === JSON.stringify(carrelli)) return;
+      // Primo snapshot ricevuto: da qui in poi saveCarrelli può pubblicare (merge)
+      if(typeof _cartFirstSyncDone !== 'undefined') _cartFirstSyncDone = true;
+      if(JSON.stringify(fresh) === JSON.stringify(carrelli)){
+        if(typeof _cartFlushPendingPush === 'function') _cartFlushPendingPush();
+        return;
+      }
       _fbSyncingCart = true;
       try{
         console.log('[CART] sync Firebase — totale condiviso:', fresh.length);
@@ -413,7 +420,10 @@ function _scheduleDbSystemMaintenance(){
           }
         }
       }catch(e){ console.error('[CART] sync Firebase errore:', e); }
-      setTimeout(function(){ _fbSyncingCart = false; }, 300);
+      finally{ _fbSyncingCart = false; }
+      // Eventuali salvataggi richiesti durante l'applicazione (o prima del primo
+      // snapshot) partono ora, con merge sul valore appena ricevuto.
+      if(typeof _cartFlushPendingPush === 'function') _cartFlushPendingPush();
     });
 
     // Dataset condivisi: identici su tutti gli account/dispositivi
