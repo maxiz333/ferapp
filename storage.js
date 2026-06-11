@@ -25,6 +25,7 @@
     BACKUP_LAST: 'cp4_backup_last',
     CLIENTI: 'cp4_clienti',
     FORNI_COLORE: 'cp4_forniColore',
+    FORNI_NOTE: 'cp4_forniNote',
     /** Anagrafica fornitori dinamica [{ id, nome, colore }] — sync Firebase settings/fornitori */
     SETTINGS_FORNITORI: 'cp4_settings_fornitori',
     ORD_FORN_STORICO: 'cp4_ord_forn_storico',

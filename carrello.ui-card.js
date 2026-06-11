@@ -238,11 +238,13 @@ function ctSetColore(cartId, idx, colore){
   else delete it._ordColore;
   it.daOrdinare = !!it._ordColore;
   if(it._ordColore){
+    if(typeof _daoTouchDaOrdinareAt === 'function') _daoTouchDaOrdinareAt(it);
     var map = typeof ctGetForniColore === 'function' ? ctGetForniColore() : {};
     if(map[it._ordColore]) it._ordFornitoreNome = map[it._ordColore];
     else delete it._ordFornitoreNome;
   } else {
     delete it._ordFornitoreNome;
+    if(typeof _daoClearDaOrdinareAt === 'function') _daoClearDaOrdinareAt(it);
   }
   if(typeof ctCloseOrdinaPopup === 'function') ctCloseOrdinaPopup();
   else{

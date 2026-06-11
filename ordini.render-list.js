@@ -58,11 +58,13 @@ function ordSetColore(gi, ii, colore){
   else delete it._ordColore;
   it.daOrdinare = !!it._ordColore;
   if(it._ordColore){
+    if(typeof _daoTouchDaOrdinareAt === 'function') _daoTouchDaOrdinareAt(it);
     var map = typeof ctGetForniColore === 'function' ? ctGetForniColore() : {};
     if(map[it._ordColore]) it._ordFornitoreNome = map[it._ordColore];
     else delete it._ordFornitoreNome;
   } else {
     delete it._ordFornitoreNome;
+    if(typeof _daoClearDaOrdinareAt === 'function') _daoClearDaOrdinareAt(it);
   }
   if(typeof saveOrdini === 'function') saveOrdini();
   var linkedCart = (typeof carrelli !== 'undefined' && carrelli)
@@ -74,11 +76,13 @@ function ordSetColore(gi, ii, colore){
     else delete lcIt._ordColore;
     lcIt.daOrdinare = !!cNorm;
     if(cNorm){
+      if(typeof _daoTouchDaOrdinareAt === 'function') _daoTouchDaOrdinareAt(lcIt);
       var lMap = typeof ctGetForniColore === 'function' ? ctGetForniColore() : {};
       if(lMap[cNorm]) lcIt._ordFornitoreNome = lMap[cNorm];
       else delete lcIt._ordFornitoreNome;
     } else {
       delete lcIt._ordFornitoreNome;
+      if(typeof _daoClearDaOrdinareAt === 'function') _daoClearDaOrdinareAt(lcIt);
     }
     if(typeof saveCarrelli === 'function') saveCarrelli();
   }

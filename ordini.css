@@ -877,29 +877,204 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
 .ord-dao-qty-wrap {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
   justify-content: flex-end;
 }
 .ord-dao-qty-inp {
-  width: 4.5rem;
-  padding: 6px 8px;
-  border-radius: 8px;
+  width: 2.8rem;
+  padding: 2px 4px;
+  height: 26px;
+  border-radius: 4px;
   border: 1px solid #444;
   background: #141416;
   color: var(--ct-text, #f0f0f0);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
   text-align: right;
   font-family: inherit;
+  box-sizing: border-box;
 }
 .ord-dao-qty-um {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--ct-muted, #7a7d82);
   font-weight: 700;
 }
 .ord-dao-row--forn {
   background: rgba(255, 255, 255, 0.02);
 }
+
+/* Fase 1 — tabella compatta articoli da ordinare */
+.dao-table {
+  width: 100%;
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+}
+.dao-table-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 52px 28px;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-bottom: 1px solid #222;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--ct-muted, #7a7d82);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.dao-table-head span:nth-child(2),
+.dao-table-head span:nth-child(3) {
+  text-align: right;
+}
+.dao-day-sep {
+  padding: 8px 8px 3px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: var(--ct-muted, #7a7d82);
+  border-top: 1px solid #2a2a2a;
+  background: rgba(0, 0, 0, 0.12);
+}
+.dao-day-sep--first {
+  border-top: none;
+  padding-top: 4px;
+}
+.dao-row--compact.dao-row--has-nota {
+  max-height: none;
+  min-height: 34px;
+  align-items: start;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+.dao-item-nota {
+  font-size: 10px;
+  line-height: 1.2;
+  color: #f6e05e;
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.dao-row--expanded .dao-item-nota {
+  white-space: normal;
+  overflow: visible;
+}
+.dao-row--compact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 52px 28px;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  max-height: 34px;
+  padding: 2px 8px;
+  overflow: hidden;
+  border-bottom: 1px solid #1a1b1d;
+  box-sizing: border-box;
+}
+.dao-row--compact.dao-row--expanded {
+  max-height: none;
+  align-items: start;
+  padding: 4px 8px;
+  overflow: visible;
+}
+.dao-cell-desc {
+  min-width: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.dao-desc-primary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.25;
+}
+.dao-row--expanded .dao-desc-primary {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+.dao-desc-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ct-text, #f0f0f0);
+}
+.dao-desc-meta {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--ct-muted, #7a7d82);
+}
+.dao-row--expanded .dao-desc-meta {
+  display: none;
+}
+.dao-desc-secondary {
+  display: none;
+  margin-top: 2px;
+}
+.dao-row--expanded .dao-desc-secondary {
+  display: block;
+}
+.dao-desc-meta-full {
+  font-size: 10px;
+  color: var(--ct-muted, #7a7d82);
+  line-height: 1.3;
+}
+.dao-desc-meta-full b {
+  color: #ddd;
+  font-weight: 600;
+}
+.dao-nota-badge {
+  font-size: 10px;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+.dao-nota-full {
+  font-size: 10px;
+  color: #f6ad55;
+  font-style: italic;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+.dao-forn-alt--expand {
+  display: none;
+  font-size: 10px;
+  color: #63b3ed;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+.dao-row--expanded .dao-forn-alt--expand {
+  display: block;
+}
+.dao-cell-qty {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+.dao-cell-sub {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ct-yellow, var(--accent));
+  text-align: right;
+  line-height: 1;
+  white-space: nowrap;
+}
+.dao-cell-sub .ord-dao-sub {
+  font-size: 11px;
+}
+.dao-cell-act {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dao-cell-act .dao-btn-cestino {
+  padding: 2px 4px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
 .ord-dao-empty-msg {
   padding: 16px 12px;
   text-align: center;
@@ -914,6 +1089,8 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
 .ord-dao-forn-inp--title {
   font-size: 14px;
   font-weight: 800;
+  flex: 1;
+  min-width: 0;
 }
 
 /* Vista "Da ordinare" — gruppi per colore fornitore (tab ordini) */
@@ -922,7 +1099,7 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
   border: 1px solid #333;
   border-radius: 12px;
   margin-bottom: 12px;
-  overflow: hidden;
+  overflow: visible;
 }
 .ord-dao-header {
   display: flex;
@@ -930,7 +1107,178 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
   gap: 8px;
   padding: 10px 12px;
   border-bottom: 1px solid #222;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--ct-card, #1a1b1d);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
+.dao-forn-title-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dao-forn-title-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  width: 100%;
+}
+.dao-forn-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+.dao-forn-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ct-text, #f0f0f0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dao-forn-edit-btn {
+  padding: 2px 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.65;
+  flex-shrink: 0;
+}
+.dao-forn-edit-btn:hover {
+  opacity: 1;
+}
+.dao-forn-nota-btn,
+.dao-item-nota-btn {
+  padding: 4px 6px;
+  min-width: 32px;
+  min-height: 32px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.75;
+  flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.dao-forn-nota-btn:hover,
+.dao-item-nota-btn:hover {
+  opacity: 1;
+}
+.dao-forn-note {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #f6e05e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.dao-forn-edit-wrap {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+.dao-forn-save-btn,
+.dao-forn-cancel-btn {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: 1px solid #444;
+  background: #2a2a2a;
+  color: #ccc;
+}
+.dao-forn-save-btn {
+  border-color: #38a16966;
+  background: #38a16933;
+  color: #68d391;
+}
+.dao-forn-cancel-btn {
+  border-color: #555;
+  background: transparent;
+  color: #aaa;
+}
+
+/* Fase 4 — mini sheet edit nota rapida */
+.dao-nota-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 12000;
+}
+.dao-nota-sheet {
+  position: fixed;
+  z-index: 12001;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(92vw, 420px);
+  background: var(--ct-card, #1a1b1d);
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 14px 16px 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+.dao-nota-sheet-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ct-text, #f0f0f0);
+  margin-bottom: 10px;
+}
+.dao-nota-sheet-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 72px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #111;
+  color: var(--ct-text, #f0f0f0);
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+}
+.dao-nota-sheet-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+.dao-nota-sheet-btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid #444;
+  font-family: inherit;
+  touch-action: manipulation;
+}
+.dao-nota-sheet-btn--ghost {
+  background: transparent;
+  color: #aaa;
+}
+.dao-nota-sheet-btn--ok {
+  background: var(--accent, #f5c400);
+  color: #111;
+  border-color: transparent;
+}
+
 .ord-dao-dot {
   width: 12px;
   height: 12px;
@@ -963,25 +1311,11 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
   white-space: nowrap;
 }
 .ord-dao-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
   border-bottom: 1px solid #1a1b1d;
 }
-.ord-dao-thumb {
-  width: 38px;
-  height: 38px;
-  border-radius: 6px;
-  object-fit: cover;
-  flex-shrink: 0;
-  background: #252628;
-}
+.ord-dao-thumb,
 .ord-dao-thumb--empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
+  display: none !important;
 }
 .ord-dao-info {
   flex: 1;
@@ -1032,17 +1366,59 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
   color: var(--ct-muted, #7a7d82);
 }
 .ord-dao-sub {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 800;
   color: var(--ct-yellow, var(--accent));
 }
 
+body.light-mode .dao-row--compact {
+  border-color: #eee;
+}
+body.light-mode .dao-desc-name {
+  color: var(--text);
+}
+body.light-mode .dao-table-head {
+  border-color: #ddd;
+  color: #888;
+}
+body.light-mode .dao-day-sep {
+  border-color: #e8e8e8;
+  background: rgba(0, 0, 0, 0.03);
+  color: #888;
+}
 body.light-mode .ord-dao-group {
   background: #fff;
   border-color: #e0e0e0;
 }
 body.light-mode .ord-dao-header {
   border-color: #e8e8e8;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+body.light-mode .dao-forn-title {
+  color: var(--text);
+}
+body.light-mode .dao-forn-note,
+body.light-mode .dao-item-nota {
+  color: #b7791f;
+}
+body.light-mode .dao-nota-sheet {
+  background: #fff;
+  border-color: #ddd;
+}
+body.light-mode .dao-nota-sheet-input {
+  background: #f8f8f8;
+  border-color: #ccc;
+  color: var(--text);
+}
+body.light-mode .dao-forn-save-btn {
+  border-color: #38a16988;
+  background: #38a16922;
+  color: #276749;
+}
+body.light-mode .dao-forn-cancel-btn {
+  border-color: #ccc;
+  color: #666;
 }
 body.light-mode .ord-dao-nome {
   color: var(--text);
@@ -1057,6 +1433,53 @@ body.light-mode .dao-btn-cestino {
   border-color: #ccc;
   background: #f5f5f5;
   color: #555;
+}
+
+@media (max-width: 480px) {
+  .dao-table-head {
+    display: none;
+  }
+  .dao-row--compact,
+  .dao-table-head {
+    grid-template-columns: minmax(0, 1fr) 60px 44px 24px;
+    gap: 4px;
+    padding: 2px 6px;
+  }
+  .dao-desc-name {
+    font-size: 10px;
+  }
+  .dao-desc-meta {
+    font-size: 9px;
+  }
+  .dao-nota-sheet {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    transform: none;
+    width: 100%;
+    max-width: none;
+    border-radius: 16px 16px 0 0;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  .dao-nota-sheet-input {
+    min-height: 80px;
+  }
+  .dao-nota-sheet-btn {
+    min-height: 44px;
+    flex: 1;
+  }
+  .dao-nota-sheet-actions {
+    flex-direction: row;
+  }
+}
+
+@media (pointer: coarse) {
+  .dao-forn-nota-btn,
+  .dao-item-nota-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 /* Pannello "ordina a fornitori" (slide-up dal basso, aperto da carrello) */

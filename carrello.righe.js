@@ -645,11 +645,13 @@ function cartToggleDaOrdinare(cartId,idx){
   it.daOrdinare=!it.daOrdinare;
   if(it.daOrdinare){
     if(!it._ordColore || it._ordColore==='#888888') it._ordColore='#e53e3e';
+    if(typeof _daoTouchDaOrdinareAt === 'function') _daoTouchDaOrdinareAt(it);
     var map=typeof ctGetForniColore==='function'?ctGetForniColore():{};
     if(map[it._ordColore]) it._ordFornitoreNome=map[it._ordColore];
  } else {
     delete it._ordColore;
     delete it._ordFornitoreNome;
+    if(typeof _daoClearDaOrdinareAt === 'function') _daoClearDaOrdinareAt(it);
   }
   if(typeof _cartSyncLinkedOrdine==='function') _cartSyncLinkedOrdine(cart);
   saveCarrelli();renderCartTabs();

@@ -92,6 +92,78 @@ function ctSaveForniColore(map){
   if(typeof window !== 'undefined') window.forniColore = map;
 }
 
+/** Chiave Firebase/localStorage per note fornitore: hex senza # (RTDB vieta # nelle chiavi). */
+function ctFornNotaDbKey(colore){
+  var hex = ctNormalizeHex(colore);
+  if(hex) return hex.replace(/^#/, '');
+  return String(colore || '').replace(/^#/, '').toLowerCase();
+}
+function _ctSanitizeForniNoteMap(raw){
+  raw = raw || {};
+  var out = {};
+  Object.keys(raw).forEach(function(k){
+    var val = raw[k];
+    if(val == null) return;
+    var t = String(val).trim();
+    if(!t) return;
+    var dbKey = String(k).replace(/^#/, '').toLowerCase();
+    if(!/^[0-9a-f]{6}$/.test(dbKey)) return;
+    if(!out[dbKey]) out[dbKey] = t;
+  });
+  return out;
+}
+function ctLookupFornNotaInMap(map, colore){
+  map = map || {};
+  var dbKey = ctFornNotaDbKey(colore);
+  var hexKey = ctNormalizeHex(colore);
+  var n = map[dbKey];
+  if(!n && hexKey && map[hexKey]) n = map[hexKey];
+  if(!n && dbKey && map['#' + dbKey]) n = map['#' + dbKey];
+  return (n && String(n).trim()) ? String(n).trim() : '';
+}
+
+function ctForniNoteKey(){
+  if(window.AppKeys && window.AppKeys.FORNI_NOTE) return window.AppKeys.FORNI_NOTE;
+  return 'cp4_forniNote';
+}
+function ctGetForniNote(){
+  var saved = {};
+  try{ saved = lsGet(ctForniNoteKey(), {}) || {}; }catch(e){ saved = {}; }
+  if((!saved || !Object.keys(saved).length) && typeof window.forniNote === 'object' && window.forniNote){
+    saved = window.forniNote;
+  }
+  return _ctSanitizeForniNoteMap(saved);
+}
+function ctSaveForniNote(map){
+  map = _ctSanitizeForniNoteMap(map || {});
+  lsSet(ctForniNoteKey(), map);
+  if(typeof window !== 'undefined') window.forniNote = map;
+}
+function ctGetFornNota(colore){
+  return ctLookupFornNotaInMap(ctGetForniNote(), colore);
+}
+function ctSaveFornNota(colore, testo){
+  var dbKey = ctFornNotaDbKey(colore);
+  var hexKey = ctNormalizeHex(colore);
+  var map = ctGetForniNote();
+  var t = (testo && String(testo).trim()) ? String(testo).trim() : '';
+  if(t) map[dbKey] = t;
+  else delete map[dbKey];
+  if(hexKey) delete map[hexKey];
+  if(dbKey) delete map['#' + dbKey];
+  ctSaveForniNote(map);
+}
+
+(function _ctMigrateForniNoteKeysOnce(){
+  try{
+    var raw = lsGet(ctForniNoteKey(), null);
+    if(!raw || typeof raw !== 'object') return;
+    var hasLegacy = Object.keys(raw).some(function(k){ return k.charAt(0) === '#'; });
+    if(!hasLegacy) return;
+    ctSaveForniNote(_ctSanitizeForniNoteMap(raw));
+  }catch(e){}
+})();
+
 /** Nome fornitore salvato per lo slot colore; altrimenti etichetta di default. */
 function ctEtichettaFornitore(hex){
   var m = typeof ctGetForniColore === 'function' ? ctGetForniColore() : {};
@@ -380,14 +452,16 @@ function daoCollectDaOrdinareByColor(){
     if(!prodKey) return;
     // Evita il doppione "specchio" carrello↔ordine dello stesso flusso.
     if(_daoIsOrderMirrorOfLinkedCart(refId, idx, it, prodKey)) return;
-    var dedupKey = col + '|' + prodKey;
+    var sortAt = _daoEntrySortAt(it, refId);
+    var dayKey = _daoDayKeyFromSortAt(sortAt);
+    var dedupKey = col + '|' + prodKey + '|' + dayKey;
     if(!upsertMap[col]) upsertMap[col] = {};
     if(!byColor[col]) byColor[col] = [];
     var existing = upsertMap[col][dedupKey];
     if(!existing){
       var copy = JSON.parse(JSON.stringify(it));
       copy.qty = _daoSumQty(0, copy.qty);
-      var entry = { it: copy, cartNome: cartNome || '', cartId: refId, idx: idx };
+      var entry = { it: copy, cartNome: cartNome || '', cartId: refId, idx: idx, sortAt: sortAt, dayKey: dayKey };
       upsertMap[col][dedupKey] = entry;
       byColor[col].push(entry);
       return;
@@ -397,6 +471,10 @@ function daoCollectDaOrdinareByColor(){
     if(!existing.it.codF && it.codF) existing.it.codF = it.codF;
     if(!existing.it.nota && it.nota) existing.it.nota = it.nota;
     if(!existing.it._ordFornitoreNome && it._ordFornitoreNome) existing.it._ordFornitoreNome = it._ordFornitoreNome;
+    if(it._daOrdinareAt && (!existing.sortAt || String(it._daOrdinareAt) > String(existing.sortAt))){
+      existing.sortAt = it._daOrdinareAt;
+      existing.it._daOrdinareAt = it._daOrdinareAt;
+    }
     // Preferisci riferimento carrello (azioni più coerenti) rispetto a riferimento ordine.
     if(String(existing.cartId || '').indexOf('ord:') === 0 && String(refId || '').indexOf('ord:') !== 0){
       existing.cartId = refId;
@@ -452,23 +530,268 @@ function daoPropagaNomeFornitoreSuArticoli(colore, nome){
   }
 }
 
+function _daoClearFlagsOnItem(it){
+  if(!it) return;
+  it.daOrdinare = false;
+  delete it._ordColore;
+  delete it._ordFornitoreNome;
+  delete it._daOrdinareAt;
+}
+
+function _daoTouchDaOrdinareAt(it){
+  if(it) it._daOrdinareAt = new Date().toISOString();
+}
+if(typeof window !== 'undefined') window._daoTouchDaOrdinareAt = _daoTouchDaOrdinareAt;
+
+function _daoClearDaOrdinareAt(it){
+  if(it) delete it._daOrdinareAt;
+}
+if(typeof window !== 'undefined') window._daoClearDaOrdinareAt = _daoClearDaOrdinareAt;
+
+function _daoPad2(n){
+  return String(n).padStart(2, '0');
+}
+
+function _daoDayKeyFromSortAt(iso){
+  if(!iso) return 'senza-data';
+  var d = new Date(iso);
+  if(isNaN(d.getTime())) return 'senza-data';
+  return d.getFullYear() + '-' + _daoPad2(d.getMonth() + 1) + '-' + _daoPad2(d.getDate());
+}
+
+function _daoEntrySortAt(it, refId){
+  if(it && it._daOrdinareAt) return it._daOrdinareAt;
+  var res = _daoResolveCart(refId);
+  if(res && res.cart){
+    if(typeof ctCartActivityIso === 'function'){
+      var act = ctCartActivityIso(res.cart);
+      if(act) return act;
+    }
+  }
+  if(String(refId || '').indexOf('ord:') === 0){
+    var ordId = String(refId).slice(4);
+    var ordRes = _daoResolveOrdine(ordId);
+    if(ordRes && ordRes.ordine){
+      var o = ordRes.ordine;
+      if(o.createdAt) return String(o.createdAt);
+      if(o.dataISO) return String(o.dataISO);
+    }
+  }
+  return '';
+}
+
+function _daoFindItemInList(items, idx, prodKey){
+  if(!items || !items.length || !prodKey) return null;
+  if(idx >= 0 && idx < items.length){
+    var atIdx = items[idx];
+    if(atIdx && _daoProdKeyFromItem(atIdx) === prodKey) return atIdx;
+  }
+  for(var i = 0; i < items.length; i++){
+    if(items[i] && _daoProdKeyFromItem(items[i]) === prodKey) return items[i];
+  }
+  return null;
+}
+
+function _daoMergeTouched(touched, part){
+  if(!part) return touched;
+  if(part.activeCart) touched.activeCart = true;
+  if(part.cestinoCart) touched.cestinoCart = true;
+  if(part.ordini) touched.ordini = true;
+  return touched;
+}
+
+function _daoClearMirrorInCartList(cart, idx, prodKey, inCestino){
+  var out = { activeCart: false, cestinoCart: false, ordini: false };
+  if(!cart || !cart.items) return out;
+  var mirror = _daoFindItemInList(cart.items, idx, prodKey);
+  if(!mirror || !mirror.daOrdinare) return out;
+  _daoClearFlagsOnItem(mirror);
+  if(inCestino) out.cestinoCart = true;
+  else out.activeCart = true;
+  return out;
+}
+
+function _daoClearMirrorInOrdine(ordId, idx, prodKey){
+  var out = { activeCart: false, cestinoCart: false, ordini: false };
+  var ordRes = _daoResolveOrdine(ordId);
+  if(!ordRes || !ordRes.ordine || !ordRes.ordine.items) return out;
+  var mirror = _daoFindItemInList(ordRes.ordine.items, idx, prodKey);
+  if(!mirror || !mirror.daOrdinare) return out;
+  _daoClearFlagsOnItem(mirror);
+  out.ordini = true;
+  return out;
+}
+
+/** Propaga rimozione daOrdinare su specchio carrello ↔ ordine collegato. */
+function _daoPropagaRipulisciDaOrdinare(cartId, idx, it){
+  var touched = { activeCart: false, cestinoCart: false, ordini: false };
+  var prodKey = _daoProdKeyFromItem(it);
+  if(!prodKey) return touched;
+
+  if(String(cartId || '').indexOf('ord:') === 0){
+    var ordId = String(cartId).slice(4);
+    var bundles = [
+      { list: typeof carrelli !== 'undefined' ? carrelli : [], inCestino: false },
+      { list: typeof carrelliCestino !== 'undefined' ? carrelliCestino : [], inCestino: true }
+    ];
+    bundles.forEach(function(bundle){
+      (bundle.list || []).forEach(function(cart){
+        if(!cart || (cart.ordId !== ordId && cart.bozzaOrdId !== ordId)) return;
+        touched = _daoMergeTouched(touched, _daoClearMirrorInCartList(cart, idx, prodKey, bundle.inCestino));
+      });
+    });
+  } else {
+    var res = _daoResolveCart(cartId);
+    if(res && res.cart){
+      var cart = res.cart;
+      if(cart.ordId) touched = _daoMergeTouched(touched, _daoClearMirrorInOrdine(cart.ordId, idx, prodKey));
+      if(cart.bozzaOrdId && cart.bozzaOrdId !== cart.ordId){
+        touched = _daoMergeTouched(touched, _daoClearMirrorInOrdine(cart.bozzaOrdId, idx, prodKey));
+      }
+    }
+  }
+  return touched;
+}
+
+function _daoPersistRipulisciTouched(touched){
+  if(touched.activeCart && typeof saveCarrelli === 'function') saveCarrelli();
+  if(touched.cestinoCart && typeof lsSet === 'function' && typeof CART_CK !== 'undefined'){
+    lsSet(CART_CK, carrelliCestino);
+  }
+  if(touched.ordini && typeof saveOrdini === 'function') saveOrdini();
+}
+
+function _daoApplyNotaToItem(it, nota){
+  if(!it) return;
+  var t = (nota && String(nota).trim()) ? String(nota).trim() : '';
+  if(t) it.nota = t;
+  else delete it.nota;
+}
+
+function _daoSetNotaMirrorInCartList(cart, idx, prodKey, nota, inCestino){
+  var out = { activeCart: false, cestinoCart: false, ordini: false };
+  if(!cart || !cart.items) return out;
+  var mirror = _daoFindItemInList(cart.items, idx, prodKey);
+  if(!mirror) return out;
+  _daoApplyNotaToItem(mirror, nota);
+  if(inCestino) out.cestinoCart = true;
+  else out.activeCart = true;
+  return out;
+}
+
+function _daoSetNotaMirrorInOrdine(ordId, idx, prodKey, nota){
+  var out = { activeCart: false, cestinoCart: false, ordini: false };
+  var ordRes = _daoResolveOrdine(ordId);
+  if(!ordRes || !ordRes.ordine || !ordRes.ordine.items) return out;
+  var mirror = _daoFindItemInList(ordRes.ordine.items, idx, prodKey);
+  if(!mirror) return out;
+  _daoApplyNotaToItem(mirror, nota);
+  out.ordini = true;
+  return out;
+}
+
+function _daoPropagaNotaSuMirror(cartId, idx, it, nota){
+  var touched = { activeCart: false, cestinoCart: false, ordini: false };
+  var prodKey = _daoProdKeyFromItem(it);
+  if(!prodKey) return touched;
+
+  if(String(cartId || '').indexOf('ord:') === 0){
+    var ordId = String(cartId).slice(4);
+    var bundles = [
+      { list: typeof carrelli !== 'undefined' ? carrelli : [], inCestino: false },
+      { list: typeof carrelliCestino !== 'undefined' ? carrelliCestino : [], inCestino: true }
+    ];
+    bundles.forEach(function(bundle){
+      (bundle.list || []).forEach(function(cart){
+        if(!cart || (cart.ordId !== ordId && cart.bozzaOrdId !== ordId)) return;
+        touched = _daoMergeTouched(touched, _daoSetNotaMirrorInCartList(cart, idx, prodKey, nota, bundle.inCestino));
+      });
+    });
+  } else {
+    var res = _daoResolveCart(cartId);
+    if(res && res.cart){
+      var cart = res.cart;
+      if(cart.ordId) touched = _daoMergeTouched(touched, _daoSetNotaMirrorInOrdine(cart.ordId, idx, prodKey, nota));
+      if(cart.bozzaOrdId && cart.bozzaOrdId !== cart.ordId){
+        touched = _daoMergeTouched(touched, _daoSetNotaMirrorInOrdine(cart.bozzaOrdId, idx, prodKey, nota));
+      }
+    }
+  }
+  return touched;
+}
+
+function daoSetItemNota(cartId, idx, notaTesto){
+  var res = _daoResolveCart(cartId);
+  var ordRes = null;
+  if(!res && String(cartId || '').indexOf('ord:') === 0) ordRes = _daoResolveOrdine(String(cartId).slice(4));
+  if((!res || !res.cart.items[idx]) && (!ordRes || !ordRes.ordine.items[idx])) return;
+  var it = res ? res.cart.items[idx] : ordRes.ordine.items[idx];
+  _daoApplyNotaToItem(it, notaTesto);
+  var touched = _daoPropagaNotaSuMirror(cartId, idx, it, notaTesto);
+  if(res){
+    if(res.inCestino) touched.cestinoCart = true;
+    else touched.activeCart = true;
+  } else {
+    touched.ordini = true;
+  }
+  _daoPersistRipulisciTouched(touched);
+  if(typeof renderCartTabs === 'function') renderCartTabs();
+  if(typeof renderOrdini === 'function') renderOrdini();
+  if(typeof renderOrdFor === 'function') renderOrdFor(true);
+  if(typeof renderDaOrdinareView === 'function') renderDaOrdinareView(true);
+}
+
+function daoEditFornNota(col){
+  if(typeof daoShowQuickNotaSheet !== 'function') return;
+  var corrente = typeof ctGetFornNota === 'function' ? ctGetFornNota(col) : '';
+  daoShowQuickNotaSheet({
+    title: 'Nota fornitore',
+    value: corrente,
+    placeholder: 'es. Ordinare il marted\u00ec...',
+    onSave: function(val){
+      if(typeof ctSaveFornNota === 'function') ctSaveFornNota(col, val);
+      if(typeof renderOrdFor === 'function') renderOrdFor(true);
+      if(typeof renderDaOrdinareView === 'function') renderDaOrdinareView(true);
+    }
+  });
+}
+if(typeof window !== 'undefined') window.daoEditFornNota = daoEditFornNota;
+
+function daoEditItemNota(cartId, idx){
+  if(typeof daoShowQuickNotaSheet !== 'function') return;
+  var res = _daoResolveCart(cartId);
+  var ordRes = null;
+  if(!res && String(cartId || '').indexOf('ord:') === 0) ordRes = _daoResolveOrdine(String(cartId).slice(4));
+  if((!res || !res.cart.items[idx]) && (!ordRes || !ordRes.ordine.items[idx])) return;
+  var it = res ? res.cart.items[idx] : ordRes.ordine.items[idx];
+  var corrente = (it && it.nota) ? String(it.nota) : '';
+  daoShowQuickNotaSheet({
+    title: 'Nota articolo',
+    value: corrente,
+    placeholder: 'Nota per questo articolo...',
+    onSave: function(val){
+      daoSetItemNota(cartId, idx, val);
+    }
+  });
+}
+if(typeof window !== 'undefined') window.daoEditItemNota = daoEditItemNota;
+
 /** Toglie marcatore "da ordinare" (speculare carrello ↔ ordine collegato). */
 function daoRipulisciVoceDaOrdinare(cartId, idx){
   var res = _daoResolveCart(cartId);
   var ordRes = null;
   if(!res && String(cartId || '').indexOf('ord:') === 0) ordRes = _daoResolveOrdine(String(cartId).slice(4));
   if((!res || !res.cart.items[idx]) && (!ordRes || !ordRes.ordine.items[idx])) return;
-  var cart = res ? res.cart : null;
-  var it = res ? cart.items[idx] : ordRes.ordine.items[idx];
-  it.daOrdinare = false;
-  delete it._ordColore;
-  delete it._ordFornitoreNome;
+  var it = res ? res.cart.items[idx] : ordRes.ordine.items[idx];
+  _daoClearFlagsOnItem(it);
+  var touched = _daoPropagaRipulisciDaOrdinare(cartId, idx, it);
   if(res){
-    if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(cart);
-    _daoPersistCartRef(res);
-  } else if(typeof saveOrdini === 'function'){
-    saveOrdini();
+    if(res.inCestino) touched.cestinoCart = true;
+    else touched.activeCart = true;
+  } else {
+    touched.ordini = true;
   }
+  _daoPersistRipulisciTouched(touched);
   if(typeof renderCartTabs === 'function') renderCartTabs();
   if(typeof renderOrdini === 'function') renderOrdini();
   if(typeof renderOrdFor === 'function') renderOrdFor();
@@ -610,16 +933,17 @@ function daoArchiviaColoreGruppo(colore){
     if(!res && String(e.cartId || '').indexOf('ord:') === 0) ordRes = _daoResolveOrdine(String(e.cartId).slice(4));
     if((!res || !res.cart.items[e.idx]) && (!ordRes || !ordRes.ordine.items[e.idx])) return;
     var it = res ? res.cart.items[e.idx] : ordRes.ordine.items[e.idx];
-    it.daOrdinare = false;
-    delete it._ordColore;
-    delete it._ordFornitoreNome;
+    _daoClearFlagsOnItem(it);
+    var part = _daoPropagaRipulisciDaOrdinare(e.cartId, e.idx, it);
     if(res){
       if(res.inCestino) touchedCestino = true;
       else touchedActive = true;
-      if(typeof _cartSyncLinkedOrdine === 'function') _cartSyncLinkedOrdine(res.cart);
     } else {
       touchedOrdini = true;
     }
+    if(part.activeCart) touchedActive = true;
+    if(part.cestinoCart) touchedCestino = true;
+    if(part.ordini) touchedOrdini = true;
   });
   // 1) Persistenza FULL su Firebase: avviene PRIMA del prune locale,
   //    così l'eccedenza scartata in locale resta comunque sul cloud.
@@ -1104,136 +1428,33 @@ function daoHtmlSearchBar(){
   return h;
 }
 
-function renderOrdFor(){
-  var wrap = document.getElementById('t-ordfor-body');
-  if(!wrap) return;
-  try{
-
-  var byColor = daoCollectDaOrdinareByColor();
-  var forniMap = ctGetForniColore();
-  var h = '';
-
-  // Barra di ricerca archivio (Firebase) — sempre in cima
-  h += daoHtmlSearchBar();
-
-  h += ctHtmlBarraFiltriFornitore(byColor, _ordForColorFilter, { fnFilter: 'ordForFilterColor', fnReset: 'ordForResetFiltri', showStoricoBtn: true });
-
-  if(!Object.keys(byColor).length){
-    h += '<div style="text-align:center;padding:28px;color:#555">' +
-      'Nessun articolo da ordinare.<br><small>Usa il tasto ORDINA nelle card del carrello.</small></div>';
-    h += daoHtmlBloccoStoricoRecente();
-    wrap.innerHTML = h;
-    return;
-  }
-
-  var coloriDaMostrare = _ordForColorFilter ? [_ordForColorFilter] : _daoSortedKeysForDisplay(byColor);
-
-  coloriDaMostrare.forEach(function(col){
-    var items = byColor[col] || [];
-    var fornNome = (forniMap[col] && String(forniMap[col]).trim()) ? String(forniMap[col]).trim() : '';
-    var titoloSlot = ctEtichettaFornitore(col);
-
-    h += '<div class="ord-dao-group" style="border-color:' + col + '55">';
-    h += '<div class="ord-dao-header" style="border-color:' + col + '">';
-    h += '<span class="ord-dao-dot" style="background:' + col + '" title="' + esc(titoloSlot) + '"></span>';
-    h += '<input class="ord-dao-forn-inp ord-dao-forn-inp--title" ' +
-         'value="' + esc(fornNome) + '" ' +
-         'placeholder="' + esc(titoloSlot) + '" ' +
-         'title="Nome fornitore (salvato)" ' +
-         'oninput="ctSaveFornNome(\'' + col + '\',this.value)" ' +
-         'onkeydown="if(event.key===\'Enter\')this.blur()">';
-    h += '<span class="ord-dao-count">' + items.length + ' art.</span>';
-    // Nuovo flusso: PDF + archivia + svuota lista
-    h += '<button type="button" onclick="daoInviaEArchiviaGruppo(\'' + col + '\')" title="Genera PDF, archivia e svuota la lista" style="margin-left:6px;padding:4px 10px;border-radius:8px;border:1px solid #3182ce66;background:#3182ce22;color:#90cdf4;font-size:10px;font-weight:800;cursor:pointer;">📄 Invia & Archivia</button>';
-    // Manteniamo il flusso storico (solo archivia, senza PDF) per non rompere l'abitudine
-    h += '<button type="button" onclick="daoArchiviaColoreGruppo(\'' + col + '\')" title="Archivia senza generare PDF" style="margin-left:6px;padding:4px 10px;border-radius:8px;border:1px solid #38a16944;background:#38a16922;color:#68d391;font-size:10px;font-weight:800;cursor:pointer;">Archivia</button>';
-    h += '</div>';
-
-    if(!items.length){
-      h += '<div class="ord-dao-empty-msg">Nessun articolo per questo fornitore.</div>';
-      h += '</div>';
-      return;
-    }
-
-    items.forEach(function(entry){
-      var it   = entry.it;
-      var codM = it.codM ? (String(it.codM).match(/^\d+$/) ? String(it.codM).padStart(7,'0') : it.codM) : '';
-      var sub  = (parsePriceIT(it.prezzoUnit)*(parseFloat(it.qty)||0)).toFixed(2);
-      var showFornRow = it._ordFornitoreNome && String(it._ordFornitoreNome).trim() &&
-        String(it._ordFornitoreNome).trim() !== String(titoloSlot).trim();
-      var allowDec = (typeof itemUnitAllowsDecimalQty === 'function') ? itemUnitAllowsDecimalQty(it.unit) : false;
-      var qVal = parseFloat(it.qty) || 0;
-      var step = allowDec ? 'any' : '1';
-      var minV = allowDec ? '0.1' : '1';
-      h += '<div class="ord-dao-row ord-dao-row--forn" style="border-left:3px solid ' + col + '99">';
-      if(it.foto) h += '<img class="ord-dao-thumb" src="' + it.foto + '" alt="" onclick="apriModalFoto(this.src)">';
-      else        h += '<div class="ord-dao-thumb ord-dao-thumb--empty">📦</div>';
-      h += '<div class="ord-dao-info">';
-      h += '<div class="ord-dao-nome">' + esc(it.desc||'—') + '</div>';
-      if(showFornRow) h += '<div class="ord-dao-forn-alt">Fornitore: ' + esc(it._ordFornitoreNome) + '</div>';
-      h += '<div class="ord-dao-meta">';
-      if(codM)    h += '<span>Cod.Mag: <b>' + esc(codM) + '</b></span> ';
-      if(it.codF) h += '<span>Cod.Forn: <b>' + esc(it.codF) + '</b></span> ';
-      h += '<span>Cart: <b>' + esc(entry.cartNome) + '</b></span>';
-      h += '</div>';
-      if(it.nota) h += '<div class="ord-dao-nota">📝 ' + esc(it.nota) + '</div>';
-      h += '</div>';
-      h += '<div class="ord-dao-right" style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">';
-      h += '<button type="button" onclick="daoRipulisciVoceDaOrdinare(\'' + entry.cartId + '\',' + entry.idx + ')" title="Togli da da ordinare" class="dao-btn-cestino">\uD83D\uDDD1\uFE0F</button>';
-      h += '<div class="ord-dao-qty-wrap">';
-      h += '<input type="number" class="ord-dao-qty-inp" min="' + minV + '" step="' + step + '" value="' + qVal + '" inputmode="decimal" ';
-      h += 'title="Quantità da ordinare" ';
-      h += 'oninput="daoSetDaOrdQtyInput(\'' + entry.cartId + '\',' + entry.idx + ',this)" ';
-      h += 'onchange="daoSetDaOrdQtyCommit(\'' + entry.cartId + '\',' + entry.idx + ',this)" />';
-      h += '<span class="ord-dao-qty-um">' + esc(it.unit||'pz') + '</span></div>';
-      h += '<div class="ord-dao-sub">€' + sub + '</div>';
-      h += '</div>';
-      h += '</div>';
-    });
-
-    h += '</div>';
+function renderOrdFor(forceRender){
+  if(typeof daoRenderFornitoreView !== 'function') return;
+  daoRenderFornitoreView({
+    wrapId: 't-ordfor-body',
+    activeFilter: _ordForColorFilter,
+    filterCfg: {
+      fnFilter: 'ordForFilterColor',
+      fnReset: 'ordForResetFiltri',
+      showStoricoBtn: true
+    },
+    mode: 'ordfor-tab',
+    showArchiveSearch: true,
+    forceRender: !!forceRender
   });
-
-  h += daoHtmlBloccoStoricoRecente();
-  wrap.innerHTML = h;
-  }catch(e){
-    console.error('[OrdFor] render errore:', e);
-    var safeByColor = {};
-    try{ safeByColor = daoCollectDaOrdinareByColor(); }catch(e2){ safeByColor = {}; }
-    var safe = '';
-    safe += '<div style="padding:10px 12px;border:1px solid #e53e3e44;border-radius:10px;background:#2a0808;color:#fc8181;font-size:12px;margin-bottom:10px;">';
-    safe += 'Errore nel caricamento fornitori. Puoi comunque ricreare i fornitori con il tasto +.</div>';
-    try{
-      if(typeof ctHtmlBarraFiltriFornitore === 'function'){
-        safe += ctHtmlBarraFiltriFornitore(safeByColor, _ordForColorFilter, { fnFilter: 'ordForFilterColor', fnReset: 'ordForResetFiltri', showStoricoBtn: true });
-      } else {
-        safe += '<button type="button" class="ord-forn-filt-add" onclick="ctApriAggiungiFornitore()" title="Nuovo fornitore">＋</button>';
-      }
-    }catch(e3){
-      safe += '<button type="button" class="ord-forn-filt-add" onclick="ctApriAggiungiFornitore()" title="Nuovo fornitore">＋</button>';
-    }
-    try{ safe += daoHtmlBloccoStoricoRecente(); }catch(e4){}
-    wrap.innerHTML = safe;
-  }
 }
 
-// ctSaveFornNome: salva il nome fornitore per un colore (con debounce)
-var _ctFornTimer = null;
+// ctSaveFornNome: salva il nome fornitore per un colore (solo su conferma esplicita)
 function ctSaveFornNome(colore, nome){
-  clearTimeout(_ctFornTimer);
-  _ctFornTimer = setTimeout(function(){
-    var map = ctGetForniColore();
-    var ck = ctNormalizeHex(colore) || colore;
-    if(nome && nome.trim()) map[ck] = nome.trim();
-    else delete map[ck];
-    ctSaveForniColore(map);
-    daoPropagaNomeFornitoreSuArticoli(ck, nome);
-    if(typeof saveCarrelli === 'function') saveCarrelli();
-    if(typeof saveOrdini === 'function') saveOrdini();
-    if(typeof renderCartTabs === 'function') renderCartTabs();
-    if(typeof renderOrdFor === 'function') renderOrdFor();
-    if(typeof renderDaOrdinareView === 'function') renderDaOrdinareView();
-  }, 400);
+  var map = ctGetForniColore();
+  var ck = ctNormalizeHex(colore) || colore;
+  if(nome && nome.trim()) map[ck] = nome.trim();
+  else delete map[ck];
+  ctSaveForniColore(map);
+  daoPropagaNomeFornitoreSuArticoli(ck, nome);
+  if(typeof saveCarrelli === 'function') saveCarrelli();
+  if(typeof saveOrdini === 'function') saveOrdini();
+  if(typeof renderCartTabs === 'function') renderCartTabs();
 }
 
 

@@ -455,9 +455,7 @@ function _scheduleDbSystemMaintenance(){
     _applySharedValue('shared/anagrafica_clienti', window.AppKeys.ANAGRAFICA_CLIENTI, 'anagraficaClienti', []);
     _applySharedValue('shared/ordini_fornitori', window.AppKeys.ORDFORNITORI, 'ordFornitori', []);
     _applySharedValue('shared/forni_colore', window.AppKeys.FORNI_COLORE, 'forniColore', {});
-    if(window.AppKeys.FORNI_NOTE){
-      _applySharedValue('shared/forni_note', window.AppKeys.FORNI_NOTE, 'forniNote', {});
-    }
+    _applySharedValue('shared/forni_note', window.AppKeys.FORNI_NOTE, 'forniNote', {});
     _applySharedValue('shared/ord_forn_storico', window.AppKeys.ORD_FORN_STORICO, 'ordFornStorico', []);
     if(window.AppKeys.SETTINGS_FORNITORI){
       _applySharedValue('settings/fornitori', window.AppKeys.SETTINGS_FORNITORI, 'fornitoriSettings', []);

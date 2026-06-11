@@ -320,6 +320,7 @@ function _fbSharedPathForKey(k){
   map[AK.ANAGRAFICA_CLIENTI] = 'shared/anagrafica_clienti';
   map[AK.ORDFORNITORI] = 'shared/ordini_fornitori';
   map[AK.FORNI_COLORE] = 'shared/forni_colore';
+  map[AK.FORNI_NOTE] = 'shared/forni_note';
   map[AK.ORD_FORN_STORICO] = 'shared/ord_forn_storico';
   if(AK.SETTINGS_FORNITORI) map[AK.SETTINGS_FORNITORI] = 'settings/fornitori';
   return map[k] || null;
