@@ -3,6 +3,7 @@
 var _ordWeekdayFilter = null;   // 1=Lun … 6=Sab, null = filtro disattivo
 var _ordWeekdayScorso = false;  // false=settimana corrente, true=precedente
 var _ordWeekdayDropdown = null; // quale giorno ha il menu aperto
+var _ordWeekdayBypassedForPronto = false;
 
 var _ORD_WDAY_LABELS = ['', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
 var _ordWdayLongPressTimer = null;
@@ -111,7 +112,18 @@ function _ordOpenWeekdayDropdown(weekday){
   dd.style.zIndex = '10050';
 }
 
+function ordRestoreTodayWeekdayFilter(){
+  var todayIdx = _ordTodayWeekdayIdx();
+  if(todayIdx != null){
+    _ordWeekdayFilter = todayIdx;
+    _ordWeekdayScorso = false;
+  }
+  _ordCloseWeekdayDropdown();
+  ordUpdateWeekdayButtonsUI();
+}
+
 function ordPickWeekdayScorso(weekday){
+  if(typeof ordFiltro !== 'undefined' && ordFiltro === 'pronto') return;
   if(weekday == null) weekday = _ordWeekdayFilter;
   if(weekday == null) return;
   _ordWeekdayFilter = weekday;
@@ -132,6 +144,7 @@ function ordClearWeekdayFilter(){
 }
 
 function ordClickWeekday(weekday, ev){
+  if(typeof ordFiltro !== 'undefined' && ordFiltro === 'pronto') return;
   if(ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
   if(_ordWdayLongPressFired){
     _ordWdayLongPressFired = false;
@@ -168,6 +181,9 @@ function ordClickWeekday(weekday, ev){
 }
 
 function ordUpdateWeekdayButtonsUI(){
+  var prontoBypass = typeof ordFiltro !== 'undefined' && ordFiltro === 'pronto';
+  var row = document.getElementById('ord-weekday-row');
+  if(row) row.classList.toggle('ord-weekday-row--disabled', prontoBypass);
   var todayIdx = _ordTodayWeekdayIdx();
   for(var i = 1; i <= 6; i++){
     var btn = document.getElementById('ord-wday-' + i);

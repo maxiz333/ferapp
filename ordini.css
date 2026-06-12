@@ -629,6 +629,17 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
   overflow: visible;
   z-index: 20;
 }
+.ord-weekday-row--disabled .ord-wday-btn {
+  opacity: 0.35;
+  pointer-events: none;
+  cursor: default;
+}
+.ord-weekday-row--disabled .ord-wday-btn.ord-wday-active {
+  background: #3a3a3a;
+  color: #888;
+  border-color: #444;
+  box-shadow: none;
+}
 .ord-weekday-scroll {
   display: flex;
   flex-wrap: nowrap;

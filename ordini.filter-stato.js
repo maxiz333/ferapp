@@ -59,7 +59,15 @@ function filterOrdini(f){
   // Bozze in lista solo con filtro "nuovo" / "tutti" (stesso pulsante Nuovo)
   if(f==='bozza') f='nuovo';
   ordCloseSpecialViews();
+  var prevFiltro = ordFiltro;
   ordFiltro=f;
+  if(f === 'pronto'){
+    if(typeof _ordWeekdayBypassedForPronto !== 'undefined') _ordWeekdayBypassedForPronto = true;
+    if(typeof _ordCloseWeekdayDropdown === 'function') _ordCloseWeekdayDropdown();
+  } else if(prevFiltro === 'pronto' && typeof _ordWeekdayBypassedForPronto !== 'undefined' && _ordWeekdayBypassedForPronto){
+    _ordWeekdayBypassedForPronto = false;
+    if(typeof ordRestoreTodayWeekdayFilter === 'function') ordRestoreTodayWeekdayFilter();
+  }
   ['nuovo','pronto','completato','tutti'].forEach(function(x){
     var btn=document.getElementById('ord-f-'+x);if(!btn)return;
     var on=(x===f);

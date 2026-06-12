@@ -146,7 +146,7 @@ function renderOrdini(){
     }
     if(crossDaySearch){
       if(typeof _ordOrderIsMonSat === 'function' && !_ordOrderIsMonSat(o)) return false;
-    } else if(typeof _ordOrderMatchesWeekdayFilter === 'function'){
+    } else if(ordFiltro !== 'pronto' && typeof _ordOrderMatchesWeekdayFilter === 'function'){
       if(!_ordOrderMatchesWeekdayFilter(o)) return false;
     }
     if(!searchLow) return true;
@@ -171,7 +171,7 @@ function renderOrdini(){
   var gruppi={},gruppiOrd=[];
   filtered.forEach(function(o){
     var dk;
-    if(crossDaySearch && typeof _ordOrderDateGroupLabel === 'function'){
+    if((crossDaySearch || ordFiltro === 'pronto') && typeof _ordOrderDateGroupLabel === 'function'){
       dk = _ordOrderDateGroupLabel(o);
     } else {
       dk=o.data||'—';
