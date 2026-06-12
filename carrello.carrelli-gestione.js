@@ -106,9 +106,18 @@ function _cartResolveActiveId(){
 }
 
 function _cartTrashSave(){
-  lsSet(CART_CK, carrelliCestino);
-  if(typeof _fbReady !== 'undefined' && _fbReady && typeof _fbDb !== 'undefined' && _fbDb){
-    try{ _fbDb.ref('ordini_eliminati').set(carrelliCestino.length ? carrelliCestino : null); }catch(e){ console.error('Firebase ordini_eliminati:', e); }
+  var arr = carrelliCestino || [];
+  window.carrelliCestino = arr;
+  var _path = 'shared/carrelli_cestino';
+  var _hasFlag = (typeof _fbSharedSyncing !== 'undefined');
+  if(_hasFlag) _fbSharedSyncing[_path] = true;
+  try{
+    lsSet(CART_CK, arr);
+    if(typeof _fbReady !== 'undefined' && _fbReady && typeof _fbDb !== 'undefined' && _fbDb){
+      try{ _fbDb.ref(_path).set(arr.length ? arr : null); }catch(e){ console.error('Firebase carrelli_cestino:', e); }
+    }
+  } finally {
+    if(_hasFlag) setTimeout(function(){ _fbSharedSyncing[_path] = false; }, 250);
   }
 }
 

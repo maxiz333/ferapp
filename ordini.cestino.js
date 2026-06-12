@@ -4,6 +4,22 @@ var ORDK_CESTINO = window.AppKeys.ORDINI_CESTINO;
 var ordiniCestino = lsGet(ORDK_CESTINO) || [];
 var _cestinoOrdOpen = false;
 
+function _saveOrdiniCestino(){
+  var arr = ordiniCestino || [];
+  window.ordiniCestino = arr;
+  var _path = 'shared/ordini_cestino';
+  var _hasFlag = (typeof _fbSharedSyncing !== 'undefined');
+  if(_hasFlag) _fbSharedSyncing[_path] = true;
+  try{
+    lsSet(ORDK_CESTINO, arr);
+    if(typeof _fbReady !== 'undefined' && _fbReady && typeof _fbDb !== 'undefined' && _fbDb){
+      try{ _fbDb.ref(_path).set(arr.length ? arr : null); }catch(e){ console.error('Firebase ordini_cestino:', e); }
+    }
+  } finally {
+    if(_hasFlag) setTimeout(function(){ _fbSharedSyncing[_path] = false; }, 250);
+  }
+}
+
 function deleteOrdine(gi){
   showConfirm('Eliminare questo ordine?',function(){
     var ord = ordini.splice(gi,1)[0];
@@ -95,7 +111,7 @@ function ripristinaOrdine(ci){
     ord.stato = 'nuovo';
     ordini.unshift(ord);
     saveOrdini();
-    lsSet(ORDK_CESTINO, ordiniCestino);
+    _saveOrdiniCestino();
     renderCestinoOrdini();
     showToastGen('green','↩️ Ordine ripristinato');
   }
@@ -104,7 +120,7 @@ function ripristinaOrdine(ci){
 function eliminaDefinitivo(ci){
   showConfirm('Eliminare definitivamente?',function(){
     ordiniCestino.splice(ci,1);
-    lsSet(ORDK_CESTINO, ordiniCestino);
+    _saveOrdiniCestino();
     renderCestinoOrdini();
     showToastGen('red','Eliminato definitivamente');
   });
@@ -113,7 +129,7 @@ function eliminaDefinitivo(ci){
 function svuotaCestinoOrdini(){
   showConfirm('Svuotare tutto il cestino?',function(){
     ordiniCestino = [];
-    lsSet(ORDK_CESTINO, []);
+    _saveOrdiniCestino();
     renderCestinoOrdini();
     showToastGen('red','Cestino svuotato');
   });
