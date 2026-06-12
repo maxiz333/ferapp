@@ -304,6 +304,7 @@ function _cassaModeFatto(btn, gi){
     ord.completatoAtISO = new Date().toISOString();
     // Sync prezzi al database
     if(typeof _syncPrezziOrdineAlDB === 'function') _syncPrezziOrdineAlDB(ord);
+    if(typeof allineaCarrelloOrdineCompletato === 'function') allineaCarrelloOrdineCompletato(ord);
     saveOrdini({
       onBlocked: function(){
         _cassaLastJson = JSON.stringify(ordini);

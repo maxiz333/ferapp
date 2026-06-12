@@ -82,6 +82,7 @@ function ctCartLinkedOrdineOggi(cart){
  */
 function ctCartIsGiornaliero(cart){
   if(!cart) return false;
+  if(typeof daoIsFornStagingCart === 'function' && daoIsFornStagingCart(cart)) return false;
   if(ctCartCreatoOggi(cart)) return true;
   if(cart.stato === 'modifica') return true;
   if(ctCartLinkedOrdineOggi(cart)) return true;
@@ -114,6 +115,7 @@ function ctRotazioneGiornoCarrelli(){
 
   var toMove = [];
   (carrelli || []).forEach(function(c){
+    if(typeof daoIsFornStagingCart === 'function' && daoIsFornStagingCart(c)) return;
     if(c.stato === 'inviato' || c.stato === 'modifica') return;
     if(ctCartIsGiornaliero(c)) return;
     toMove.push(c.id);

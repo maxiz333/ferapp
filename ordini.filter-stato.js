@@ -96,6 +96,9 @@ function setStatoOrdine(gi,stato){
   if(!o.statiLog)o.statiLog={};
   o.statiLog[stato]={ora:new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('it-IT')};
   if(stato==='completato') o.completatoAtISO=new Date().toISOString();
+  if(stato==='completato' && typeof allineaCarrelloOrdineCompletato==='function'){
+    allineaCarrelloOrdineCompletato(o);
+  }
   var saveOpts = (typeof _ordSaveOptsForStateChange === 'function')
     ? _ordSaveOptsForStateChange(prevStato, stato, o.id)
     : null;

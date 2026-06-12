@@ -1021,7 +1021,7 @@ function daoApriArchivioColdUI(){
 
 /** Mostra/focus la barra di ricerca inline dell'archivio completo. */
 function daoApriRicercaArchivio(){
-  var inp = document.getElementById('dao-search-input');
+  var inp = daoQueryInActiveWrap('#dao-search-input');
   if(inp){
     try{ inp.focus(); inp.select(); }catch(e){}
     inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1053,80 +1053,486 @@ function daoApriRicercaArchivio(){
 
 /** Esegue la ricerca testuale (nome prodotto / data / codici / fornitore) sull'archivio completo. */
 var _daoSearchTimer = null;
-function daoCercaArchivioInput(val){
-  // Debounce input: 300ms
-  if(_daoSearchTimer) clearTimeout(_daoSearchTimer);
-  _daoSearchTimer = setTimeout(function(){ daoCercaArchivio(val); }, 300);
+var _daoSearchMode = 'ordini';
+var _daoSearchQuery = '';
+var DAO_FORN_STAGING_CART_ID = '__dao_forn_staging__';
+
+/** Container visibile: Tab Ordini → Da ordinare ha priorità su Carrello → Ordini fornitore. */
+function daoGetActiveSearchWrap(){
+  var daOrd = document.getElementById('ord-daordinare-view');
+  if(daOrd){
+    var hidden = daOrd.style.display === 'none';
+    if(!hidden){
+      try{
+        var cs = window.getComputedStyle(daOrd);
+        if(cs && cs.display !== 'none' && cs.visibility !== 'hidden') return daOrd;
+      }catch(e){
+        return daOrd;
+      }
+    }
+  }
+  var ordFor = document.getElementById('t-ordfor-body');
+  if(ordFor) return ordFor;
+  return daOrd || ordFor || null;
 }
 
-function daoCercaArchivio(rawQuery){
-  var resBox = document.getElementById('dao-search-results');
+function daoQueryInActiveWrap(selector){
+  var wrap = daoGetActiveSearchWrap();
+  if(!wrap) return null;
+  try{ return wrap.querySelector(selector); }catch(e){ return null; }
+}
+
+function daoIsFornStagingCart(cart){
+  return !!(cart && (cart._daoFornStaging === true || cart.id === DAO_FORN_STAGING_CART_ID));
+}
+
+function daoGetOrCreateStagingCart(){
+  if(typeof carrelli === 'undefined' || !carrelli) return null;
+  var cart = carrelli.find(function(c){ return c && daoIsFornStagingCart(c); });
+  if(!cart){
+    var nowIso = new Date().toISOString();
+    cart = {
+      id: DAO_FORN_STAGING_CART_ID,
+      nome: '',
+      _daoFornStaging: true,
+      createdAt: new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+      dataCreazione: Date.now(),
+      creatoAtISO: nowIso,
+      ultimaModificaISO: nowIso,
+      items: [],
+      scontoGlobale: null,
+      fatturaRichiesta: false,
+      fatturaCliente: null,
+      salvaFatturaInRubrica: false
+    };
+    carrelli.push(cart);
+  }
+  return cart;
+}
+
+function daoBuildCatalogItem(rowIdx){
+  var r = (typeof rows !== 'undefined' && rows) ? (rows[rowIdx] || {}) : {};
+  var m = (typeof magazzino !== 'undefined' && magazzino) ? (magazzino[rowIdx] || {}) : {};
+  var hasScag = !!(m.scaglioni && m.scaglioni.length);
+  var newItem = {
+    rowIdx: rowIdx,
+    desc: r.desc || '',
+    codF: r.codF || '',
+    codM: r.codM || '',
+    specs: m.specs || '',
+    posizione: m.posizione || '',
+    prezzoUnit: r.prezzo || '0',
+    qty: 1,
+    unit: typeof rowListinoUnit === 'function' ? rowListinoUnit(r) : (r.unit || 'pz'),
+    scampolo: false,
+    hasScaglioni: hasScag,
+    scaglioni: hasScag ? JSON.parse(JSON.stringify(m.scaglioni)) : [],
+    nota: '',
+    _scaglioniAperti: false,
+    daOrdinare: false
+  };
+  if(typeof itemUsesPrezzoPerBaseUm === 'function' && itemUsesPrezzoPerBaseUm(newItem.unit)){
+    var pList = parsePriceIT(r.prezzo || '0');
+    if(pList > 0){
+      newItem._prezzoUnitaBase = typeof itemFormatPrezzoLineStr === 'function' ? itemFormatPrezzoLineStr(pList) : String(pList);
+      if(typeof itemApplyPrezzoUnitaBase === 'function') itemApplyPrezzoUnitaBase(newItem);
+    }
+  }
+  return newItem;
+}
+
+function daoSetDaOrdColoreOnItem(it, colore){
+  if(!it) return;
+  var cNorm = (colore && typeof ctNormalizeHex === 'function') ? ctNormalizeHex(colore) : (colore || '');
+  if(colore && typeof ctNormalizeHex === 'function' && !cNorm){
+    if(typeof showToastGen === 'function') showToastGen('yellow', 'Colore non valido');
+    return;
+  }
+  if(cNorm) it._ordColore = cNorm;
+  else delete it._ordColore;
+  it.daOrdinare = !!it._ordColore;
+  if(it._ordColore){
+    if(typeof _daoTouchDaOrdinareAt === 'function') _daoTouchDaOrdinareAt(it);
+    var map = typeof ctGetForniColore === 'function' ? ctGetForniColore() : {};
+    if(map[it._ordColore]) it._ordFornitoreNome = map[it._ordColore];
+    else delete it._ordFornitoreNome;
+  } else {
+    delete it._ordFornitoreNome;
+    if(typeof _daoClearDaOrdinareAt === 'function') _daoClearDaOrdinareAt(it);
+  }
+}
+
+function daoSearchMode(){
+  return _daoSearchMode === 'catalogo' ? 'catalogo' : 'ordini';
+}
+
+function daoToggleSearchMode(){
+  _daoSearchMode = (_daoSearchMode === 'catalogo') ? 'ordini' : 'catalogo';
+  var inp = daoQueryInActiveWrap('#dao-search-input');
+  var q = inp ? String(inp.value || '').trim() : _daoSearchQuery;
+  _daoSearchQuery = q;
+  if(_daoSearchMode === 'ordini') daoRipristinaVisibilitaRighe();
+  daoAggiornaUiBarraRicerca();
+  if(q.length >= 2) daoCercaInput(q);
+  else daoChiudiRicerca(false);
+}
+
+function daoAggiornaUiBarraRicerca(){
+  var badge = daoQueryInActiveWrap('#dao-search-mode-badge');
+  var btn = daoQueryInActiveWrap('#dao-search-mode-btn');
+  var inp = daoQueryInActiveWrap('#dao-search-input');
+  var isCat = daoSearchMode() === 'catalogo';
+  if(badge) badge.textContent = isCat ? 'Catalogo' : 'Ordini';
+  if(btn){
+    btn.title = isCat ? 'Passa a ricerca ordini' : 'Passa a ricerca catalogo';
+    btn.setAttribute('aria-label', btn.title);
+  }
+  if(inp){
+    inp.placeholder = isCat
+      ? 'Cerca nel catalogo (nome, codice, fornitore)...'
+      : 'Cerca ordini correnti e archivio (prodotto, codice, fornitore, data)...';
+  }
+}
+
+function daoCercaArchivioInput(val){
+  daoCercaInput(val);
+}
+
+function daoCercaInput(val){
+  _daoSearchQuery = String(val != null ? val : '').trim();
+  if(_daoSearchTimer) clearTimeout(_daoSearchTimer);
+  _daoSearchTimer = setTimeout(function(){
+    if(daoSearchMode() === 'catalogo') daoCercaCatalogo(_daoSearchQuery);
+    else daoCercaOrdini(_daoSearchQuery);
+  }, 300);
+}
+
+function _daoEntrySearchHay(entry, col){
+  var it = (entry && entry.it) || {};
+  var forn = typeof ctEtichettaFornitore === 'function' ? ctEtichettaFornitore(col) : (col || '');
+  var nota = (it.nota != null ? it.nota : it.note) || '';
+  return [
+    it.desc || '',
+    it.codM || '',
+    it.codF || '',
+    entry.cartNome || '',
+    forn,
+    col || '',
+    it._ordFornitoreNome || '',
+    nota
+  ].join(' ').toLowerCase();
+}
+
+function daoRaccogliMatchCorrenti(q){
+  q = String(q || '').toLowerCase().trim();
+  if(!q) return [];
+  var byColor = typeof daoCollectDaOrdinareByColor === 'function' ? daoCollectDaOrdinareByColor() : {};
+  var out = [];
+  Object.keys(byColor).forEach(function(col){
+    (byColor[col] || []).forEach(function(entry){
+      if(_daoEntrySearchHay(entry, col).indexOf(q) !== -1){
+        out.push({ entry: entry, col: col, rowId: typeof daoRowDomId === 'function' ? daoRowDomId(entry) : '' });
+      }
+    });
+  });
+  return out;
+}
+
+function daoRipristinaVisibilitaRighe(){
+  var wrap = daoGetActiveSearchWrap();
+  if(!wrap) return;
+  wrap.querySelectorAll('.dao-row--search-hidden').forEach(function(el){
+    el.classList.remove('dao-row--search-hidden');
+  });
+  wrap.querySelectorAll('.ord-dao-group--search-hidden').forEach(function(el){
+    el.classList.remove('ord-dao-group--search-hidden');
+  });
+  wrap.querySelectorAll('.dao-day-sep--search-hidden').forEach(function(el){
+    el.classList.remove('dao-day-sep--search-hidden');
+  });
+}
+
+function daoFiltraRigheCorrenti(q){
+  q = String(q || '').toLowerCase().trim();
+  var wrap = daoGetActiveSearchWrap();
+  if(!wrap) return;
+  if(!q){
+    daoRipristinaVisibilitaRighe();
+    return;
+  }
+  wrap.querySelectorAll('.dao-row--compact[data-dao-search]').forEach(function(row){
+    var hay = row.getAttribute('data-dao-search') || '';
+    row.classList.toggle('dao-row--search-hidden', hay.indexOf(q) === -1);
+  });
+  wrap.querySelectorAll('.ord-dao-group').forEach(function(grp){
+    var vis = grp.querySelector('.dao-row--compact:not(.dao-row--search-hidden)');
+    grp.classList.toggle('ord-dao-group--search-hidden', !vis);
+  });
+  wrap.querySelectorAll('.dao-day-sep').forEach(function(sep){
+    var el = sep.nextElementSibling;
+    var anyVisible = false;
+    while(el){
+      if(el.classList.contains('ord-dao-group')) break;
+      if(el.classList.contains('dao-day-sep')) break;
+      if(el.classList.contains('dao-row--compact') && !el.classList.contains('dao-row--search-hidden')){
+        anyVisible = true;
+        break;
+      }
+      el = el.nextElementSibling;
+    }
+    sep.classList.toggle('dao-day-sep--search-hidden', !anyVisible);
+  });
+}
+
+function daoScrollToRigaCorrente(rowId){
+  if(!rowId) return;
+  var wrap = daoGetActiveSearchWrap();
+  var row = null;
+  if(wrap){
+    try{ row = wrap.querySelector('[id="' + String(rowId).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]'); }catch(e){}
+  }
+  if(!row) row = document.getElementById(rowId);
+  if(!row) return;
+  row.classList.remove('dao-row--search-hidden');
+  var grp = row.closest('.ord-dao-group');
+  if(grp) grp.classList.remove('ord-dao-group--search-hidden');
+  row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  row.classList.add('dao-row--search-flash');
+  setTimeout(function(){ row.classList.remove('dao-row--search-flash'); }, 1200);
+}
+
+function daoFiltraArchivioBatch(arr, q){
+  q = String(q || '').toLowerCase().trim();
+  if(!q) return [];
+  return (arr || []).filter(function(b){
+    if(!b) return false;
+    var d = (b.archivedAt || '').toLowerCase();
+    if(d.indexOf(q) !== -1) return true;
+    var nm = (b.nomeFornitore || '').toLowerCase();
+    if(nm.indexOf(q) !== -1) return true;
+    return (b.items || []).some(function(it){
+      return (String(it.desc||'').toLowerCase().indexOf(q) !== -1) ||
+             (String(it.codM||'').toLowerCase().indexOf(q) !== -1) ||
+             (String(it.codF||'').toLowerCase().indexOf(q) !== -1);
+    });
+  });
+}
+
+function daoRenderRisultatiOrdini(liveMatches, archiveArr, q){
+  var resBox = daoQueryInActiveWrap('#dao-search-results');
+  if(!resBox) return;
+  liveMatches = liveMatches || [];
+  archiveArr = archiveArr || [];
+  if(!liveMatches.length && !archiveArr.length){
+    resBox.innerHTML = '<div class="dao-search-empty">Nessun risultato per "' + esc(q) + '".</div>';
+    return;
+  }
+  var h = '';
+  h += '<div class="dao-search-panel-head">';
+  h += 'RISULTATI RICERCA';
+  h += '<button type="button" class="dao-search-close-btn" onclick="daoChiudiRicerca()" title="Chiudi ricerca">\u2715</button>';
+  h += '</div>';
+  if(liveMatches.length){
+    h += '<div class="dao-search-section-title">CORRENTI (' + liveMatches.length + ')</div>';
+    liveMatches.slice(0, 40).forEach(function(m){
+      var it = m.entry.it || {};
+      var forn = typeof ctEtichettaFornitore === 'function' ? ctEtichettaFornitore(m.col) : m.col;
+      h += '<div class="dao-search-row dao-search-row--live" onclick="daoScrollToRigaCorrente(\'' + esc(m.rowId) + '\')">';
+      h += '<span class="dao-search-live-dot" style="background:' + esc(m.col) + '"></span>';
+      h += '<span class="dao-search-live-desc">' + esc(it.desc || '\u2014') + '</span>';
+      h += '<span class="dao-search-live-meta">' + esc(forn) + '</span>';
+      h += '</div>';
+    });
+  }
+  if(archiveArr.length){
+    h += '<div class="dao-search-section-title">ARCHIVIO (' + archiveArr.length + ')</div>';
+    archiveArr.slice(0, 80).forEach(function(b){
+      var d = b.archivedAt ? b.archivedAt.slice(0,10) : '';
+      var col = b.colore || '#888888';
+      var nItems = (b.items || []).length;
+      h += '<div class="dao-search-row dao-search-row--arch" onclick="daoApriDettaglioBatchArchivio(\'' + esc(b.id||'') + '\')">';
+      h += '<span class="dao-search-live-dot" style="background:' + col + '"></span>';
+      h += '<span class="dao-search-arch-date">' + esc(d) + '</span>';
+      h += '<span class="dao-search-live-desc">' + esc(b.nomeFornitore||'') + '</span>';
+      h += '<span class="dao-search-arch-count">' + nItems + ' art.</span>';
+      h += '</div>';
+    });
+  }
+  resBox.innerHTML = h;
+}
+
+function daoCercaOrdini(rawQuery){
+  var resBox = daoQueryInActiveWrap('#dao-search-results');
   if(rawQuery == null){
-    var inp = document.getElementById('dao-search-input');
+    var inp = daoQueryInActiveWrap('#dao-search-input');
     rawQuery = inp ? inp.value : '';
   }
-  var q = String(rawQuery || '').toLowerCase().trim();
+  var q = String(rawQuery || '').trim();
+  _daoSearchQuery = q;
   if(!resBox) return;
   if(!q){
+    daoChiudiRicerca(false);
+    return;
+  }
+  if(q.length < 2){
+    resBox.innerHTML = '';
+    resBox.style.display = 'none';
+    daoRipristinaVisibilitaRighe();
+    return;
+  }
+  daoFiltraRigheCorrenti(q);
+  var liveMatches = daoRaccogliMatchCorrenti(q);
+  resBox.style.display = 'block';
+  resBox.innerHTML = '<div class="dao-search-loading">Ricerca in corso...</div>';
+  daoFetchArchivioCompleto(function(arr, err){
+    if(err){
+      daoRenderRisultatiOrdini(liveMatches, [], q);
+      var rb = daoQueryInActiveWrap('#dao-search-results');
+      if(rb) rb.insertAdjacentHTML('beforeend', '<div class="dao-search-arch-err">Archivio: ' + esc(err) + '</div>');
+      return;
+    }
+    daoRenderRisultatiOrdini(liveMatches, daoFiltraArchivioBatch(arr, q), q);
+  });
+}
+
+function daoCatalogSearchResultRowHtml(x){
+  var r = x.r, i = x.i, m = x.m;
+  var qty = m.qty !== undefined && m.qty !== '' ? m.qty : '';
+  var qtyNum = qty === '' ? null : Number(qty);
+  var outOfStock = qtyNum !== null && qtyNum <= 0;
+  var h = '';
+  h += '<div class="dao-search-catalog-row">';
+  h += '<div class="dao-search-catalog-info">';
+  h += '<div class="dao-search-catalog-desc">' + esc(r.desc) + '</div>';
+  h += '<div class="dao-search-catalog-meta">';
+  if(r.codF) h += '<span class="dao-search-catalog-codf">' + esc(r.codF) + '</span> ';
+  if(r.codM) h += '<span class="dao-search-catalog-codm">' + esc(r.codM) + '</span>';
+  if(m.marca) h += ' <span class="dao-search-catalog-marca">' + esc(m.marca) + '</span>';
+  h += '</div>';
+  if(qty !== '') h += '<div class="dao-search-catalog-stock' + (outOfStock ? ' dao-search-catalog-stock--out' : '') + '">Stock: ' + esc(qty) + ' ' + esc(rowListinoUnit(r)) + '</div>';
+  h += '</div>';
+  h += '<div class="dao-search-catalog-actions">';
+  h += '<div class="dao-search-catalog-price">' + esc(r.prezzo) + '</div>';
+  h += '<button type="button" class="dao-search-ordina-btn" onclick="event.stopPropagation();daoOrdinaDaCatalogo(' + i + ', this)">Ordina</button>';
+  h += '</div></div>';
+  return h;
+}
+
+function daoCercaCatalogo(rawQuery){
+  var resBox = daoQueryInActiveWrap('#dao-search-results');
+  if(rawQuery == null){
+    var inp = daoQueryInActiveWrap('#dao-search-input');
+    rawQuery = inp ? inp.value : '';
+  }
+  var q = String(rawQuery || '').trim();
+  _daoSearchQuery = q;
+  if(!resBox) return;
+  daoRipristinaVisibilitaRighe();
+  if(!q){
+    daoChiudiRicerca(false);
+    return;
+  }
+  if(q.length < 2){
     resBox.innerHTML = '';
     resBox.style.display = 'none';
     return;
   }
   resBox.style.display = 'block';
-  resBox.innerHTML = '<div style="padding:10px;color:#888;font-size:11px;">Ricerca in corso...</div>';
-  daoFetchArchivioCompleto(function(arr, err){
-    if(err){
-      resBox.innerHTML = '<div style="padding:10px;color:#fc8181;font-size:11px;">Errore: ' + esc(err) + '</div>';
-      return;
-    }
-    var results = (arr || []).filter(function(b){
-      if(!b) return false;
-      var d = (b.archivedAt || '').toLowerCase();
-      if(d.indexOf(q) !== -1) return true;
-      var nm = (b.nomeFornitore || '').toLowerCase();
-      if(nm.indexOf(q) !== -1) return true;
-      return (b.items || []).some(function(it){
-        return (String(it.desc||'').toLowerCase().indexOf(q) !== -1) ||
-               (String(it.codM||'').toLowerCase().indexOf(q) !== -1) ||
-               (String(it.codF||'').toLowerCase().indexOf(q) !== -1);
-      });
-    });
-    daoRenderRisultatiRicerca(results, q);
-  });
-}
-
-function daoRenderRisultatiRicerca(arr, q){
-  var resBox = document.getElementById('dao-search-results');
-  if(!resBox) return;
-  if(!arr || !arr.length){
-    resBox.innerHTML = '<div style="padding:10px;color:#888;font-size:11px;">Nessun risultato per "' + esc(q) + '".</div>';
+  if(typeof rows === 'undefined' || !rows || !rows.length){
+    resBox.innerHTML = '<div class="dao-search-loading">\u23F3 Database in caricamento, attendi...</div>';
+    return;
+  }
+  var matches = typeof catalogSearchCollectMatches === 'function' ? catalogSearchCollectMatches(q) : [];
+  if(!matches.length){
+    resBox.innerHTML = '<div class="dao-search-empty">Nessun risultato catalogo per "' + esc(q) + '".</div>';
     return;
   }
   var h = '';
-  h += '<div style="padding:6px 10px;font-size:10px;color:#888;letter-spacing:.5px;font-weight:800;">';
-  h += 'RISULTATI ARCHIVIO (' + arr.length + ')';
-  h += '<button type="button" onclick="daoChiudiRicerca()" style="float:right;background:transparent;border:none;color:#888;cursor:pointer;font-size:14px;line-height:1;">✕</button>';
+  h += '<div class="dao-search-panel-head">';
+  h += 'CATALOGO (' + matches.length + ')';
+  h += '<button type="button" class="dao-search-close-btn" onclick="daoChiudiRicerca()" title="Chiudi ricerca">\u2715</button>';
   h += '</div>';
-  arr.slice(0, 80).forEach(function(b){
-    var d = b.archivedAt ? b.archivedAt.slice(0,10) : '';
-    var col = b.colore || '#888888';
-    var nItems = (b.items || []).length;
-    h += '<div class="dao-search-row" onclick="daoApriDettaglioBatchArchivio(\'' + esc(b.id||'') + '\')" ';
-    h += 'style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid #252528;cursor:pointer;">';
-    h += '<span style="width:10px;height:10px;border-radius:50%;background:' + col + ';flex:0 0 auto;"></span>';
-    h += '<span style="font-size:11px;color:#aaa;flex:0 0 78px;">' + esc(d) + '</span>';
-    h += '<span style="font-size:11px;color:#ddd;font-weight:700;flex:1;">' + esc(b.nomeFornitore||'') + '</span>';
-    h += '<span style="font-size:10px;color:#68d391;">' + nItems + ' art.</span>';
-    h += '</div>';
-  });
+  matches.slice(0, 40).forEach(function(x){ h += daoCatalogSearchResultRowHtml(x); });
+  if(matches.length > 40){
+    h += '<div class="dao-search-more-hint">... e altri ' + (matches.length - 40) + ' articoli. Affina la ricerca.</div>';
+  }
   resBox.innerHTML = h;
 }
 
-function daoChiudiRicerca(){
-  var resBox = document.getElementById('dao-search-results');
-  if(resBox){ resBox.innerHTML = ''; resBox.style.display = 'none'; }
-  var inp = document.getElementById('dao-search-input');
-  if(inp) inp.value = '';
+function daoOrdinaDaCatalogo(rowIdx, anchorEl){
+  var slots = typeof ctHexSlotsOrdineFornitore === 'function'
+    ? ctHexSlotsOrdineFornitore()
+    : (typeof CT_FORN_CANON_HEX !== 'undefined' ? CT_FORN_CANON_HEX : ['#e53e3e', '#38a169', '#3182ce', '#e2c400']);
+  if(typeof ctOpenOrdinaPopup !== 'function') return;
+  ctOpenOrdinaPopup({
+    key: 'dao-catalog:' + rowIdx,
+    slots: slots,
+    activeColor: '',
+    anchorEl: anchorEl || null,
+    onSelectColor: function(color){
+      if(!color) return;
+      var cart = daoGetOrCreateStagingCart();
+      if(!cart){
+        if(typeof showToastGen === 'function') showToastGen('orange', 'Impossibile salvare articolo');
+        return;
+      }
+      var newItem = daoBuildCatalogItem(rowIdx);
+      daoSetDaOrdColoreOnItem(newItem, color);
+      if(!newItem.daOrdinare) return;
+      cart.items = cart.items || [];
+      cart.items.push(newItem);
+      cart.ultimaModificaISO = new Date().toISOString();
+      if(typeof saveCarrelli === 'function') saveCarrelli();
+      if(typeof ctCloseOrdinaPopup === 'function') ctCloseOrdinaPopup();
+      if(typeof renderOrdFor === 'function') renderOrdFor(true);
+      if(typeof renderDaOrdinareView === 'function') renderDaOrdinareView(true);
+      if(typeof showToastGen === 'function') showToastGen('green', 'Aggiunto a da ordinare');
+    }
+  });
+}
+
+function daoSearchReapplyAfterRender(){
+  var q = _daoSearchQuery || '';
+  var inp = daoQueryInActiveWrap('#dao-search-input');
+  if(inp && String(inp.value || '').trim()) q = String(inp.value || '').trim();
+  if(!q || q.length < 2) return;
+  daoAggiornaUiBarraRicerca();
+  if(daoSearchMode() === 'catalogo') daoCercaCatalogo(q);
+  else daoCercaOrdini(q);
+}
+
+function daoCercaArchivio(rawQuery){
+  daoCercaOrdini(rawQuery);
+}
+
+function daoRenderRisultatiRicerca(arr, q){
+  daoRenderRisultatiOrdini([], arr || [], q);
+}
+
+function daoChiudiRicerca(clearInput){
+  if(clearInput !== false){
+    var inp = daoQueryInActiveWrap('#dao-search-input');
+    if(inp) inp.value = '';
+  }
+  _daoSearchQuery = '';
+  daoRipristinaVisibilitaRighe();
+  var resBox = daoQueryInActiveWrap('#dao-search-results');
+  if(resBox){
+    resBox.innerHTML = '';
+    resBox.style.display = 'none';
+    resBox.classList.remove('dao-search-results--open');
+  }
+}
+if(typeof window !== 'undefined'){
+  window.daoGetActiveSearchWrap = daoGetActiveSearchWrap;
+  window.daoQueryInActiveWrap = daoQueryInActiveWrap;
+  window.daoIsFornStagingCart = daoIsFornStagingCart;
+  window.daoToggleSearchMode = daoToggleSearchMode;
+  window.daoCercaInput = daoCercaInput;
+  window.daoScrollToRigaCorrente = daoScrollToRigaCorrente;
+  window.daoOrdinaDaCatalogo = daoOrdinaDaCatalogo;
+  window.daoChiudiRicerca = daoChiudiRicerca;
+  window._daoEntrySearchHay = _daoEntrySearchHay;
 }
 
 /** Mostra il dettaglio (read-only) di un batch archiviato, fetchando il singolo nodo Firebase. */
@@ -1403,27 +1809,31 @@ function ordForResetFiltri(){
   renderOrdFor();
 }
 
-/** HTML della barra di ricerca nell'archivio completo Firebase. */
+/** HTML barra ricerca unificata (modalità Ordini / Catalogo). */
 function daoHtmlSearchBar(){
-  // Conserva il valore attuale dell'input se è già in DOM (per non perderlo a re-render)
-  var prevVal = '';
-  var prevInp = document.getElementById('dao-search-input');
-  if(prevInp) prevVal = prevInp.value || '';
+  var prevVal = _daoSearchQuery || '';
+  var prevInp = typeof daoQueryInActiveWrap === 'function' ? daoQueryInActiveWrap('#dao-search-input') : null;
+  if(!prevInp) prevInp = document.getElementById('dao-search-input');
+  if(prevInp) prevVal = prevInp.value || prevVal;
   var resVisible = false;
-  var prevRes = document.getElementById('dao-search-results');
+  var prevRes = typeof daoQueryInActiveWrap === 'function' ? daoQueryInActiveWrap('#dao-search-results') : null;
+  if(!prevRes) prevRes = document.getElementById('dao-search-results');
   if(prevRes) resVisible = prevRes.style.display !== 'none' && prevRes.innerHTML.length > 0;
+  var isCat = daoSearchMode() === 'catalogo';
   var h = '';
-  h += '<div style="margin-bottom:10px;padding:8px 10px;background:#16161a;border:1px solid #2a2a30;border-radius:10px;">';
-  h += '<div style="display:flex;gap:6px;align-items:center;">';
-  h += '<span style="font-size:13px;">🔍</span>';
-  h += '<input id="dao-search-input" type="search" placeholder="Cerca archivio (prodotto, codice, fornitore o data YYYY-MM-DD)..." ';
+  h += '<div class="dao-search-bar">';
+  h += '<div class="dao-search-bar-row">';
+  h += '<span class="dao-search-bar-icon">\uD83D\uDD0D</span>';
+  h += '<span id="dao-search-mode-badge" class="dao-search-mode-badge">' + (isCat ? 'Catalogo' : 'Ordini') + '</span>';
+  h += '<input id="dao-search-input" type="search" class="dao-search-input" ';
+  h += 'placeholder="' + (isCat ? 'Cerca nel catalogo (nome, codice, fornitore)...' : 'Cerca ordini correnti e archivio (prodotto, codice, fornitore, data)...') + '" ';
   h += 'value="' + esc(prevVal) + '" ';
-  h += 'oninput="daoCercaArchivioInput(this.value)" ';
-  h += 'onkeydown="if(event.key===\'Enter\'){event.preventDefault();daoCercaArchivio(this.value);}" ';
-  h += 'style="flex:1;min-width:0;padding:6px 8px;border-radius:8px;border:1px solid #333;background:#0e0e10;color:#eee;font-size:11px;">';
-  h += '<button type="button" onclick="daoCercaArchivio()" style="padding:6px 10px;border-radius:8px;border:1px solid #555;background:#222;color:#ddd;font-size:10px;font-weight:700;cursor:pointer;">Cerca</button>';
+  h += 'oninput="daoCercaInput(this.value)" ';
+  h += 'onkeydown="if(event.key===\'Enter\'){event.preventDefault();daoCercaInput(this.value);}" ';
+  h += 'autocomplete="off" autocorrect="off" spellcheck="false">';
+  h += '<button type="button" id="dao-search-mode-btn" class="dao-search-mode-btn" onclick="daoToggleSearchMode()" title="' + (isCat ? 'Passa a ricerca ordini' : 'Passa a ricerca catalogo') + '" aria-label="' + (isCat ? 'Passa a ricerca ordini' : 'Passa a ricerca catalogo') + '">\uD83D\uDD04</button>';
   h += '</div>';
-  h += '<div id="dao-search-results" style="margin-top:' + (resVisible ? '8px' : '0') + ';background:#0e0e10;border-radius:8px;border:1px solid #2a2a30;display:' + (resVisible ? 'block' : 'none') + ';max-height:320px;overflow:auto;"></div>';
+  h += '<div id="dao-search-results" class="dao-search-results' + (resVisible ? ' dao-search-results--open' : '') + '"></div>';
   h += '</div>';
   return h;
 }

@@ -66,6 +66,7 @@ function openCassa(gi){
       if(!o.statiLog)o.statiLog={};
       o.statiLog.completato={ora:new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}),data:new Date().toLocaleDateString('it-IT')};
       o.completatoAtISO = new Date().toISOString();
+      if(typeof allineaCarrelloOrdineCompletato === 'function') allineaCarrelloOrdineCompletato(o);
       saveOrdini();
     }
     closeCassa();

@@ -2,6 +2,73 @@
 
 function ordSetNuovo(gi){ setStatoOrdine(gi,'nuovo'); }
 function ordSetFatto(gi){ setStatoOrdine(gi,'completato'); }
+
+/** Carrelli collegati a ord.id (ordId o bozzaOrdId). */
+function _carrelliCollegatiOrdine(ordId){
+  if(!ordId || typeof carrelli === 'undefined' || !carrelli) return [];
+  return carrelli.filter(function(c){
+    return c && (c.ordId === ordId || c.bozzaOrdId === ordId);
+  });
+}
+
+/**
+ * Allinea carrello collegato dopo invio/Fatto: inviato + bloccato, niente CONFERMA.
+ * Ritorna true se almeno un carrello è stato aggiornato.
+ */
+function allineaCarrelloOrdineCollegato(ord){
+  if(!ord || !ord.id || typeof carrelli === 'undefined') return false;
+  var changed = false;
+  _carrelliCollegatiOrdine(ord.id).forEach(function(cart){
+    if(cart.bozzaOrdId === ord.id) delete cart.bozzaOrdId;
+    if(cart.ordId !== ord.id) cart.ordId = ord.id;
+    if(cart.stato !== 'inviato'){
+      cart.stato = 'inviato';
+      changed = true;
+    }
+    if(!cart.locked){
+      cart.locked = true;
+      changed = true;
+    }
+  });
+  if(changed){
+    if(typeof saveCarrelli === 'function') saveCarrelli();
+    if(typeof renderCartTabs === 'function') renderCartTabs();
+  }
+  return changed;
+}
+
+/** Alias usato quando l'ordine passa a completato/Fatto. */
+function allineaCarrelloOrdineCompletato(ord){
+  return allineaCarrelloOrdineCollegato(ord);
+}
+
+/**
+ * Blocca un secondo inviaOrdine se l'ordine collegato esiste già (inviato o Fatto).
+ * Ritorna messaggio italiano da mostrare, oppure null se l'invio può procedere.
+ */
+function inviaOrdineBloccaSeDuplicato(cart){
+  if(!cart || typeof ordini === 'undefined' || !ordini) return null;
+  var ord = null;
+  if(cart.ordId){
+    ord = ordini.find(function(o){ return o && o.id === cart.ordId; });
+  }
+  if(!ord && cart.bozzaOrdId){
+    ord = ordini.find(function(o){ return o && o.id === cart.bozzaOrdId; });
+  }
+  if(!ord) return null;
+  var st = (ord.stato === 'lavorazione') ? 'nuovo' : String(ord.stato || '');
+  if(st === 'bozza') return null;
+  allineaCarrelloOrdineCollegato(ord);
+  var num = ord.numero ? (' #' + ord.numero) : '';
+  if(st === 'completato'){
+    return 'Ordine già completato (Fatto)' + num + '. Non è stato creato un duplicato.';
+  }
+  if(st === 'nuovo' || st === 'pronto'){
+    return 'Ordine già inviato' + num + '. Non è stato creato un duplicato.';
+  }
+  return null;
+}
+
 function _rimuoviCarrelloDaOrdine(ordId){
   var idx=carrelli.findIndex(function(c){return c.ordId===ordId;});
   if(idx===-1) return;

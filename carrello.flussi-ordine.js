@@ -309,6 +309,10 @@ function _rimuoviBozzaOrdine(cart){
 function inviaOrdine(cartId){
   var cart=carrelli.find(function(c){return c.id===cartId;});
   if(!cart||!(cart.items||[]).length){showToastGen('red','-- Carrello vuoto!');return;}
+  if(typeof inviaOrdineBloccaSeDuplicato==='function'){
+    var _dupMsg=inviaOrdineBloccaSeDuplicato(cart);
+    if(_dupMsg){ showToastGen('orange', _dupMsg); return; }
+  }
   if(typeof ensureFatturaState === 'function') ensureFatturaState(cart);
   // Rimuovi bozza se presente
   _rimuoviBozzaOrdine(cart);

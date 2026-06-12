@@ -1,8 +1,10 @@
 // ordini.dao-render.js — renderer condiviso vista "Da ordinare" / Ordini fornitore
 
-/** True se la ricerca archivio (#dao-search-input) ha testo (congela re-render automatico). */
+/** True se la ricerca (#dao-search-input) ha testo nel wrap visibile (congela re-render automatico). */
 function daoSearchFieldActive(){
-  var inp = document.getElementById('dao-search-input');
+  var inp = typeof daoQueryInActiveWrap === 'function'
+    ? daoQueryInActiveWrap('#dao-search-input')
+    : document.getElementById('dao-search-input');
   if(!inp) return false;
   return String(inp.value || '').trim().length > 0;
 }
@@ -221,9 +223,12 @@ function daoHtmlRigaCompatta(entry, col, titoloSlot){
   var metaFull = daoFormatMetaFull(entry, it, codM);
   var cartIdEsc = _daoEscCartId(entry.cartId);
   var rowCls = 'dao-row dao-row--compact ord-dao-row ord-dao-row--forn' + (hasNota ? ' dao-row--has-nota' : '');
+  var searchHay = typeof _daoEntrySearchHay === 'function' ? _daoEntrySearchHay(entry, col) : '';
 
   var h = '';
-  h += '<div class="' + rowCls + '" id="' + esc(rowId) + '" style="border-left:3px solid ' + col + '99">';
+  h += '<div class="' + rowCls + '" id="' + esc(rowId) + '" style="border-left:3px solid ' + col + '99"';
+  if(searchHay) h += ' data-dao-search="' + esc(searchHay) + '"';
+  h += '>';
   h += '<div class="dao-cell dao-cell-desc" onclick="daoToggleRowExpand(\'' + esc(rowId) + '\')">';
   h += '<div class="dao-desc-primary">';
   h += '<span class="dao-desc-name">' + esc(it.desc || '\u2014') + '</span>';
@@ -371,7 +376,7 @@ function daoRenderFornitoreView(cfg){
     var forniNoteMap = typeof ctGetForniNote === 'function' ? ctGetForniNote() : {};
     var h = '';
 
-    if(cfg.showArchiveSearch && typeof daoHtmlSearchBar === 'function'){
+    if(typeof daoHtmlSearchBar === 'function'){
       h += daoHtmlSearchBar();
     }
 
@@ -384,6 +389,7 @@ function daoRenderFornitoreView(cfg){
         'Nessun articolo da ordinare.<br><small>Usa il tasto ORDINA nelle card del carrello.</small></div>';
       h += typeof daoHtmlBloccoStoricoRecente === 'function' ? daoHtmlBloccoStoricoRecente() : '';
       wrap.innerHTML = h;
+      if(typeof daoSearchReapplyAfterRender === 'function') daoSearchReapplyAfterRender();
       return;
     }
 
@@ -397,6 +403,7 @@ function daoRenderFornitoreView(cfg){
 
     h += typeof daoHtmlBloccoStoricoRecente === 'function' ? daoHtmlBloccoStoricoRecente() : '';
     wrap.innerHTML = h;
+    if(typeof daoSearchReapplyAfterRender === 'function') daoSearchReapplyAfterRender();
   } catch(e){
     console.error('[DaoRender] errore:', e);
     var safeByColor = {};

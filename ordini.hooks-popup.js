@@ -21,6 +21,10 @@
   if(!_origInvia) return;
   inviaOrdine = function(cartId){
     var cart = carrelli.find(function(c){ return c.id === cartId; });
+    if(cart && typeof inviaOrdineBloccaSeDuplicato === 'function'){
+      var _dupMsg = inviaOrdineBloccaSeDuplicato(cart);
+      if(_dupMsg){ showToastGen('orange', _dupMsg); return; }
+    }
     // Se c'è una bozza collegata, promuovila invece di ricreare l'ordine
     if(cart && cart.bozzaOrdId){
       var bozza = ordini.find(function(o){ return o.id === cart.bozzaOrdId; });
