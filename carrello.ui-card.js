@@ -26,6 +26,34 @@ function ctToggleIconbar(cartId, idx, ev){
   }
 }
 
+// Pannello esauriti su carrello inviato — aperto/chiuso per cartId (volatile, non Firebase)
+var _ctInvEsauritiOpen = {};
+function ctToggleInvEsauriti(cartId){
+  _ctInvEsauritiOpen[cartId] = !_ctInvEsauritiOpen[cartId];
+  if(typeof renderCartTabs === 'function') renderCartTabs();
+}
+function ctInvEsauritiOrdina(cartId, idx, ev){
+  if(ev && ev.stopPropagation) ev.stopPropagation();
+  var cart = carrelli.find(function(c){ return c.id === cartId; });
+  if(!cart || !cart.items[idx]) return;
+  var it = cart.items[idx];
+  if(it._stornoReso) return;
+  var slots = typeof ctHexSlotsOrdineFornitore === 'function'
+    ? ctHexSlotsOrdineFornitore()
+    : (typeof CT_FORN_CANON_HEX !== 'undefined' ? CT_FORN_CANON_HEX : ['#e53e3e', '#38a169', '#3182ce', '#e2c400']);
+  var anchor = (ev && ev.currentTarget) ? ev.currentTarget : null;
+  ctOpenOrdinaPopup({
+    key: 'cart-inv:' + cartId + ':' + idx,
+    slots: slots,
+    activeColor: it._ordColore || '',
+    anchorEl: anchor,
+    centerOnAnchor: true,
+    onSelectColor: function(color){
+      ctSetColore(cartId, idx, color);
+    }
+  });
+}
+
 // ctTogglePanel: mostra/nasconde pannello a comparsa (sconto|nota)
 // Stato salvato in _ctPanelState (JS puro, non nei dati carrello/Firebase)
 var _ctPanelState = {}; // chiave: cartId+'-'+idx → 'sconto'|'nota'|null
@@ -186,18 +214,24 @@ function ctOpenOrdinaPopup(opts){
   }
 
   var anchor = opts.anchorEl || null;
-  if(anchor){
-    var r = anchor.getBoundingClientRect();
-    popup.style.top  = (r.bottom + window.scrollY + 4) + 'px';
-    popup.style.left = Math.min(r.left, window.innerWidth - 180) + 'px';
-  }
-
   var bd = document.createElement('div');
   bd.id = 'ct-color-bd';
   bd.style.cssText = 'position:fixed;inset:0;z-index:7990';
   bd.onclick = function(){ ctCloseOrdinaPopup(); };
   document.body.appendChild(bd);
   document.body.appendChild(popup);
+  if(anchor){
+    var r = anchor.getBoundingClientRect();
+    popup.style.top = (r.bottom + window.scrollY + 4) + 'px';
+    if(opts.centerOnAnchor){
+      var popW = popup.offsetWidth || 200;
+      var leftVp = (r.left + r.width / 2) - popW / 2;
+      leftVp = Math.max(8, Math.min(leftVp, window.innerWidth - popW - 8));
+      popup.style.left = (leftVp + window.scrollX) + 'px';
+    } else {
+      popup.style.left = Math.min(r.left, window.innerWidth - 180) + 'px';
+    }
+  }
   _ctOrdinaPopupCtxKey = key;
   return true;
 }

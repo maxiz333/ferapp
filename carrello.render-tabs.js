@@ -204,7 +204,42 @@ function renderCartTabs(forceRender){
     }
     h += '</div>';
     if((cart.items||[]).length > 0){
-      h += '<div class="ct-inviato-esauriti-banner" role="note">C\'è qualche articolo esaurito?</div>';
+      var _esOpen = !!_ctInvEsauritiOpen[cart.id];
+      h += '<div class="ct-inviato-esauriti-wrap">';
+      h += '<button type="button" class="ct-inviato-esauriti-banner' + (_esOpen ? ' ct-inviato-esauriti-banner--open' : '') + '" ';
+      h += 'onclick="ctToggleInvEsauriti(\'' + cart.id + '\')" aria-expanded="' + (_esOpen ? 'true' : 'false') + '">';
+      h += '<span>C\'è qualche articolo esaurito?</span>';
+      h += '<span class="ct-inviato-esauriti-chev" aria-hidden="true">' + (_esOpen ? '▲' : '▼') + '</span>';
+      h += '</button>';
+      h += '<div class="ct-inviato-esauriti-panel' + (_esOpen ? ' ct-inviato-esauriti-panel--open' : '') + '">';
+      h += '<div class="ct-inviato-esauriti-panel-inner">';
+      (cart.items||[]).forEach(function(it, idx){
+        if(it._stornoReso) return;
+        var codM7 = it.codM
+          ? (String(it.codM).match(/^\d+$/) ? String(it.codM).padStart(7,'0') : it.codM)
+          : '';
+        var codF = it.codF || '';
+        var isDaOrd = it.daOrdinare || false;
+        var ordStyle = it._ordColore
+          ? 'background:' + it._ordColore + '33;border-color:' + it._ordColore + ';color:' + it._ordColore
+          : '';
+        h += '<div class="ct-inviato-esauriti-row">';
+        h += '<div class="ct-inviato-esauriti-info">';
+        h += '<div class="ct-inviato-esauriti-name">' + esc(it.desc || '—') + '</div>';
+        h += '<div class="ord-item-codes-line">';
+        if(codM7) h += '<span class="ord-code-mag">' + esc(codM7) + '</span>';
+        h += '<span class="ord-code-forn"><span class="ord-code-forn-lbl">f.</span> ' + esc(codF || '—') + '</span>';
+        h += '</div></div>';
+        h += '<button type="button" class="ct-icon-btn ct-icon-btn--ordina' + (isDaOrd ? ' ct-icon-btn--on' : '') + '" ';
+        h += 'style="' + ordStyle + '" ';
+        h += 'onclick="ctInvEsauritiOrdina(\'' + cart.id + '\',' + idx + ',event)" title="Colore ordine fornitore">';
+        h += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">';
+        h += '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>';
+        h += '<path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>';
+        h += '<span>ORDINA</span></button>';
+        h += '</div>';
+      });
+      h += '</div></div></div>';
     }
     h += '</div>';
     body.innerHTML = h;

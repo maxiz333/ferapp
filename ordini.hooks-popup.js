@@ -50,6 +50,7 @@
         cart.stato  = 'inviato';
         cart.locked = true;
         cart.ordId  = bozza.id;
+        if(typeof _ctInvEsauritiOpen !== 'undefined') _ctInvEsauritiOpen[cart.id] = true;
         saveCarrelli();
         feedbackSend();
         renderCartTabs();

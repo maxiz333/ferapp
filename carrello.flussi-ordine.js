@@ -405,6 +405,7 @@ function inviaOrdine(cartId){
   cart.stato='inviato';
   cart.ordId=ord.id;
   cart.locked=true;
+  if(typeof _ctInvEsauritiOpen !== 'undefined') _ctInvEsauritiOpen[cart.id] = true;
   saveCarrelli();
   _lastAddedItem=null;
   feedbackSend();
