@@ -72,12 +72,10 @@ function ordEditNota(gi, ii){
   if(nota===null) return;
   ord.items[ii].nota=nota;
   saveOrdini();
-  if(ord.stato === 'bozza'){
-    var cB = carrelli.find(function(x){ return x.bozzaOrdId === ord.id; });
-    if(cB){ cB.items = ordItemsSoloAttiviDeep(ord.items); saveCarrelli(); }
+  if(typeof syncOrdineItemsToLinkedCart === 'function'){
+    syncOrdineItemsToLinkedCart(ord);
   }
   renderOrdini();
-  if(ord.stato === 'bozza' && typeof renderCartTabs === 'function') renderCartTabs();
 }
 
 function ordSetNotaOrdine(gi, val){
@@ -98,12 +96,10 @@ function _ordRecalcSave(gi){
   ord.modificato=true;
   ord.modificatoAt=new Date().toLocaleString('it-IT');
   saveOrdini();
-  if(ord.stato === 'bozza'){
-    var cB = carrelli.find(function(x){ return x.bozzaOrdId === ord.id; });
-    if(cB){ cB.items = ordItemsSoloAttiviDeep(ord.items); saveCarrelli(); }
+  if(typeof syncOrdineItemsToLinkedCart === 'function'){
+    syncOrdineItemsToLinkedCart(ord);
   }
   renderOrdini();
-  if(ord.stato === 'bozza' && typeof renderCartTabs === 'function') renderCartTabs();
 }
 
 // ── SBLOCCA/RIBLOCCA ordine completato per modifiche ─────────────
@@ -132,15 +128,9 @@ function ordSetMqSuperficie(gi, ii, which, rawVal){
     ord.modificatoAt = new Date().toLocaleString('it-IT');
     ord.modificatoAtISO = new Date().toISOString();
     saveOrdini();
-    var linkedCart = carrelli.find(function(c){ return c.ordId === ord.id; });
-    if(!linkedCart && ord.stato === 'bozza'){
-      linkedCart = carrelli.find(function(c){ return c.bozzaOrdId === ord.id; });
+    if(typeof syncOrdineItemsToLinkedCart === 'function'){
+      syncOrdineItemsToLinkedCart(ord);
     }
-    if(linkedCart){
-      linkedCart.items = ordItemsSoloAttiviDeep(ord.items);
-      saveCarrelli();
-    }
-    if(ord.stato === 'bozza' && typeof renderCartTabs === 'function') renderCartTabs();
   }, 420);
 }
 
@@ -163,12 +153,10 @@ function ordSetUnit(gi, ii, val){
   ord.modificato=true;
   ord.modificatoAt=new Date().toLocaleString('it-IT');
   saveOrdini();
-  if(ord.stato === 'bozza'){
-    var cB = carrelli.find(function(x){ return x.bozzaOrdId === ord.id; });
-    if(cB){ cB.items = ordItemsSoloAttiviDeep(ord.items); saveCarrelli(); }
+  if(typeof syncOrdineItemsToLinkedCart === 'function'){
+    syncOrdineItemsToLinkedCart(ord);
   }
   renderOrdini();
-  if(ord.stato === 'bozza' && typeof renderCartTabs === 'function') renderCartTabs();
 }
 
 var _ordBaseUmTimers = {};
@@ -253,15 +241,9 @@ function ordInputPrezzoUnitaBase(gi, ii, el){
     ord.modificatoAt = new Date().toLocaleString('it-IT');
     ord.modificatoAtISO = new Date().toISOString();
     saveOrdini();
-    var linkedCart = carrelli.find(function(c){ return c.ordId === ord.id; });
-    if(!linkedCart && ord.stato === 'bozza'){
-      linkedCart = carrelli.find(function(c){ return c.bozzaOrdId === ord.id; });
+    if(typeof syncOrdineItemsToLinkedCart === 'function'){
+      syncOrdineItemsToLinkedCart(ord);
     }
-    if(linkedCart){
-      linkedCart.items = ordItemsSoloAttiviDeep(ord.items);
-      saveCarrelli();
-    }
-    if(ord.stato === 'bozza' && typeof renderCartTabs === 'function') renderCartTabs();
   }, 450);
 }
 

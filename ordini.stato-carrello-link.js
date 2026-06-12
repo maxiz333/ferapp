@@ -69,6 +69,39 @@ function inviaOrdineBloccaSeDuplicato(cart){
   return null;
 }
 
+/** Carrello collegato a ordine/bozza (ordId o bozzaOrdId). */
+function linkedCartForOrdine(ord){
+  if(!ord || !ord.id || typeof carrelli === 'undefined' || !carrelli) return null;
+  var byOrdId = carrelli.find(function(c){ return c && c.ordId === ord.id; });
+  if(byOrdId) return byOrdId;
+  return carrelli.find(function(c){ return c && c.bozzaOrdId === ord.id; }) || null;
+}
+
+/** Copia righe ordine → carrello collegato (prezzo, qty, …). Anche ordini nuovo/pronto/inviato. */
+function syncOrdineItemsToLinkedCart(ord){
+  if(!ord || typeof ordItemsSoloAttiviDeep !== 'function') return false;
+  var cart = linkedCartForOrdine(ord);
+  if(!cart) return false;
+  cart.items = ordItemsSoloAttiviDeep(ord.items);
+  cart.ultimaModificaISO = new Date().toISOString();
+  if(typeof saveCarrelli === 'function') saveCarrelli();
+  if(typeof renderCartTabs === 'function') renderCartTabs();
+  return true;
+}
+
+/** Dopo merge Firebase ordini: propaga ordine→carrello se una versione remota è cambiata. */
+function cartSyncCarrelliDopoMergeOrdiniRemote(localBefore, merged){
+  if(!localBefore || !merged || typeof syncOrdineItemsToLinkedCart !== 'function') return;
+  var beforeById = {};
+  localBefore.forEach(function(o){ if(o && o.id) beforeById[o.id] = o; });
+  merged.forEach(function(ord){
+    if(!ord || !ord.id) return;
+    var prev = beforeById[ord.id];
+    if(prev && JSON.stringify(prev) === JSON.stringify(ord)) return;
+    syncOrdineItemsToLinkedCart(ord);
+  });
+}
+
 function _rimuoviCarrelloDaOrdine(ordId){
   var idx=carrelli.findIndex(function(c){return c.ordId===ordId;});
   if(idx===-1) return;

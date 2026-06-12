@@ -191,6 +191,58 @@ function _ordShouldBlockFirebasePush(localArr, remoteArr, remoteMeta, opts){
   return false;
 }
 
+/** Id ordini nel cestino = eliminazioni intenzionali. */
+function _ordTrashIdSet(){
+  var set = {};
+  var trash = (typeof ordiniCestino !== 'undefined' && ordiniCestino) || [];
+  trash.forEach(function(o){ if(o && o.id) set[o.id] = true; });
+  return set;
+}
+
+function _ordActivityMsForMerge(o){
+  if(!o) return 0;
+  var iso = o.modificatoAtISO || o.completatoAtISO || o.createdAt || '';
+  var t = iso ? new Date(iso).getTime() : 0;
+  return isNaN(t) ? 0 : t;
+}
+
+/**
+ * Unione per id ordini locali/remoti: vince la versione con modificatoAtISO più recente
+ * (parità → locale). Esclude id nel cestino. Stesso schema di _cartMergeById.
+ */
+function _ordMergeById(localArr, remoteArr){
+  localArr = localArr || [];
+  remoteArr = remoteArr || [];
+  var trashIds = _ordTrashIdSet();
+  var localById = {};
+  localArr.forEach(function(o){ if(o && o.id) localById[o.id] = o; });
+  var merged = [];
+  var seen = {};
+  var resurrected = 0;
+  remoteArr.forEach(function(ro){
+    if(!ro) return;
+    if(!ro.id){ merged.push(ro); return; }
+    if(trashIds[ro.id]) return;
+    seen[ro.id] = true;
+    var lo = localById[ro.id];
+    if(lo){
+      merged.push(_ordActivityMsForMerge(ro) > _ordActivityMsForMerge(lo) ? ro : lo);
+    } else {
+      merged.push(ro);
+      resurrected++;
+    }
+  });
+  localArr.forEach(function(lo){
+    if(!lo) return;
+    if(!lo.id){ merged.push(lo); return; }
+    if(seen[lo.id]) return;
+    if(trashIds[lo.id]) return;
+    merged.push(lo);
+  });
+  return { merged: merged, resurrected: resurrected };
+}
+window._ordMergeById = _ordMergeById;
+
 function _ordApplyRemoteSnapshot(fresh, meta, opts){
   opts = opts || {};
   if(typeof _fbFix === 'function') fresh = _fbFix(fresh);
@@ -273,28 +325,36 @@ function _ordPushToFirebase(localSnapshot, opts){
 
       if(_ordShouldBlockFirebasePush(localSnapshot, remoteArr, remoteMeta, opts)){
         _ordSavePending = false;
-        _ordApplyRemoteSnapshot(remoteArr, remoteMeta, { renderOrdini: true });
+        var recovered = (_ordMergeById(localSnapshot, remoteArr) || {}).merged || remoteArr;
+        _ordApplyRemoteSnapshot(recovered, remoteMeta, { renderOrdini: true });
         if(typeof showToastGen === 'function'){
           showToastGen('orange',
-            'Salvataggio bloccato: il server ha più ordini completati (' + remoteM.completati +
-            ' vs ' + localM.completati + '). Lista aggiornata.');
+            'Salvataggio unito al server: ordini aggiornati da un altro dispositivo.');
         }
-        if(opts.onBlocked) opts.onBlocked(remoteArr, remoteMeta);
+        if(opts.onBlocked) opts.onBlocked(recovered, remoteMeta);
         return;
       }
+
+      var mergeInfo = _ordMergeById(localSnapshot, remoteArr);
+      var toPush = (mergeInfo && mergeInfo.merged) ? mergeInfo.merged : localSnapshot;
+      if(JSON.stringify(toPush) !== JSON.stringify(ordini)){
+        ordini = toPush;
+        lsSet(ORDK, ordini);
+      }
+      var pushM = _ordCountMetrics(toPush);
 
       var now = Date.now();
       var deviceId = (window.AppKeys && localStorage.getItem(window.AppKeys.DEVICE_ID)) || '';
       var metaOut = {
         updatedAt: now,
-        completati: localM.completati,
-        total: localM.total,
-        pronti: localM.pronti,
+        completati: pushM.completati,
+        total: pushM.total,
+        pronti: pushM.pronti,
         by: deviceId
       };
       try{
         metaRef.set(metaOut);
-        ordRef.set(localSnapshot);
+        ordRef.set(toPush);
         _ordRemoteMeta = metaOut;
         _ordLocalSyncedAt = now;
       }catch(e){

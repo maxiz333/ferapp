@@ -134,6 +134,7 @@ function cartDelta(cartId,idx,delta){
     if(typeof saveOrdini==='function') saveOrdini();
   }
   _cartSyncLinkedOrdine(cart);
+  cart.ultimaModificaISO = new Date().toISOString();
   saveCarrelli();renderCartTabs();
 }
 function cartSetQty(cartId,idx,val){
@@ -162,6 +163,7 @@ function cartSetQty(cartId,idx,val){
     if(typeof saveOrdini==='function') saveOrdini();
   }
   _cartSyncLinkedOrdine(cart);
+  cart.ultimaModificaISO = new Date().toISOString();
   saveCarrelli();renderCartTabs();
 }
 /** Rimuove la nota automatica "ROTOLO INTERO" se l'articolo non è più in modalità rotolo intero. */

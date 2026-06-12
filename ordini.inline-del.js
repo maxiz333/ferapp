@@ -60,13 +60,10 @@ function ordInlineEdit(el, gi, ii, field){
       ord.modificatoAt = new Date().toLocaleString('it-IT');
       ord.modificatoAtISO = new Date().toISOString();
       saveOrdini();
-      var linkedCart = carrelli.find(function(c){ return c.ordId === ord.id; });
-      if(!linkedCart && ord.stato === 'bozza'){
-        linkedCart = carrelli.find(function(c){ return c.bozzaOrdId === ord.id; });
+      if(typeof syncOrdineItemsToLinkedCart === 'function'){
+        syncOrdineItemsToLinkedCart(ord);
       }
-      if(linkedCart){ linkedCart.items = ordItemsSoloAttiviDeep(ord.items); saveCarrelli(); }
       renderOrdini();
-      if(ord.stato === 'bozza' && typeof renderCartTabs === 'function') renderCartTabs();
     }
     inp.addEventListener('blur', save);
     inp.addEventListener('keydown', function(e){
@@ -119,13 +116,10 @@ function ordDelItem(el, gi, ii){
     ord.modificatoAt = new Date().toLocaleString('it-IT');
     ord.modificatoAtISO = new Date().toISOString();
     saveOrdini();
-    var linkedCart = carrelli.find(function(c){ return c.ordId === ord.id; });
-    if(!linkedCart && ord.stato === 'bozza'){
-      linkedCart = carrelli.find(function(c){ return c.bozzaOrdId === ord.id; });
+    if(typeof syncOrdineItemsToLinkedCart === 'function'){
+      syncOrdineItemsToLinkedCart(ord);
     }
-    if(linkedCart){ linkedCart.items = ordItemsSoloAttiviDeep(ord.items); saveCarrelli(); }
     renderOrdini();
-    if(ord.stato === 'bozza' && typeof renderCartTabs === 'function') renderCartTabs();
     showToastGen('red', 'Articolo rimosso');
     return;
   }
