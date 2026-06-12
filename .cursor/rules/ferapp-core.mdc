@@ -1,0 +1,11 @@
+---
+description: FerApp — vincoli base progetto
+alwaysApply: true
+---
+
+# FerApp
+
+- Vanilla JS, Firebase Realtime (non Firestore)
+- Lavorare in root; non modificare `tools/`
+- Fix minimi; commit solo se l'utente lo chiede
+- Plan = capire | Agent = implementare | Debug = bug che persiste

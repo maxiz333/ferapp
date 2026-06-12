@@ -361,6 +361,7 @@ function inviaOrdine(cartId){
     tipo:cart.tipo||(cart.fatturaRichiesta?'fattura':''),
     numeroFattura:cart.numeroFattura||''
   };
+  if(typeof riepilogoCopyToOrdine === 'function') riepilogoCopyToOrdine(cart, ord);
   // Difesa esplicita: invio da carrello non deve mai partire come "visto"
   ord.visto = false;
   if(ord.fatturaRichiesta && ord.salvaFatturaInRubrica && ord.fatturaCliente && typeof upsertClienteAnagrafica==='function'){
@@ -468,6 +469,14 @@ function cartSyncOrdiniDopoMergeRemote(localBefore){
 (function(){
   var _origSaveCarrelli = saveCarrelli;
   saveCarrelli = function(){
+    try{
+      if(typeof carrelli!=='undefined'&&carrelli&&typeof riepilogoCartMaybeReset==='function'){
+        carrelli.forEach(function(c){
+          riepilogoCartMaybeReset(c);
+          if(typeof riepilogoSyncCompleto==='function') riepilogoSyncCompleto(c);
+        });
+      }
+    }catch(_eR){}
     try{
       if(typeof carrelli!=='undefined'&&carrelli&&typeof activeCartId==='string'&&activeCartId){
         var _touch = carrelli.find(function(c){ return c && c.id === activeCartId; });

@@ -25,6 +25,7 @@
       var _dupMsg = inviaOrdineBloccaSeDuplicato(cart);
       if(_dupMsg){ showToastGen('orange', _dupMsg); return; }
     }
+    if(typeof riepilogoBloccaInvioSeIncompleto === 'function' && riepilogoBloccaInvioSeIncompleto(cartId)) return;
     // Se c'è una bozza collegata, promuovila invece di ricreare l'ordine
     if(cart && cart.bozzaOrdId){
       var bozza = ordini.find(function(o){ return o.id === cart.bozzaOrdId; });
@@ -39,6 +40,7 @@
         bozza.scontoGlobale = cart.scontoGlobale || null;
         bozza.commesso  = (typeof _currentUser !== 'undefined' && _currentUser) ? _currentUser.key : (cart.commesso || '');
         bozza.promozione= new Date().toLocaleString('it-IT');
+        if(typeof riepilogoCopyToOrdine === 'function') riepilogoCopyToOrdine(cart, bozza);
         delete cart.bozzaOrdId;
         // Sposta in cima
         ordini = ordini.filter(function(o){ return o.id !== bozza.id; });

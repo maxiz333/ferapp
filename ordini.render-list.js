@@ -246,7 +246,9 @@ function renderOrdini(){
       var _bannerLabel = isBozza ? 'In lavorazione' : ((_isExBozza && ost==='nuovo') ? 'ORDINE IN ARRIVO' : SL[ost]);
       var _bannerTextCol = (ost==='nuovo' && !_isExBozza && !isBozza) ? '#111' : '#fff';
       var _ordIsFatt = !!(ord.tipo === 'fattura' || ord.fatturaRichiesta);
+      var _nArtAttivi = (ord.items||[]).filter(function(it){ return !ordItemCongelato(it); }).length;
       h+='<div class="ord-card-stato" style="background:'+sc+';color:'+_bannerTextCol+'">';
+      if(_nArtAttivi > 1 && ord.riepilogoCompleto) h+='<span class="ord-riepilogo-ok" title="Riepilogo completato">✅</span>';
       h+=_bannerLabel;
       if(ord.numero) h+=' — #'+ord.numero;
       if(_ordIsFatt){
