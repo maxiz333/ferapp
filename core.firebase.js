@@ -440,7 +440,10 @@ function _scheduleDbSystemMaintenance(){
         updateCartBadge();
         // Se activeCartId non è valido (inviato storico / assente), risolvi come dopo deleteCart
         var cartAttivoOk = carrelli.find(function(c){
-          return c && c.id === activeCartId && c.stato !== 'inviato' &&
+          if(!c || c.id !== activeCartId) return false;
+          if(c.id === '__dao_forn_staging__' || c._daoFornStaging) return false;
+          if(typeof _cartIsStagingCart === 'function' && _cartIsStagingCart(c)) return false;
+          return c.stato !== 'inviato' &&
             (typeof ctCartCreatoOggi !== 'function' || ctCartCreatoOggi(c));
         });
         if(!cartAttivoOk && typeof _cartResolveActiveId === 'function'){

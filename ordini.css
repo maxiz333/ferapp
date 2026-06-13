@@ -1134,6 +1134,258 @@ body.light-mode .ord-item-del:hover, body.light-mode .ord-item-del:active { colo
   background: var(--ct-card, #1a1b1d);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
+
+/* Barra ricerca Da ordinare — stile coerente con #cart-search-wrap */
+.dao-search-bar {
+  padding: 4px 8px;
+  margin-bottom: 8px;
+}
+.dao-search-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dao-search-bar-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+  opacity: 0.75;
+  line-height: 1;
+}
+.dao-search-mode-badge {
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: #2a2a2a;
+  color: var(--accent, #f5c400);
+  border: 1px solid #3a3a3a;
+}
+.dao-search-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #2e3033;
+  border-radius: 12px;
+  font-size: 16px;
+  background: #1e1e1e;
+  color: #f0f0f0;
+  box-sizing: border-box;
+  font-family: inherit;
+  outline: none;
+}
+.dao-search-input:focus {
+  border-color: var(--accent, #f5c400);
+}
+.dao-search-mode-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid #3a3a3a;
+  background: #252525;
+  color: #ddd;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.dao-search-mode-btn:hover {
+  background: #2e2e2e;
+  border-color: #555;
+}
+.dao-search-results {
+  display: none;
+  margin-top: 6px;
+}
+.dao-search-results.dao-search-results--open,
+.dao-search-results:not(:empty) {
+  display: block;
+}
+.dao-search-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: #888;
+  background: #252525;
+  border: 1px solid var(--border, #333);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+}
+.dao-search-close-btn {
+  padding: 2px 8px;
+  border: none;
+  background: transparent;
+  color: #888;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+}
+.dao-search-close-btn:hover {
+  color: #ccc;
+}
+.dao-search-catalog-list {
+  background: #1e1e1e;
+  border: 1px solid var(--border, #333);
+  border-radius: 0 0 10px 10px;
+  overflow: hidden;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.dao-search-catalog-row {
+  padding: 10px 12px;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.dao-search-catalog-info {
+  flex: 1;
+  min-width: 0;
+}
+.dao-search-catalog-desc {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text, #f0f0f0);
+}
+.dao-search-catalog-meta {
+  font-size: 10px;
+  margin-top: 2px;
+}
+.dao-search-catalog-codf {
+  color: #fc8181;
+  font-weight: 600;
+}
+.dao-search-catalog-codm {
+  color: var(--accent, #f5c400);
+  font-weight: 600;
+}
+.dao-search-catalog-marca {
+  color: var(--muted, #888);
+}
+.dao-search-catalog-stock {
+  font-size: 10px;
+  color: #555;
+  margin-top: 1px;
+}
+.dao-search-catalog-stock--out {
+  color: #e53e3e;
+  font-weight: 700;
+}
+.dao-search-catalog-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.dao-search-catalog-price {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--accent, #f5c400);
+}
+.dao-search-ordina-btn {
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #38a169;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.dao-search-ordina-btn:active {
+  filter: brightness(0.9);
+}
+.dao-search-more-btn {
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--accent, #f5c400);
+  text-align: center;
+  padding: 10px 8px;
+  border-top: 1px solid #2a2a2a;
+  background: #252525;
+}
+.dao-search-empty,
+.dao-search-loading {
+  padding: 12px;
+  font-size: 12px;
+  color: var(--muted, #888);
+  text-align: center;
+  background: #1e1e1e;
+  border: 1px solid var(--border, #333);
+  border-radius: 10px;
+}
+.dao-search-loading {
+  color: var(--accent, #f5c400);
+}
+.dao-search-section-title {
+  padding: 6px 12px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #666;
+  background: #1a1a1a;
+  border-bottom: 1px solid #2a2a2a;
+}
+.dao-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #2a2a2a;
+  cursor: pointer;
+  font-size: 12px;
+}
+.dao-search-row:hover {
+  background: #252525;
+}
+.dao-search-live-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dao-search-live-desc {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text, #f0f0f0);
+}
+.dao-search-live-meta,
+.dao-search-arch-date,
+.dao-search-arch-count {
+  font-size: 10px;
+  color: var(--muted, #888);
+  flex-shrink: 0;
+}
+.dao-row--search-hidden,
+.ord-dao-group--search-hidden,
+.dao-day-sep--search-hidden {
+  display: none !important;
+}
+.dao-row--search-flash {
+  animation: dao-search-flash 1.2s ease;
+}
+@keyframes dao-search-flash {
+  0%, 100% { background: transparent; }
+  30% { background: rgba(245, 196, 0, 0.15); }
+}
 .dao-forn-title-area {
   flex: 1;
   min-width: 0;
@@ -1416,6 +1668,44 @@ body.light-mode .ord-dao-header {
   background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
+body.light-mode .dao-search-input {
+  background: #fff;
+  color: #111;
+  border-color: #ccc;
+}
+body.light-mode .dao-search-mode-badge {
+  background: #f0f0f0;
+  border-color: #ddd;
+  color: #b7791f;
+}
+body.light-mode .dao-search-mode-btn {
+  background: #f5f5f5;
+  border-color: #ccc;
+  color: #444;
+}
+body.light-mode .dao-search-catalog-list,
+body.light-mode .dao-search-empty,
+body.light-mode .dao-search-loading {
+  background: #fff;
+  border-color: #ddd;
+}
+body.light-mode .dao-search-catalog-row,
+body.light-mode .dao-search-row {
+  border-color: #eee;
+}
+body.light-mode .dao-search-catalog-desc,
+body.light-mode .dao-search-live-desc {
+  color: var(--text);
+}
+body.light-mode .dao-search-panel-head {
+  background: #f5f5f5;
+  border-color: #ddd;
+  color: #666;
+}
+body.light-mode .dao-search-more-btn {
+  background: #f0f0f0;
+  border-color: #ddd;
+}
 body.light-mode .dao-forn-title {
   color: var(--text);
 }
@@ -1500,6 +1790,62 @@ body.light-mode .dao-btn-cestino {
   .dao-item-nota-btn {
     min-width: 44px;
     min-height: 44px;
+  }
+}
+
+/* Da ordinare — header fornitore e barra ricerca su mobile */
+@media (max-width: 768px) {
+  .dao-search-bar {
+    padding: 2px 6px;
+  }
+  .ord-dao-header {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    row-gap: 8px;
+    padding: 8px 10px;
+  }
+  .ord-dao-dot {
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+  .dao-forn-title-area {
+    flex: 1 1 calc(100% - 24px);
+    min-width: 0;
+    max-width: 100%;
+  }
+  .dao-forn-title-row {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .dao-forn-title-wrap {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .dao-forn-edit-wrap {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 100%;
+    gap: 6px;
+  }
+  .ord-dao-forn-inp--title {
+    flex: 1 1 100%;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .dao-forn-save-btn,
+  .dao-forn-cancel-btn {
+    flex: 1 1 auto;
+  }
+  .ord-dao-count {
+    margin-left: 20px;
+    font-size: 10px;
+  }
+  .ord-dao-header > button {
+    font-size: 9px;
+    padding: 4px 8px;
+    white-space: nowrap;
   }
 }
 

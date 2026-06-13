@@ -60,7 +60,7 @@ function ncAutoSconto(){
   }
 }
 function switchCart(idx){
-  if(carrelli[idx])activeCartId=carrelli[idx].id;
+  if(carrelli[idx] && !_cartIsStagingCart(carrelli[idx])) activeCartId=carrelli[idx].id;
   renderCartTabs();
 }
 
@@ -85,6 +85,24 @@ function _cartCreateVuotoOggi(nome){
   return id;
 }
 
+var CART_DAO_STAGING_ID = '__dao_forn_staging__';
+
+/** Carrello interno "Da ordinare" (ricerca catalogo) — mai visibile nel tab Carrello. */
+function _cartIsStagingCart(cart){
+  return !!(cart && (cart._daoFornStaging === true || cart.id === CART_DAO_STAGING_ID));
+}
+if(typeof window !== 'undefined') window._cartIsStagingCart = _cartIsStagingCart;
+
+/** Se activeCartId punta allo staging, ripristina un carrello cliente valido. */
+function _cartEnsureActiveNotStaging(){
+  if(typeof _cartIsStagingCart !== 'function') return;
+  var cur = (carrelli || []).find(function(c){ return c && c.id === activeCartId; });
+  if(!activeCartId || (cur && _cartIsStagingCart(cur))){
+    activeCartId = _cartResolveActiveId();
+  }
+}
+if(typeof window !== 'undefined') window._cartEnsureActiveNotStaging = _cartEnsureActiveNotStaging;
+
 /** Dopo eliminazione/sync: carrello aperto creato oggi, altrimenti null (schermata NUOVO). */
 function _cartResolveActiveId(){
   var oggi = typeof ctOggiDateKey === 'function' ? ctOggiDateKey() : '';
@@ -92,6 +110,7 @@ function _cartResolveActiveId(){
   var bestMs = 0;
   (carrelli || []).forEach(function(c){
     if(!c || c.stato === 'inviato') return;
+    if(_cartIsStagingCart(c)) return;
     if(typeof ctCartCreatoOggi === 'function' && !ctCartCreatoOggi(c)) return;
     if(typeof ctCartCreatoDayKey === 'function' && ctCartCreatoDayKey(c) !== oggi) return;
     var iso = (typeof ctCartActivityIso === 'function') ? ctCartActivityIso(c) : (c.ultimaModificaISO || c.creatoAtISO || '');
@@ -415,3 +434,5 @@ function rinominaCart(idx){
     showToastGen('green','-- Rinominato: '+cart.nome);
   }
 }
+
+_cartEnsureActiveNotStaging();

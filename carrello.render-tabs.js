@@ -91,6 +91,7 @@ function renderCartTabs(forceRender){
     if(typeof cartSearchFieldActive === 'function' && cartSearchFieldActive()) return;
   }
   if(typeof ctRotazioneGiornoCarrelli === 'function') ctRotazioneGiornoCarrelli();
+  if(typeof _cartEnsureActiveNotStaging === 'function') _cartEnsureActiveNotStaging();
   var body = document.getElementById('cart-body');
   if(!body) return;
 
@@ -140,6 +141,10 @@ function renderCartTabs(forceRender){
     return;
   }
   var cart = carrelli.find(function(c){ return c.id === activeCartId; });
+  if(!cart || (typeof _cartIsStagingCart === 'function' && _cartIsStagingCart(cart))){
+    if(typeof _cartEnsureActiveNotStaging === 'function') _cartEnsureActiveNotStaging();
+    cart = activeCartId ? carrelli.find(function(c){ return c.id === activeCartId; }) : null;
+  }
   if(!cart) return;
   if(typeof cartEnsureInsertNums === 'function' && cartEnsureInsertNums(cart)){
     if(typeof saveCarrelli === 'function') saveCarrelli();

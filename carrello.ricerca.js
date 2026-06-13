@@ -39,6 +39,57 @@ function _cartSearchLegacySubset(qWords, textLower){
   return true;
 }
 
+/**
+ * Raccoglie match catalogo (carrello + Da ordinare): matchNormQueryToText, fuzzyScore, ranking.
+ * opts.skipRemoved — default true (esclude righe rimosse dal listino).
+ */
+function catalogSearchCollectMatches(rawQuery, opts){
+  opts = opts || {};
+  var skipRemoved = opts.skipRemoved !== false;
+  var qTrim = String(rawQuery == null ? '' : rawQuery).trim();
+  if(qTrim.length < 2) return [];
+  if(typeof rows === 'undefined' || !rows || !rows.length) return [];
+  var qNorm = (typeof norm === 'function') ? norm(qTrim) : qTrim.toLowerCase();
+  var qWords = qTrim.toLowerCase().split(/\s+/).filter(function(w){ return w.length > 0; });
+
+  function collect(mode){
+    var bestByCode = {};
+    rows.forEach(function(r, i){
+      if(!r) return;
+      if(skipRemoved && typeof removed !== 'undefined' && removed.has(String(i))) return;
+      var m = (typeof magazzino !== 'undefined' && magazzino) ? (magazzino[i] || {}) : {};
+      var hayRaw = _cartSearchHayRaw(r, m);
+      var tNorm = (typeof norm === 'function') ? norm(hayRaw) : hayRaw.toLowerCase();
+      var mr;
+      if(typeof matchNormQueryToText === 'function'){
+        mr = matchNormQueryToText(qNorm, tNorm, mode);
+      } else {
+        mr = { ok: _cartSearchLegacySubset(qWords, hayRaw.toLowerCase()), tier: 'exact' };
+      }
+      if(!mr.ok) return;
+      var score = (typeof fuzzyScore === 'function') ? fuzzyScore(qTrim, hayRaw) : 100;
+      if(score < 50) return;
+      var mult = (typeof searchTierRankMultiplier === 'function') ? searchTierRankMultiplier(mr.tier || 'exact') : 1;
+      var rankScore = score * mult;
+      var key = '';
+      if(typeof normalizeCodiceMagazzino === 'function') key = normalizeCodiceMagazzino(r.codM);
+      if(!key) key = 'idx:' + i;
+      var cand = { r: r, i: i, m: m, score: rankScore, _updatedAt: getRowUpdatedAt(r, i) };
+      var prev = bestByCode[key];
+      if(!prev || cand._updatedAt > prev._updatedAt || (cand._updatedAt === prev._updatedAt && cand.score > prev.score)){
+        bestByCode[key] = cand;
+      }
+    });
+    return Object.keys(bestByCode).map(function(k){ return bestByCode[k]; });
+  }
+
+  var matches = collect('primary');
+  if(!matches.length) matches = collect('fallback');
+  matches.sort(function(a, b){ return b.score - a.score; });
+  return matches;
+}
+if(typeof window !== 'undefined') window.catalogSearchCollectMatches = catalogSearchCollectMatches;
+
 /** Risultati carrello: mostrati a blocchi nel DOM (stesso schema ricerca globale). */
 var _cartSearchMoreState = { q: '', matches: [], shown: 0 };
 var CART_SEARCH_INITIAL = 15;
@@ -111,44 +162,7 @@ function _doCartSearch(){
     return;
   }
   var qTrim = q.trim();
-  var qNorm = (typeof norm === 'function') ? norm(qTrim) : qTrim.toLowerCase();
-  var qWords = qTrim.toLowerCase().split(/\s+/).filter(function(w){ return w.length > 0; });
-
-  function collect(mode){
-    var bestByCode = {};
-    rows.forEach(function(r,i){
-      if(!r)return;
-      if(removed.has(String(i)))return;
-      var m=magazzino[i]||{};
-      var hayRaw = _cartSearchHayRaw(r, m);
-      var tNorm = (typeof norm === 'function') ? norm(hayRaw) : hayRaw.toLowerCase();
-      var mr;
-      if(typeof matchNormQueryToText === 'function'){
-        mr = matchNormQueryToText(qNorm, tNorm, mode);
-      } else {
-        mr = { ok: _cartSearchLegacySubset(qWords, hayRaw.toLowerCase()), tier: 'exact' };
-      }
-      if(!mr.ok) return;
-      var score = (typeof fuzzyScore === 'function') ? fuzzyScore(qTrim, hayRaw) : 100;
-      if(score < 50) return;
-      var mult = (typeof searchTierRankMultiplier === 'function') ? searchTierRankMultiplier(mr.tier || 'exact') : 1;
-      var rankScore = score * mult;
-      var key = '';
-      if(typeof normalizeCodiceMagazzino === 'function') key = normalizeCodiceMagazzino(r.codM);
-      if(!key) key = 'idx:' + i;
-      var cand = {r:r, i:i, m:m, score: rankScore, _updatedAt:getRowUpdatedAt(r,i)};
-      var prev = bestByCode[key];
-      if(!prev || cand._updatedAt > prev._updatedAt || (cand._updatedAt === prev._updatedAt && cand.score > prev.score)){
-        bestByCode[key] = cand;
-      }
-    });
-    return Object.keys(bestByCode).map(function(k){ return bestByCode[k]; });
-  }
-
-  var matches = collect('primary');
-  if(!matches.length) matches = collect('fallback');
-  // Ordina per score decrescente (migliori in cima)
-  matches.sort(function(a,b){return b.score-a.score;});
+  var matches = catalogSearchCollectMatches(qTrim);
   if(!matches.length){res.innerHTML='<div style="padding:10px;color:var(--muted);font-size:12px;">Nessun risultato per "'+esc(q)+'"</div>';return;}
   var firstN = Math.min(CART_SEARCH_INITIAL, matches.length);
   _cartSearchMoreState = { q: qTrim, matches: matches, shown: firstN };

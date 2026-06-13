@@ -1053,7 +1053,7 @@ function daoApriRicercaArchivio(){
 
 /** Esegue la ricerca testuale (nome prodotto / data / codici / fornitore) sull'archivio completo. */
 var _daoSearchTimer = null;
-var _daoSearchMode = 'ordini';
+var _daoSearchMode = 'catalogo';
 var _daoSearchQuery = '';
 var DAO_FORN_STAGING_CART_ID = '__dao_forn_staging__';
 
@@ -1083,7 +1083,9 @@ function daoQueryInActiveWrap(selector){
 }
 
 function daoIsFornStagingCart(cart){
-  return !!(cart && (cart._daoFornStaging === true || cart.id === DAO_FORN_STAGING_CART_ID));
+  return typeof _cartIsStagingCart === 'function'
+    ? _cartIsStagingCart(cart)
+    : !!(cart && (cart._daoFornStaging === true || cart.id === DAO_FORN_STAGING_CART_ID));
 }
 
 function daoGetOrCreateStagingCart(){
@@ -1395,6 +1397,34 @@ function daoCercaOrdini(rawQuery){
   });
 }
 
+var _daoCatalogSearchMoreState = { q: '', matches: [], shown: 0 };
+var DAO_CATALOG_SEARCH_INITIAL = 15;
+var DAO_CATALOG_SEARCH_PAGE = 20;
+
+function daoCatalogSearchLoadMore(){
+  var inp = daoQueryInActiveWrap('#dao-search-input');
+  var qNow = inp ? String(inp.value || '').trim() : '';
+  var st = _daoCatalogSearchMoreState;
+  if(!st.matches.length || qNow !== st.q) return;
+  var listEl = daoQueryInActiveWrap('#dao-catalog-search-rows');
+  var moreEl = daoQueryInActiveWrap('#dao-catalog-search-more');
+  if(!listEl || !moreEl) return;
+  var total = st.matches.length;
+  var start = st.shown;
+  if(start >= total) return;
+  var end = Math.min(start + DAO_CATALOG_SEARCH_PAGE, total);
+  for(var ci = start; ci < end; ci++){
+    listEl.insertAdjacentHTML('beforeend', daoCatalogSearchResultRowHtml(st.matches[ci]));
+  }
+  st.shown = end;
+  var rem = total - end;
+  if(rem <= 0){
+    moreEl.parentNode.removeChild(moreEl);
+  } else {
+    moreEl.textContent = '... e altri ' + rem + ' articoli';
+  }
+}
+
 function daoCatalogSearchResultRowHtml(x){
   var r = x.r, i = x.i, m = x.m;
   var qty = m.qty !== undefined && m.qty !== '' ? m.qty : '';
@@ -1442,21 +1472,32 @@ function daoCercaCatalogo(rawQuery){
     resBox.innerHTML = '<div class="dao-search-loading">\u23F3 Database in caricamento, attendi...</div>';
     return;
   }
+  _daoCatalogSearchMoreState = { q: '', matches: [], shown: 0 };
   var matches = typeof catalogSearchCollectMatches === 'function' ? catalogSearchCollectMatches(q) : [];
   if(!matches.length){
     resBox.innerHTML = '<div class="dao-search-empty">Nessun risultato catalogo per "' + esc(q) + '".</div>';
     return;
   }
+  var firstN = Math.min(DAO_CATALOG_SEARCH_INITIAL, matches.length);
+  _daoCatalogSearchMoreState = { q: q, matches: matches, shown: firstN };
   var h = '';
   h += '<div class="dao-search-panel-head">';
   h += 'CATALOGO (' + matches.length + ')';
   h += '<button type="button" class="dao-search-close-btn" onclick="daoChiudiRicerca()" title="Chiudi ricerca">\u2715</button>';
   h += '</div>';
-  matches.slice(0, 40).forEach(function(x){ h += daoCatalogSearchResultRowHtml(x); });
-  if(matches.length > 40){
-    h += '<div class="dao-search-more-hint">... e altri ' + (matches.length - 40) + ' articoli. Affina la ricerca.</div>';
+  h += '<div class="dao-search-catalog-list">';
+  h += '<div id="dao-catalog-search-rows">';
+  for(var ri = 0; ri < firstN; ri++){
+    h += daoCatalogSearchResultRowHtml(matches[ri]);
   }
+  h += '</div>';
+  var rem = matches.length - firstN;
+  if(rem > 0){
+    h += '<div id="dao-catalog-search-more" class="dao-search-more-btn" role="button" tabindex="0" onclick="daoCatalogSearchLoadMore()" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();daoCatalogSearchLoadMore();}">... e altri ' + rem + ' articoli</div>';
+  }
+  h += '</div>';
   resBox.innerHTML = h;
+  resBox.classList.add('dao-search-results--open');
 }
 
 function daoOrdinaDaCatalogo(rowIdx, anchorEl){
@@ -1471,6 +1512,7 @@ function daoOrdinaDaCatalogo(rowIdx, anchorEl){
     anchorEl: anchorEl || null,
     onSelectColor: function(color){
       if(!color) return;
+      var prevActiveCartId = (typeof activeCartId !== 'undefined') ? activeCartId : null;
       var cart = daoGetOrCreateStagingCart();
       if(!cart){
         if(typeof showToastGen === 'function') showToastGen('orange', 'Impossibile salvare articolo');
@@ -1480,9 +1522,27 @@ function daoOrdinaDaCatalogo(rowIdx, anchorEl){
       daoSetDaOrdColoreOnItem(newItem, color);
       if(!newItem.daOrdinare) return;
       cart.items = cart.items || [];
-      cart.items.push(newItem);
+      var prodKey = _daoProdKeyFromItem(newItem);
+      var dayKey = _daoDayKeyFromSortAt(newItem._daOrdinareAt);
+      var colNorm = _daoColorFromItem(newItem);
+      var merged = false;
+      for(var mi = 0; mi < cart.items.length; mi++){
+        var ex = cart.items[mi];
+        if(!ex || !ex.daOrdinare) continue;
+        if(_daoColorFromItem(ex) !== colNorm) continue;
+        if(_daoProdKeyFromItem(ex) !== prodKey) continue;
+        if(_daoDayKeyFromSortAt(ex._daOrdinareAt) !== dayKey) continue;
+        ex.qty = _daoSumQty(ex.qty, newItem.qty);
+        merged = true;
+        break;
+      }
+      if(!merged) cart.items.push(newItem);
       cart.ultimaModificaISO = new Date().toISOString();
       if(typeof saveCarrelli === 'function') saveCarrelli();
+      if(typeof activeCartId !== 'undefined'){
+        activeCartId = prevActiveCartId;
+        if(typeof _cartEnsureActiveNotStaging === 'function') _cartEnsureActiveNotStaging();
+      }
       if(typeof ctCloseOrdinaPopup === 'function') ctCloseOrdinaPopup();
       if(typeof renderOrdFor === 'function') renderOrdFor(true);
       if(typeof renderDaOrdinareView === 'function') renderDaOrdinareView(true);
@@ -1515,6 +1575,7 @@ function daoChiudiRicerca(clearInput){
     if(inp) inp.value = '';
   }
   _daoSearchQuery = '';
+  _daoCatalogSearchMoreState = { q: '', matches: [], shown: 0 };
   daoRipristinaVisibilitaRighe();
   var resBox = daoQueryInActiveWrap('#dao-search-results');
   if(resBox){
@@ -1531,6 +1592,7 @@ if(typeof window !== 'undefined'){
   window.daoCercaInput = daoCercaInput;
   window.daoScrollToRigaCorrente = daoScrollToRigaCorrente;
   window.daoOrdinaDaCatalogo = daoOrdinaDaCatalogo;
+  window.daoCatalogSearchLoadMore = daoCatalogSearchLoadMore;
   window.daoChiudiRicerca = daoChiudiRicerca;
   window._daoEntrySearchHay = _daoEntrySearchHay;
 }

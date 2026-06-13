@@ -15,7 +15,11 @@
 var CARTK=window.AppKeys.CARRELLI, ORDK=window.AppKeys.ORDINI, CART_CK=window.AppKeys.CARRELLI_CESTINO;
 var carrelli=lsGet(CARTK)||[], ordini=lsGet(ORDK)||[];
 var carrelliCestino=lsGet(CART_CK)||[];
-var activeCartId=carrelli.length?carrelli[carrelli.length-1].id:null;
+var activeCartId=null;
+for(var _ci=carrelli.length-1;_ci>=0;_ci--){
+  var _c=carrelli[_ci];
+  if(_c&&_c.id!=='__dao_forn_staging__'&&!_c._daoFornStaging){ activeCartId=_c.id; break; }
+}
 var ordFiltro='nuovo';
 var ORDK_ARCH=window.AppKeys.ORDINI_ARCHIVIO;
 /** Archivio ordini completati (lazy: non leggiamo localStorage all'avvio se non serve). */
@@ -378,7 +382,12 @@ var _confirmCb=null;
 function updateCartBadge(){
   var b=document.getElementById('cart-badge');
   if(!b||!Array.isArray(carrelli))return;
-  var n=carrelli.reduce(function(s,c){return s+((c&&c.items)?c.items.length:0);},0);
+  var n=carrelli.reduce(function(s,c){
+    if(!c||!c.items) return s;
+    if(c.id==='__dao_forn_staging__'||c._daoFornStaging) return s;
+    if(typeof _cartIsStagingCart==='function'&&_cartIsStagingCart(c)) return s;
+    return s+c.items.length;
+  },0);
   b.textContent=n;b.style.display=n?'':'none';
 }
 function updateOrdBadge(){
