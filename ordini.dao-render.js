@@ -358,10 +358,9 @@ function daoHtmlGruppoFornitore(col, items, forniMap, opts){
   h += '<span class="ord-dao-count">' + items.length + ' art.</span>';
 
   if(mode === 'ordini-tab'){
-    h += '<button type="button" onclick="daoArchiviaColoreGruppo(\'' + col + '\')" style="margin-left:6px;padding:4px 10px;border-radius:8px;border:1px solid #38a16944;background:#38a16922;color:#68d391;font-size:10px;font-weight:800;cursor:pointer;">Archivia ordinato</button>';
+    h += '<button type="button" onclick="daoConfermaArchiviaGruppo(\'' + col + '\')" style="margin-left:6px;padding:4px 10px;border-radius:8px;border:1px solid #38a16944;background:#38a16922;color:#68d391;font-size:10px;font-weight:800;cursor:pointer;">Archivia ordinato</button>';
   } else {
-    h += '<button type="button" onclick="daoInviaEArchiviaGruppo(\'' + col + '\')" title="Genera PDF, archivia e svuota la lista" style="margin-left:6px;padding:4px 10px;border-radius:8px;border:1px solid #3182ce66;background:#3182ce22;color:#90cdf4;font-size:10px;font-weight:800;cursor:pointer;">\uD83D\uDCC4 Invia & Archivia</button>';
-    h += '<button type="button" onclick="daoArchiviaColoreGruppo(\'' + col + '\')" title="Archivia senza generare PDF" style="margin-left:6px;padding:4px 10px;border-radius:8px;border:1px solid #38a16944;background:#38a16922;color:#68d391;font-size:10px;font-weight:800;cursor:pointer;">Archivia</button>';
+    h += '<button type="button" onclick="daoConfermaArchiviaGruppo(\'' + col + '\')" title="Anteprima, stampa e archivia" style="margin-left:6px;padding:4px 10px;border-radius:8px;border:1px solid #3182ce66;background:#3182ce22;color:#90cdf4;font-size:10px;font-weight:800;cursor:pointer;">\uD83D\uDCC4 Invia & Archivia</button>';
   }
   h += '</div>';
 

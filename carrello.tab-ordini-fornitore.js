@@ -897,6 +897,102 @@ function daoMigraColdToFirebase(){
   setTimeout(function(){ tryMigra(0); }, 1500);
 })();
 
+function _daoHtmlBatchItemRows(items){
+  return (items || []).map(function(it){
+    var codM = it.codM ? (String(it.codM).match(/^\d+$/) ? String(it.codM).padStart(7, '0') : it.codM) : '';
+    var um = it.unit || 'pz';
+    return '<tr>' +
+      '<td style="padding:6px 8px;border-bottom:1px solid #2a2a2a;color:#ddd;">' + esc(it.desc || '—') + '</td>' +
+      '<td style="padding:6px 8px;border-bottom:1px solid #2a2a2a;color:#aaa;font-family:monospace;">' + esc(codM) + '</td>' +
+      '<td style="padding:6px 8px;border-bottom:1px solid #2a2a2a;color:#aaa;font-family:monospace;">' + esc(it.codF || '') + '</td>' +
+      '<td style="padding:6px 8px;border-bottom:1px solid #2a2a2a;color:#68d391;text-align:right;">' + esc(String(it.qty || '')) + '</td>' +
+      '<td style="padding:6px 8px;border-bottom:1px solid #2a2a2a;color:#aaa;">' + esc(um) + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+function _daoHtmlBatchItemsTable(items){
+  var rows = _daoHtmlBatchItemRows(items);
+  if(!rows){
+    return '<div style="padding:12px;color:#888;">Nessun articolo.</div>';
+  }
+  return '<table style="width:100%;border-collapse:collapse;font-size:11px;">' +
+    '<thead><tr>' +
+      '<th style="padding:6px 8px;text-align:left;color:#888;border-bottom:1px solid #333;">Descrizione</th>' +
+      '<th style="padding:6px 8px;text-align:left;color:#888;border-bottom:1px solid #333;">Cod.Mag</th>' +
+      '<th style="padding:6px 8px;text-align:left;color:#888;border-bottom:1px solid #333;">Cod.Forn</th>' +
+      '<th style="padding:6px 8px;text-align:right;color:#888;border-bottom:1px solid #333;">Q.tà</th>' +
+      '<th style="padding:6px 8px;text-align:left;color:#888;border-bottom:1px solid #333;">UM</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table>';
+}
+
+function daoChiudiConfermaArchiviaOverlay(){
+  var el = document.getElementById('dao-arch-conf-overlay');
+  if(el) el.remove();
+}
+
+/** Anteprima articoli + No / Stampa / Sì (stampa + archivia). */
+function daoConfermaArchiviaGruppo(colore){
+  colore = typeof ctNormalizeHex === 'function' ? (ctNormalizeHex(colore) || colore) : colore;
+  var byColor = daoCollectDaOrdinareByColor();
+  var entries = byColor[colore] || [];
+  if(!entries.length){
+    if(typeof showToastGen === 'function') showToastGen('yellow', 'Nessun articolo in questo gruppo');
+    return;
+  }
+  var forniMap = typeof ctGetForniColore === 'function' ? ctGetForniColore() : {};
+  var nome = (forniMap[colore] && String(forniMap[colore]).trim())
+    ? String(forniMap[colore]).trim()
+    : (typeof ctEtichettaFornitore === 'function' ? ctEtichettaFornitore(colore) : colore);
+  var items = entries.map(function(e){ return e.it; });
+  var col = colore || '#888888';
+  var colAttr = String(col).replace(/'/g, "\\'");
+
+  daoChiudiConfermaArchiviaOverlay();
+  var bd = document.createElement('div');
+  bd.id = 'dao-arch-conf-overlay';
+  bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9055;display:flex;align-items:center;justify-content:center;padding:16px;';
+  bd.onclick = function(e){ if(e.target === bd) daoChiudiConfermaArchiviaOverlay(); };
+
+  bd.innerHTML =
+    '<div class="dao-arch-conf-box" style="background:#1a1a1c;border:1px solid #333;border-radius:12px;max-width:720px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;" onclick="event.stopPropagation()">' +
+      '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #333;">' +
+        '<span style="width:14px;height:14px;border-radius:50%;background:' + col + ';flex-shrink:0;"></span>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-size:14px;font-weight:900;color:#fff;">' + esc(nome) + '</div>' +
+          '<div style="font-size:11px;color:#888;">Confermi archiviazione? — ' + items.length + ' articoli</div>' +
+        '</div>' +
+        '<button type="button" onclick="daoChiudiConfermaArchiviaOverlay()" style="background:transparent;border:none;color:#aaa;font-size:20px;cursor:pointer;line-height:1;">✕</button>' +
+      '</div>' +
+      '<div style="overflow:auto;padding:8px 14px;flex:1;min-height:0;">' +
+        _daoHtmlBatchItemsTable(items) +
+      '</div>' +
+      '<div style="display:flex;gap:8px;padding:12px 14px;border-top:1px solid #333;flex-wrap:wrap;justify-content:flex-end;">' +
+        '<button type="button" onclick="daoChiudiConfermaArchiviaOverlay()" style="padding:8px 16px;border-radius:8px;border:1px solid #444;background:transparent;color:#aaa;font-size:12px;font-weight:800;cursor:pointer;">No</button>' +
+        '<button type="button" onclick="daoArchiviaGruppoSoloStampa(\'' + colAttr + '\')" style="padding:8px 16px;border-radius:8px;border:1px solid #3182ce66;background:#3182ce22;color:#90cdf4;font-size:12px;font-weight:800;cursor:pointer;">🖨️ Stampa</button>' +
+        '<button type="button" onclick="daoArchiviaGruppoSi(\'' + colAttr + '\')" style="padding:8px 16px;border-radius:8px;border:none;background:#38a169;color:#fff;font-size:12px;font-weight:900;cursor:pointer;">Sì, archivia</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(bd);
+}
+
+function daoArchiviaGruppoSoloStampa(colore){
+  colore = typeof ctNormalizeHex === 'function' ? (ctNormalizeHex(colore) || colore) : colore;
+  if(typeof daoGenerateOrderPDF === 'function') daoGenerateOrderPDF(colore);
+  daoChiudiConfermaArchiviaOverlay();
+}
+
+function daoArchiviaGruppoSi(colore){
+  colore = typeof ctNormalizeHex === 'function' ? (ctNormalizeHex(colore) || colore) : colore;
+  daoChiudiConfermaArchiviaOverlay();
+  var ok = typeof daoGenerateOrderPDF === 'function' ? daoGenerateOrderPDF(colore) : false;
+  if(!ok) return;
+  setTimeout(function(){
+    daoArchiviaColoreGruppo(colore);
+    if(typeof showToastGen === 'function') showToastGen('green', 'Ordine stampato e archiviato');
+  }, 500);
+}
+
 /** Sposta il gruppo colore in "già ordinati" e svuota le righe dai carrelli. */
 function daoArchiviaColoreGruppo(colore){
   var byColor = daoCollectDaOrdinareByColor();
@@ -1625,40 +1721,20 @@ function _daoMostraDettaglioBatchOverlay(b){
   bd.id = 'dao-detail-overlay';
   bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9050;display:flex;align-items:center;justify-content:center;padding:16px;';
   bd.onclick = function(e){ if(e.target === bd) bd.remove(); };
-  var d = b.archivedAt ? b.archivedAt.slice(0,10) : '';
+  var d = b.archivedAt ? b.archivedAt.slice(0, 10) : '';
   var col = b.colore || '#888888';
-  var rows = (b.items || []).map(function(it){
-    var codM = it.codM ? (String(it.codM).match(/^\d+$/) ? String(it.codM).padStart(7,'0') : it.codM) : '';
-    var um = it.unit || 'pz';
-    return '<tr>' +
-      '<td style="padding:6px 8px;border-bottom:1px solid #2a2a2a;color:#ddd;">' + esc(it.desc||'—') + '</td>' +
-      '<td style="padding:6px 8px;border-bottom:1px solid #2a2a2a;color:#aaa;font-family:monospace;">' + esc(codM) + '</td>' +
-      '<td style="padding:6px 8px;border-bottom:1px solid #2a2a2a;color:#aaa;font-family:monospace;">' + esc(it.codF||'') + '</td>' +
-      '<td style="padding:6px 8px;border-bottom:1px solid #2a2a2a;color:#68d391;text-align:right;">' + esc(String(it.qty||'')) + '</td>' +
-      '<td style="padding:6px 8px;border-bottom:1px solid #2a2a2a;color:#aaa;">' + esc(um) + '</td>' +
-      '</tr>';
-  }).join('');
   bd.innerHTML =
     '<div style="background:#1a1a1c;border:1px solid #333;border-radius:12px;max-width:720px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">' +
       '<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #333;">' +
         '<span style="width:14px;height:14px;border-radius:50%;background:' + col + ';"></span>' +
         '<div style="flex:1;">' +
-          '<div style="font-size:14px;font-weight:900;color:#fff;">' + esc(b.nomeFornitore||'') + '</div>' +
-          '<div style="font-size:11px;color:#888;">Archiviato il ' + esc(d) + ' — ' + (b.items||[]).length + ' articoli</div>' +
+          '<div style="font-size:14px;font-weight:900;color:#fff;">' + esc(b.nomeFornitore || '') + '</div>' +
+          '<div style="font-size:11px;color:#888;">Archiviato il ' + esc(d) + ' — ' + (b.items || []).length + ' articoli</div>' +
         '</div>' +
         '<button type="button" onclick="document.getElementById(\'dao-detail-overlay\').remove()" style="background:transparent;border:none;color:#aaa;font-size:20px;cursor:pointer;line-height:1;">✕</button>' +
       '</div>' +
       '<div style="overflow:auto;padding:8px 14px 14px;">' +
-        (rows ?
-          '<table style="width:100%;border-collapse:collapse;font-size:11px;">' +
-            '<thead><tr>' +
-              '<th style="padding:6px 8px;text-align:left;color:#888;border-bottom:1px solid #333;">Descrizione</th>' +
-              '<th style="padding:6px 8px;text-align:left;color:#888;border-bottom:1px solid #333;">Cod.Mag</th>' +
-              '<th style="padding:6px 8px;text-align:left;color:#888;border-bottom:1px solid #333;">Cod.Forn</th>' +
-              '<th style="padding:6px 8px;text-align:right;color:#888;border-bottom:1px solid #333;">Q.tà</th>' +
-              '<th style="padding:6px 8px;text-align:left;color:#888;border-bottom:1px solid #333;">UM</th>' +
-            '</tr></thead><tbody>' + rows + '</tbody></table>'
-          : '<div style="padding:12px;color:#888;">Nessun articolo nel batch.</div>') +
+        _daoHtmlBatchItemsTable(b.items || []) +
       '</div>' +
     '</div>';
   document.body.appendChild(bd);
@@ -1826,19 +1902,7 @@ function daoGenerateOrderPDF(colore){
  *  3) la lista del fornitore si svuota in tab.
  */
 function daoInviaEArchiviaGruppo(colore){
-  var byColor = daoCollectDaOrdinareByColor();
-  var entries = byColor[colore] || [];
-  if(!entries.length){
-    if(typeof showToastGen === 'function') showToastGen('yellow', 'Nessun articolo da inviare');
-    return;
-  }
-  var ok = daoGenerateOrderPDF(colore);
-  if(!ok) return; // PDF non generato → non archiviamo per non perdere dati
-  // Piccolo ritardo per dare tempo al dialog di stampa di aprirsi nel popup
-  setTimeout(function(){
-    daoArchiviaColoreGruppo(colore);
-    if(typeof showToastGen === 'function') showToastGen('green', 'Ordine inviato e archiviato');
-  }, 500);
+  daoConfermaArchiviaGruppo(colore);
 }
 
 function daoHtmlBloccoStoricoRecente(){
