@@ -1,0 +1,13 @@
+{
+  "name": "aggiorna-magazzino",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Merge sicuro magazzino_ext FerApp da backup JSON + file gestionale",
+  "scripts": {
+    "merge": "node merge-magazzino.js",
+    "upload": "node upload-magazzino.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}

@@ -1,0 +1,6 @@
+node_modules/
+serviceAccountKey.json
+input/*.txt
+backup/*.json
+changes.json
+report.txt
