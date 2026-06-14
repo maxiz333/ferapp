@@ -1245,7 +1245,7 @@ body.light-mode .ct-cli-fatt {
   box-sizing: border-box;
   width: calc(100% + 28px);
   margin: 10px -14px -14px;
-  overflow: hidden;
+  overflow: visible;
   border-radius: 0 0 12px 12px;
 }
 .ct-inviato-box .ct-inviato-esauriti-banner {
@@ -1279,7 +1279,13 @@ body.light-mode .ct-cli-fatt {
   background: rgba(125, 211, 192, 0.12);
   border-top: 1px solid rgba(125, 211, 192, 0.22);
 }
-.ct-inviato-esauriti-panel--open { max-height: 520px; }
+.ct-inviato-esauriti-panel--open {
+  max-height: min(520px, 55vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
 .ct-inviato-esauriti-panel-inner { padding: 4px 10px 8px; }
 .ct-inviato-esauriti-row {
   display: flex;

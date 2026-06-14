@@ -205,8 +205,9 @@ function _daoItemNotaText(it){
   return (n && String(n).trim()) ? String(n).trim() : '';
 }
 
-/** Singola riga articolo compatta (CSS Grid, ~34px). */
-function daoHtmlRigaCompatta(entry, col, titoloSlot){
+/** Singola riga articolo compatta (CSS Grid, ~34px). opts.showColDot: pallino colore fornitore. */
+function daoHtmlRigaCompatta(entry, col, titoloSlot, opts){
+  opts = opts || {};
   var it = entry.it;
   var itemNota = _daoItemNotaText(it);
   var hasNota = !!itemNota;
@@ -231,6 +232,7 @@ function daoHtmlRigaCompatta(entry, col, titoloSlot){
   h += '>';
   h += '<div class="dao-cell dao-cell-desc" onclick="daoToggleRowExpand(\'' + esc(rowId) + '\')">';
   h += '<div class="dao-desc-primary">';
+  if(opts.showColDot) h += '<span class="dao-row-col-dot" style="background:' + col + '"></span>';
   h += '<span class="dao-desc-name">' + esc(it.desc || '\u2014') + '</span>';
   if(metaInline) h += '<span class="dao-desc-meta">' + esc(metaInline) + '</span>';
   h += '</div>';
@@ -310,6 +312,33 @@ function daoHtmlGruppoItemsByDay(col, items, titoloSlot){
       h += daoHtmlRigaCompatta(entry, col, titoloSlot);
     });
   });
+  return h;
+}
+
+/** Vista "Tutti": lista unificata raggruppata solo per giorno, senza header fornitore. */
+function daoHtmlUnifiedByDay(byColor){
+  var wrappers = [];
+  Object.keys(byColor).forEach(function(col){
+    (byColor[col] || []).forEach(function(entry){
+      wrappers.push({ entry: entry, col: col, dayKey: entry.dayKey, sortAt: entry.sortAt });
+    });
+  });
+  if(!wrappers.length) return '';
+
+  var h = '';
+  h += '<div class="dao-table dao-table--tutti">';
+  h += '<div class="dao-table-head">';
+  h += '<span>Prodotto</span><span>Qt\u00e0</span><span>\u20ac</span><span></span>';
+  h += '</div>';
+  var dayGroups = daoGroupEntriesByDay(wrappers);
+  dayGroups.forEach(function(g){
+    h += daoHtmlDaySep(g.label, g.isFirst);
+    g.entries.forEach(function(w){
+      var titoloSlot = typeof ctEtichettaFornitore === 'function' ? ctEtichettaFornitore(w.col) : w.col;
+      h += daoHtmlRigaCompatta(w.entry, w.col, titoloSlot, { showColDot: true });
+    });
+  });
+  h += '</div>';
   return h;
 }
 
@@ -393,13 +422,11 @@ function daoRenderFornitoreView(cfg){
       return;
     }
 
-    var coloriDaMostrare = cfg.activeFilter ? [cfg.activeFilter] : (
-      typeof _daoSortedKeysForDisplay === 'function' ? _daoSortedKeysForDisplay(byColor) : Object.keys(byColor)
-    );
-
-    coloriDaMostrare.forEach(function(col){
-      h += daoHtmlGruppoFornitore(col, byColor[col] || [], forniMap, { mode: cfg.mode || 'ordfor-tab', forniNoteMap: forniNoteMap });
-    });
+    if(cfg.activeFilter){
+      h += daoHtmlGruppoFornitore(cfg.activeFilter, byColor[cfg.activeFilter] || [], forniMap, { mode: cfg.mode || 'ordfor-tab', forniNoteMap: forniNoteMap });
+    } else {
+      h += daoHtmlUnifiedByDay(byColor);
+    }
 
     h += typeof daoHtmlBloccoStoricoRecente === 'function' ? daoHtmlBloccoStoricoRecente() : '';
     wrap.innerHTML = h;
