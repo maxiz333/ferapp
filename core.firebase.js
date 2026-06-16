@@ -428,8 +428,12 @@ function _scheduleDbSystemMaintenance(){
           if(!c || c.id !== activeCartId) return false;
           if(c.id === '__dao_forn_staging__' || c._daoFornStaging) return false;
           if(typeof _cartIsStagingCart === 'function' && _cartIsStagingCart(c)) return false;
-          return c.stato !== 'inviato' &&
-            (typeof ctCartCreatoOggi !== 'function' || ctCartCreatoOggi(c));
+          var creatoOggi = typeof ctCartCreatoOggi !== 'function' || ctCartCreatoOggi(c);
+          var linkedOggi = typeof ctCartLinkedOrdineOggi === 'function' && ctCartLinkedOrdineOggi(c);
+          if(c.stato === 'inviato' || c.stato === 'modifica'){
+            return creatoOggi || linkedOggi;
+          }
+          return creatoOggi;
         });
         if(!cartAttivoOk && typeof _cartResolveActiveId === 'function'){
           activeCartId = _cartResolveActiveId();
