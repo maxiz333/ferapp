@@ -10,6 +10,10 @@ function _fbPush(ref,data){
 var _ordRemoteMeta = null;
 var _ordLocalSyncedAt = 0;
 var _ordSavePending = false;
+var _ordSaveQueue = [];
+var _cartOrdFbDebounceTimer = null;
+var _CART_ORD_FB_DEBOUNCE_MS = 400;
+var _cartOrdFbNeedsOrdiniPush = false;
 
 function _ordNormStato(stato){
   if(stato === 'lavorazione') return 'nuovo';
@@ -251,6 +255,19 @@ function fetchOrdiniFromFirebase(opts, cb){
 window.fetchOrdiniFromFirebase = fetchOrdiniFromFirebase;
 window._ordApplyRemoteSnapshot = _ordApplyRemoteSnapshot;
 
+function _ordEnqueueFirebasePush(localSnapshot, opts){
+  _ordSaveQueue.push({ snapshot: localSnapshot, opts: opts || {} });
+  _ordDrainSaveQueue();
+}
+
+function _ordDrainSaveQueue(){
+  if(_ordSavePending || !_ordSaveQueue.length) return;
+  if(!_fbReady || !_fbDb) return;
+  var job = _ordSaveQueue[_ordSaveQueue.length - 1];
+  _ordSaveQueue.length = 0;
+  _ordPushToFirebase(job.snapshot, job.opts);
+}
+
 function _ordPushToFirebase(localSnapshot, opts){
   opts = opts || {};
   if(!_fbReady || !_fbDb) return;
@@ -271,8 +288,13 @@ function _ordPushToFirebase(localSnapshot, opts){
         remoteMeta = { updatedAt: 0, completati: remoteM.completati, total: remoteM.total };
       }
 
-      if(_ordShouldBlockFirebasePush(localSnapshot, remoteArr, remoteMeta, opts)){
+      function _ordPushDone(){
         _ordSavePending = false;
+        _ordDrainSaveQueue();
+      }
+
+      if(_ordShouldBlockFirebasePush(localSnapshot, remoteArr, remoteMeta, opts)){
+        _ordPushDone();
         _ordApplyRemoteSnapshot(remoteArr, remoteMeta, { renderOrdini: true });
         if(typeof showToastGen === 'function' && remoteM.completati > localM.completati){
           showToastGen('orange',
@@ -300,10 +322,50 @@ function _ordPushToFirebase(localSnapshot, opts){
       }catch(e){
         console.error('FB ordini save:', e);
       }
-      _ordSavePending = false;
+      _ordPushDone();
     });
   });
 }
+
+function cartPersistLocalOnly(){
+  _takeSnapshot();
+  lsSet(CARTK, carrelli);
+  updateCartBadge();
+}
+
+function flushDebouncedCartOrdFirebaseSave(){
+  if(_cartOrdFbDebounceTimer){
+    clearTimeout(_cartOrdFbDebounceTimer);
+    _cartOrdFbDebounceTimer = null;
+  }
+  _cartPushToFirebase();
+  if(_cartOrdFbNeedsOrdiniPush && typeof saveOrdini === 'function') saveOrdini();
+  _cartOrdFbNeedsOrdiniPush = false;
+}
+
+function scheduleDebouncedCartOrdFirebaseSave(needOrdini){
+  if(needOrdini) _cartOrdFbNeedsOrdiniPush = true;
+  clearTimeout(_cartOrdFbDebounceTimer);
+  _cartOrdFbDebounceTimer = setTimeout(function(){
+    _cartOrdFbDebounceTimer = null;
+    flushDebouncedCartOrdFirebaseSave();
+  }, _CART_ORD_FB_DEBOUNCE_MS);
+}
+
+window.cartPersistLocalOnly = cartPersistLocalOnly;
+window.scheduleDebouncedCartOrdFirebaseSave = scheduleDebouncedCartOrdFirebaseSave;
+window.flushDebouncedCartOrdFirebaseSave = flushDebouncedCartOrdFirebaseSave;
+
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden && typeof flushDebouncedCartOrdFirebaseSave === 'function'){
+    flushDebouncedCartOrdFirebaseSave();
+  }
+});
+window.addEventListener('beforeunload', function(){
+  if(typeof flushDebouncedCartOrdFirebaseSave === 'function'){
+    flushDebouncedCartOrdFirebaseSave();
+  }
+});
 
 // Sync unificata localStorage -> Firebase per dataset condivisi globali
 var _fbSharedSyncing = {};
@@ -461,7 +523,7 @@ function saveOrdini(opts){
   lsSet(ORDK, ordini);
   updateOrdBadge();
   var snapshot = (ordini || []).slice();
-  _ordPushToFirebase(snapshot, opts);
+  _ordEnqueueFirebasePush(snapshot, opts);
   if(typeof renderOrdini === 'function') renderOrdini();
   if(typeof window !== 'undefined' && typeof window.dispatchEvent === 'function'){
     window.dispatchEvent(new CustomEvent('sync-orders', { detail: { source: 'saveOrdini' } }));

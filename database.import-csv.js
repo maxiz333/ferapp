@@ -521,6 +521,7 @@ function goTab(id){
   goTabDirect(id);
 }
 function goTabDirect(id){
+  if(typeof flushDebouncedCartOrdFirebaseSave === 'function') flushDebouncedCartOrdFirebaseSave();
   var _fromT11 = (id === 't11');
   if(_fromT11) id = 't0';
   if(_PRIMARY_TABS.indexOf(id)>=0) _lastPrimaryTab=id;

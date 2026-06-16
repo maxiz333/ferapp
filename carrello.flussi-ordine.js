@@ -163,7 +163,8 @@ function _ordMergeCartItemsPreserveOfficePrices(cartItems, ordActiveItems){
 }
 
 // Aggiorna la bozza con gli articoli correnti del carrello (i congelati restano in coda)
-function _aggiornaBozzaOrdine(cart){
+function _aggiornaBozzaOrdine(cart, opts){
+  opts = opts || {};
   if(!cart||!cart.bozzaOrdId)return;
   if(typeof ensureFatturaState === 'function') ensureFatturaState(cart);
   var bozza=ordini.find(function(o){return o.id===cart.bozzaOrdId;});
@@ -222,11 +223,19 @@ function _aggiornaBozzaOrdine(cart){
   bozza.modificatoAt=new Date().toLocaleString('it-IT');
   bozza.modificatoAtISO=new Date().toISOString();
   // Come ordine già inviato: il sync carrello→bozza non azzera "visto" (l'ufficio resta "visto" finché non serve altro flusso)
+  if(opts.skipSave){
+    lsSet(ORDK, ordini);
+    if(typeof updateOrdBadge === 'function') updateOrdBadge();
+    var toSkip = document.getElementById('to');
+    if(toSkip && toSkip.classList.contains('active') && typeof renderOrdini === 'function') renderOrdini();
+    return;
+  }
   saveOrdini();
 }
 
 /** Sync tab Ordini mentre il carrello è in modifica (stesso schema bozza + righe congelate). Mantiene cart.ordId ↔ ord.id. */
-function _aggiornaOrdineDaCarrelloModifica(cart){
+function _aggiornaOrdineDaCarrelloModifica(cart, opts){
+  opts = opts || {};
   if(!cart||!cart.ordId||cart.stato!=='modifica') return;
   if(typeof ensureFatturaState === 'function') ensureFatturaState(cart);
   var ord=ordini.find(function(o){ return o.id===cart.ordId; });
@@ -294,6 +303,13 @@ function _aggiornaOrdineDaCarrelloModifica(cart){
   ord.scontoGlobale=cart.scontoGlobale||null;
   ord.totale=ordTotaleSenzaCongelati(ord).toFixed(2);
   if(typeof ordineResetVistoSeNegozio === 'function') ordineResetVistoSeNegozio(ord);
+  if(opts.skipSave){
+    lsSet(ORDK, ordini);
+    if(typeof updateOrdBadge === 'function') updateOrdBadge();
+    var toMod = document.getElementById('to');
+    if(toMod && toMod.classList.contains('active') && typeof renderOrdini === 'function') renderOrdini();
+    return;
+  }
   saveOrdini();
 }
 
