@@ -353,29 +353,17 @@ function _scheduleDbSystemMaintenance(){
         if(isBoot) _ordScheduleArchivBoot();
         return;
       }
-      var localOrdBefore = (ordini || []).slice();
-      var mergedOrd = fresh;
-      if(typeof _ordMergeById === 'function'){
-        mergedOrd = (_ordMergeById(localOrdBefore, fresh) || {}).merged || fresh;
-      }
-      if(JSON.stringify(mergedOrd) === JSON.stringify(ordini)){
-        if(isBoot) _ordScheduleArchivBoot();
-        return;
-      }
       _fbSyncing=true;
       try{
         if(typeof _ordApplyRemoteSnapshot === 'function'){
-          _ordApplyRemoteSnapshot(mergedOrd, _ordRemoteMeta, {
+          _ordApplyRemoteSnapshot(fresh, _ordRemoteMeta, {
             renderOrdini: true,
             onlyIfTabActive: true
           });
         } else {
-          ordini=mergedOrd;lsSet(ORDK,ordini);updateOrdBadge();updateOrdCounter();
+          ordini=fresh;lsSet(ORDK,ordini);updateOrdBadge();updateOrdCounter();
           var t=document.getElementById('to');
           if(t&&t.classList.contains('active')) renderOrdini();
-        }
-        if(typeof cartSyncCarrelliDopoMergeOrdiniRemote === 'function'){
-          cartSyncCarrelliDopoMergeOrdiniRemote(localOrdBefore, mergedOrd);
         }
         // Solo ordini con stato 'nuovo' che NON erano già noti
         var nuovi=fresh.filter(function(o){return o.stato==='nuovo'&&!_idKnown[o.id];});
@@ -434,9 +422,6 @@ function _scheduleDbSystemMaintenance(){
         console.log('[CART] sync Firebase — totale condiviso:', merged.length);
         carrelli = merged;
         lsSet(CARTK, carrelli);
-        if(typeof cartSyncOrdiniDopoMergeRemote === 'function'){
-          cartSyncOrdiniDopoMergeRemote(localBefore);
-        }
         updateCartBadge();
         // Se activeCartId non è valido (inviato storico / assente), risolvi come dopo deleteCart
         var cartAttivoOk = carrelli.find(function(c){

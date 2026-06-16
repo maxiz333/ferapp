@@ -442,31 +442,6 @@ function cartSetScaglioneQta(cartId, idx, val){
 
 // ── Override saveCarrelli: aggiorna automaticamente le bozze attive ──
 // (core.js definisce saveCarrelli; qui la estendiamo senza toccare database.js)
-/** Dopo merge Firebase carrelli: propaga qty al ordine/bozza se il carrello remoto è cambiato. */
-function cartSyncOrdiniDopoMergeRemote(localBefore){
-  if(!localBefore || !carrelli) return;
-  var beforeById = {};
-  localBefore.forEach(function(c){ if(c && c.id) beforeById[c.id] = c; });
-  var needOrdListRefresh = false;
-  (carrelli || []).forEach(function(cart){
-    if(!cart || !cart.id) return;
-    var prev = beforeById[cart.id];
-    if(prev && JSON.stringify(prev) === JSON.stringify(cart)) return;
-    if(cart.bozzaOrdId){
-      _aggiornaBozzaOrdine(cart);
-      needOrdListRefresh = true;
-    }
-    if(cart.stato === 'modifica' && cart.ordId){
-      _aggiornaOrdineDaCarrelloModifica(cart);
-      needOrdListRefresh = true;
-    }
-  });
-  if(needOrdListRefresh && typeof renderOrdini === 'function'){
-    var to = document.getElementById('to');
-    if(to && to.classList.contains('active')) renderOrdini();
-  }
-}
-
 (function(){
   var _origSaveCarrelli = saveCarrelli;
   saveCarrelli = function(){

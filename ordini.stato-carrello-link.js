@@ -89,19 +89,6 @@ function syncOrdineItemsToLinkedCart(ord){
   return true;
 }
 
-/** Dopo merge Firebase ordini: propaga ordine→carrello se una versione remota è cambiata. */
-function cartSyncCarrelliDopoMergeOrdiniRemote(localBefore, merged){
-  if(!localBefore || !merged || typeof syncOrdineItemsToLinkedCart !== 'function') return;
-  var beforeById = {};
-  localBefore.forEach(function(o){ if(o && o.id) beforeById[o.id] = o; });
-  merged.forEach(function(ord){
-    if(!ord || !ord.id) return;
-    var prev = beforeById[ord.id];
-    if(prev && JSON.stringify(prev) === JSON.stringify(ord)) return;
-    syncOrdineItemsToLinkedCart(ord);
-  });
-}
-
 function _rimuoviCarrelloDaOrdine(ordId){
   var idx=carrelli.findIndex(function(c){return c.ordId===ordId;});
   if(idx===-1) return;
